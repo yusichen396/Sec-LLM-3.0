@@ -1,4 +1,6 @@
 # Python
+# Local execution snapshots, documents and potentially sensitive evaluation outputs
+/artifacts/
 __pycache__/
 *.py[cod]
 *$py.class

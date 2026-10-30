@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://127.0.0.1:11434"
     OLLAMA_MODEL_NAME: str = "llama3:8b"
     RAG_ONLY_MAX_DISTANCE: float = 1.2
+    # 安全护栏：话题域识别 + 越权拦截，关闭后 /api/chat 不再做前置检查
+    SAFETY_GUARD_ENABLED: bool = True
+    # 混合召回：BM25 + 向量 RRF 融合；集合超过 5000 条时自动退化为纯向量
+    HYBRID_RECALL_ENABLED: bool = True
+    # Optional profile path; empty uses data/rag_optimization/active.json when present.
+    RAG_POLICY_PATH: Optional[str] = None
 
     # Database
     DATABASE_TYPE: str = "mysql"
@@ -58,6 +64,8 @@ class Settings(BaseSettings):
     AGENT_BROWSER_HEADLESS: bool = True
     AGENT_DEFAULT_SCAN_MODE: str = "standard"  # standard | deep | quick
     AGENT_ALLOWED_TARGETS: str = ""  # comma-separated exact hostnames/IPs; required for production web scans
+    AGENT_POLICY_PATH: Optional[str] = None  # default: data/agent_optimization/active.json
+    RERANKER_MODEL_PATH: Optional[str] = None
 
 settings = Settings()
 

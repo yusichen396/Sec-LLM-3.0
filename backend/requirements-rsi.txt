@@ -1,0 +1,10 @@
+# Minimal fixed-test environment. No browser installation, DB server or cloud API required.
+pytest>=8,<10
+langchain-core>=1.2,<2
+langgraph>=1,<2
+pydantic-settings>=2,<3
+httpx>=0.27,<1
+fastapi==0.128.0
+pymysql>=1.1,<2
+python-jose[cryptography]>=3.5,<4
+passlib==1.7.4

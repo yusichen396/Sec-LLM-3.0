@@ -18,6 +18,7 @@ class AgentState(TypedDict):
     target: str                        # Target URL, IP, file path, or repo
     task_type: str                     # web_scan / code_audit / threat_intel / comprehensive
     provider: str                      # local or cloud
+    policy: Dict[str, Any]              # Snapshot pinned for this execution
 
     # Conversation
     messages: Annotated[List[Dict[str, str]], add_messages]

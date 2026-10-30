@@ -127,6 +127,55 @@ class TestExploitSpecialist:
 
 
 class TestSupervisor:
+    @pytest.mark.parametrize("source", ["recon", "exploit"])
+    def test_partial_report_does_not_hide_tool_errors(self, monkeypatch, source):
+        import asyncio
+        import agents.supervisor as supervisor
+
+        async def recon(*args, **kwargs):
+            return {"findings": [{"type": "error", "tool": "fixture", "error": "offline"}] if source == "recon" else []}
+
+        async def exploit(*args, **kwargs):
+            return {"errors": [{"tool": "fixture", "error": "offline"}] if source == "exploit" else []}
+
+        async def complete(*args, **kwargs):
+            return "partial report"
+
+        monkeypatch.setattr(supervisor, "run_recon", recon)
+        monkeypatch.setattr(supervisor, "run_exploit", exploit)
+        monkeypatch.setattr(supervisor, "single_shot_completion", complete)
+        result = asyncio.run(supervisor.run_multi_agent("fixture"))
+        assert result["status"] == "failed"
+        assert result["report"] == "partial report"
+
+    @pytest.mark.parametrize("response", [RuntimeError("model offline"), "   "])
+    def test_report_failure_is_published_to_session_progress(self, monkeypatch, response):
+        import asyncio
+        import agents.supervisor as supervisor
+
+        async def recon(*args, **kwargs):
+            return {"findings": []}
+
+        async def exploit(*args, **kwargs):
+            return {"errors": []}
+
+        async def fail(*args, **kwargs):
+            if isinstance(response, Exception):
+                raise response
+            return response
+
+        async def collect(state):
+            progress.append(state)
+
+        monkeypatch.setattr(supervisor, "run_recon", recon)
+        monkeypatch.setattr(supervisor, "run_exploit", exploit)
+        monkeypatch.setattr(supervisor, "single_shot_completion", fail)
+        progress = []
+        result = asyncio.run(supervisor.run_multi_agent("fixture", on_progress=collect))
+        assert result["status"] == "failed"
+        assert result["report"] is None
+        assert progress[-1]["status"] == "failed"
+
     def test_graph_hands_recon_output_to_exploit(self, monkeypatch):
         import asyncio
         import agents.supervisor as supervisor

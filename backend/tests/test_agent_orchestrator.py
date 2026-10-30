@@ -11,6 +11,31 @@ from agents.orchestrator import (
 
 
 class TestAgentGraph:
+    @pytest.mark.parametrize("response,step_status,existing_error", [
+        (RuntimeError("model offline"), "done", None),
+        ("  ", "done", None),
+        ("report", "timeout", None),
+        ("report", "skipped", None),
+        ("report", "error", None),
+        ("report", "done", "Planning failed"),
+    ])
+    def test_reporting_cannot_turn_failures_into_success(self, monkeypatch, response, step_status, existing_error):
+        import agents.orchestrator as orch
+
+        async def complete(*args, **kwargs):
+            if isinstance(response, Exception):
+                raise response
+            return response
+
+        monkeypatch.setattr(orch, "single_shot_completion", complete)
+        state = {"target": "fixture", "task_type": "code_audit", "provider": "local",
+                 "findings": [], "plan": [{"status": step_status}], "logs": [], "error": existing_error}
+        result = asyncio.run(orch.report_node(state))
+        assert result["status"] == "failed"
+        if isinstance(response, Exception) or not response.strip():
+            assert result["report"] is None
+            assert result["error"]
+
     def test_graph_nodes(self):
         graph = get_agent_graph()
         nodes = list(graph.nodes.keys())
@@ -37,6 +62,9 @@ class TestAgentGraph:
             return {"findings": [{"title": "test", "severity": "low"}]}
 
         monkeypatch.setattr(orch, "single_shot_completion", completion)
+        monkeypatch.setattr(orch, "get_all_tools", lambda: {
+            "fake_tool": {"func": lambda: None, "description": "fixture tool"},
+        })
         monkeypatch.setattr(orch, "get_tool", lambda name: {"requires_provider": False})
         monkeypatch.setattr(orch, "invoke_tool", tool)
         state = {
@@ -57,6 +85,12 @@ class TestAgentGraph:
 
 
 class TestSessionManagement:
+    @pytest.fixture(autouse=True)
+    def isolate_session_storage(self, monkeypatch):
+        import agents.orchestrator as orch
+        monkeypatch.setattr(orch, "_load_session", lambda session_id: None)
+        monkeypatch.setattr(orch, "_claim_session", lambda session_id, recovered=False: True)
+
     def setup_method(self):
         import agents.orchestrator as orch
         orch._sessions.clear()

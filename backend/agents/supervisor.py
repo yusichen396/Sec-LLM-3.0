@@ -7,12 +7,15 @@ from agents.collaboration import Blackboard
 from agents.specialists.recon import run_recon
 from agents.specialists.exploit import run_exploit
 from core.llm.router import single_shot_completion
+from dataclasses import asdict
+from agents.policy import load_policy, policy_for, report_messages
 
 
 class SupervisorState(TypedDict):
     target: str
     task_type: str
     provider: str
+    policy: Dict[str, Any]
     blackboard: Blackboard
     recon_state: Dict[str, Any]
     exploit_state: Dict[str, Any]
@@ -51,23 +54,24 @@ async def _report_node(state: SupervisorState) -> dict:
     logs = state["logs"] + ["[SUPERVISOR] Generating final report..."]
     report = None
     try:
-        bb_summary = f"Target: {state['target']}\nDiscoveries: {blackboard.list_keys()}\nVerified: {len(verified)}\nUnverified: {len(unverified)}"
-        prompt = (
-            f"You are a security lead. Synthesize the assessment results into a report.\n\n"
-            f"{bb_summary}\n\nScan limitations:\n{str([item for item in state['recon_state'].get('findings', []) if item.get('type') == 'error'])[:2000]}\n\nVerified vulnerabilities:\n{str(verified)[:4000]}\n\n"
-            f"Unverified leads:\n{str(unverified)[:4000]}\n\n"
-            f"Write in Chinese. Only call verified items vulnerabilities. Label all other items "
-            f"as unverified leads; do not invent validation evidence. Include: Executive Summary, "
-            f"Attack Surface, Verified Findings, Unverified Leads, Recommendations. Markdown format."
-        )
-        messages = [{"role": "system", "content": "You are a senior security consultant."},
-                     {"role": "user", "content": prompt}]
+        messages = report_messages(state["target"], state["task_type"], all_findings,
+                                   {"recon": state["recon_state"].get("findings", []),
+                                    "tool_errors": state["exploit_state"].get("errors", [])}, policy_for(state))
         report = await single_shot_completion(messages, provider=state["provider"], temperature=0.3)
+        if not report or not report.strip():
+            raise ValueError("Empty report")
+        if policy_for(state).reporting != "baseline":
+            from agents.evaluation import score_report
+            if not score_report(report, all_findings)["success"]:
+                raise ValueError("Report failed the evidence citation contract")
     except Exception as e:
+        report = None
         logs.append(f"[SUPERVISOR] Report generation failed: {e}")
 
     logs.append(f"[SUPERVISOR] Assessment complete. {len(verified)} verified, {len(unverified)} unverified.")
-    return {"report_state": {"report": report, "findings": all_findings}, "logs": logs}
+    tool_errors = any(item.get("type") == "error" for item in state["recon_state"].get("findings", [])) or bool(state["exploit_state"].get("errors"))
+    status = "completed" if report and not tool_errors else "failed"
+    return {"report_state": {"report": report, "findings": all_findings, "status": status}, "logs": logs}
 
 
 def _build_graph():
@@ -92,10 +96,12 @@ async def run_multi_agent(
     on_progress: Callable[[Dict[str, Any]], Awaitable[None]] | None = None,
 ) -> Dict[str, Any]:
     """Run independent specialist nodes through LangGraph; keep the public result shape."""
+    policy = load_policy()
     initial = {
         "target": target, "task_type": task_type, "provider": provider,
+        "policy": asdict(policy),
         "blackboard": Blackboard(), "recon_state": {}, "exploit_state": {},
-        "report_state": {}, "logs": [],
+        "report_state": {}, "logs": [f"[POLICY] {policy.version}"],
     }
     if on_progress:
         async for state in _graph.astream(initial, stream_mode="values"):
@@ -104,7 +110,7 @@ async def run_multi_agent(
                 "phase": ("complete" if state["report_state"] else
                           "exploit" if state["exploit_state"] else
                           "recon" if state["recon_state"] else "pending"),
-                "status": "completed" if state["report_state"] else "running",
+                "status": state["report_state"].get("status", "running"),
                 "steps_completed": completed, "steps_total": 3 if task_type in ("web_scan", "comprehensive") else 2,
                 "findings": state["blackboard"].get("all_findings", []),
                 "report": state["report_state"].get("report"), "logs": state["logs"],
@@ -112,7 +118,7 @@ async def run_multi_agent(
     else:
         state = await _graph.ainvoke(initial)
     return {
-        "status": "completed",
+        "status": state["report_state"]["status"],
         "target": target,
         "phase": "complete",
         "findings": state["report_state"]["findings"],

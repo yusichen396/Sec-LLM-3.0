@@ -12,6 +12,8 @@ from langgraph.graph import END, StateGraph
 
 from agents.state import AgentState, AgentTask
 from agents.reporting import annotate_finding
+from agents.policy import parse_plan, planning_messages, policy_for, report_messages
+from dataclasses import asdict
 from agents.supervisor import run_multi_agent
 from config import settings
 from core.llm.router import single_shot_completion
@@ -208,43 +210,19 @@ def get_session_event(session_id: str) -> asyncio.Event | None:
 async def planner_node(state: AgentState) -> AgentState:
     """Analyze task and target, generate ordered tool execution plan."""
     state["phase"] = "planning"
-    tools_desc = ""
-    for name, info in sorted(get_all_tools().items()):
-        tools_desc += f"- {name}: {info['description']}\n"
-
-    prompt = (
-        f"You are a senior penetration testing lead. Generate a step-by-step plan as JSON array.\n\n"
-        f"Task: {state['task']}\nTarget: {state['target']}\nTask Type: {state['task_type']}\n\n"
-        f"Available tools:\n{tools_desc}\n"
-        f"Format: [{{\"tool\": \"name\", \"args\": {{...}}, \"reason\": \"why\"}}]\n"
-        f"Max {settings.AGENT_MAX_STEPS} steps. Output ONLY the JSON array, no markdown."
-    )
-
-    messages = [
-        {"role": "system", "content": "You are a security testing planner. Output ONLY valid JSON arrays."},
-        {"role": "user", "content": prompt},
-    ]
+    policy = policy_for(state)
+    state["policy"] = asdict(policy)
+    tools = get_all_tools()
+    messages = planning_messages(state, tools, policy, settings.AGENT_MAX_STEPS)
 
     try:
         raw = await single_shot_completion(
             messages, provider=state.get("provider", "local"), temperature=0.1, json_mode=False
         )
-        start = raw.find("[")
-        end = raw.rfind("]") + 1
-        if start >= 0 and end > start:
-            plan = json.loads(raw[start:end])
-            if isinstance(plan, list) and len(plan) > 0:
-                for step in plan:
-                    step["status"] = "pending"
-                state["plan"] = plan[: settings.AGENT_MAX_STEPS]
-                state["current_step"] = 0
-                state["logs"].append(f"[PLAN] Generated {len(state['plan'])}-step plan")
-            else:
-                state["error"] = "Plan generation returned empty result"
-                state["status"] = "failed"
-        else:
-            state["error"] = f"Could not parse plan from LLM output"
-            state["status"] = "failed"
+        state["plan"] = parse_plan(raw, tools, settings.AGENT_MAX_STEPS)
+        state["current_step"] = 0
+        state["logs"].append(f"[POLICY] {policy.version}")
+        state["logs"].append(f"[PLAN] Generated {len(state['plan'])}-step plan")
     except Exception as e:
         state["error"] = f"Planning failed: {e}"
         state["status"] = "failed"
@@ -288,6 +266,11 @@ async def execute_node(state: AgentState) -> AgentState:
             "tool": tool_name, "args": tool_args,
             "result": result, "duration_ms": elapsed,
         })
+        if isinstance(result, dict) and (
+            result.get("status") in ("error", "failed") or result.get("error")
+            or ("exit_code" in result and result["exit_code"] != 0)
+        ):
+            raise RuntimeError(f"Tool returned failure: {str(result)[:1000]}")
         step["status"] = "done"
         state["logs"].append(f"[DONE] {tool_name} completed in {elapsed}ms")
 
@@ -324,30 +307,29 @@ async def report_node(state: AgentState) -> AgentState:
     state["phase"] = "report"
 
     findings = state.get("findings", [])
-    verified = [f for f in findings if f.get("verification_status") == "verified"]
-    unverified = [f for f in findings if f.get("verification_status") != "verified"]
-    prompt = (
-        f"You are a senior security consultant. Write a comprehensive security assessment report in Chinese.\n\n"
-        f"Target: {state['target']}\nTask Type: {state['task_type']}\nSteps: {len(state['plan'])}\n"
-        f"Verified vulnerabilities ({len(verified)}):\n{json.dumps(verified, ensure_ascii=False)[:4000]}\n"
-        f"Unverified leads ({len(unverified)}):\n{json.dumps(unverified, ensure_ascii=False)[:4000]}\n\n"
-        f"Only call verified items vulnerabilities. Label every other item as an unverified lead; "
-        f"do not invent validation evidence. Include Executive Summary, Verified Findings, "
-        f"Unverified Leads, Remediation Recommendations and Testing Limitations. Output in Markdown."
-    )
+    policy = policy_for(state)
+    limitations = {"error": state.get("error"), "steps": state["plan"],
+                   "tool_errors": [line for line in state["logs"] if "[ERROR]" in line or "[TIMEOUT]" in line]}
 
     try:
         report = await single_shot_completion(
-            [{"role": "system", "content": "You are a security consultant. Write professional reports."},
-             {"role": "user", "content": prompt}],
+            report_messages(state["target"], state["task_type"], findings, limitations, policy),
             provider=state.get("provider", "local"), temperature=0.3
         )
+        if not report or not report.strip():
+            raise ValueError("Empty report")
+        if policy.reporting != "baseline":
+            from agents.evaluation import score_report
+            if not score_report(report, findings)["success"]:
+                raise ValueError("Report failed the evidence citation contract")
         state["report"] = report
-        state["status"] = "completed"
+        failed_steps = any(step.get("status") != "done" for step in state["plan"])
+        state["status"] = "failed" if state.get("error") or failed_steps else "completed"
         state["logs"].append(f"[REPORT] Generated report ({len(report)} chars)")
     except Exception as e:
-        state["report"] = f"Report generation failed: {e}"
-        state["status"] = "completed"
+        state["report"] = None
+        state["error"] = f"Report generation failed: {e}"
+        state["status"] = "failed"
         state["logs"].append(f"[ERROR] Report generation: {e}")
 
     return state
@@ -379,6 +361,7 @@ async def planner_agent(state: AgentState) -> dict:
     own = {key: deepcopy(result[key]) for key in ("plan", "error", "status")}
     return {
         "planner_state": own,
+        "policy": result["policy"],
         "plan": result["plan"], "error": result["error"],
         "status": result["status"], "phase": result["phase"], "logs": result["logs"],
     }
@@ -418,10 +401,10 @@ async def reporter_agent(state: AgentState) -> dict:
     local["plan"] = deepcopy(state["executor_state"].get("plan", state["planner_state"].get("plan", [])))
     local["findings"] = deepcopy(state["executor_state"].get("findings", []))
     result = await report_node(local)
-    own = {key: deepcopy(result[key]) for key in ("report", "status", "phase")}
+    own = {key: deepcopy(result[key]) for key in ("report", "status", "phase", "error")}
     return {
         "reporter_state": own, "report": result["report"], "status": result["status"],
-        "phase": result["phase"], "logs": result["logs"],
+        "phase": result["phase"], "logs": result["logs"], "error": result["error"],
     }
 
 

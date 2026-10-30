@@ -1,0 +1,469 @@
+{
+  "name": "agent_contract_smoke_v1",
+  "description": "18 authored contract cases with topic-disjoint splits. Planner tool/argument correctness and report citation placement only. No security tools are executed. Not an external task-success benchmark.",
+  "cases": [
+    {
+      "id": "audit_sql_plan",
+      "group": "audit_sql",
+      "split": "dev",
+      "kind": "plan",
+      "input": {
+        "task": "审计以下 Python 代码，不要运行：cursor.execute(\"SELECT * FROM users WHERE id=\" + user_id)",
+        "target": "sample_sql.py",
+        "task_type": "code_audit"
+      },
+      "expected_plan": [
+        {
+          "tool": "code_auditor",
+          "args": {
+            "code": "cursor.execute(\"SELECT * FROM users WHERE id=\" + user_id)",
+            "language": "python"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "audit_sql_report",
+      "group": "audit_sql",
+      "split": "dev",
+      "kind": "report",
+      "input": {
+        "target": "sample_sql.py",
+        "task_type": "code_audit",
+        "tool_results": [
+          {
+            "tool": "code_auditor",
+            "result": {
+              "findings": [
+                {
+                  "title": "audit_sql 待验证风险",
+                  "severity": "medium",
+                  "description": "静态提示，尚未复现。",
+                  "verification_status": "verified"
+                }
+              ]
+            }
+          }
+        ],
+        "limitations": [
+          "仅根据固定工具输出回放，不代表真实环境验证。"
+        ]
+      }
+    },
+    {
+      "id": "phishing_mail_plan",
+      "group": "phishing_mail",
+      "split": "dev",
+      "kind": "plan",
+      "input": {
+        "task": "分析这封可疑邮件，不要访问链接。邮件原文：请尽快核对密码，访问 https://mail.example.invalid/check",
+        "target": "mail_sample",
+        "task_type": "comprehensive"
+      },
+      "expected_plan": [
+        {
+          "tool": "phishing_analyzer",
+          "args": {
+            "content": "请尽快核对密码，访问 https://mail.example.invalid/check"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "phishing_mail_report",
+      "group": "phishing_mail",
+      "split": "dev",
+      "kind": "report",
+      "input": {
+        "target": "mail_sample",
+        "task_type": "comprehensive",
+        "tool_results": [
+          {
+            "tool": "browser_check_xss",
+            "result": {
+              "url": "https://lab.example.invalid",
+              "parameter": "q",
+              "results": [
+                {
+                  "payload": "fixture-marker",
+                  "dialog_triggered": true
+                }
+              ],
+              "findings": [
+                {
+                  "title": "phishing_mail 回放观察",
+                  "severity": "low",
+                  "evidence": "fixture-marker"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "code_auditor",
+            "result": {
+              "findings": [
+                {
+                  "title": "phishing_mail 待验证风险",
+                  "severity": "medium",
+                  "description": "静态提示，尚未复现。",
+                  "verification_status": "verified"
+                }
+              ]
+            }
+          }
+        ],
+        "limitations": [
+          "仅根据固定工具输出回放，不代表真实环境验证。"
+        ]
+      }
+    },
+    {
+      "id": "intel_ip_plan",
+      "group": "intel_ip",
+      "split": "dev",
+      "kind": "plan",
+      "input": {
+        "task": "只富化 IOC 192.0.2.12，类型为 ip，不要扫描。",
+        "target": "192.0.2.12",
+        "task_type": "threat_intel"
+      },
+      "expected_plan": [
+        {
+          "tool": "threat_intel_enrich",
+          "args": {
+            "ioc": "192.0.2.12",
+            "ioc_type": "ip"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "intel_ip_report",
+      "group": "intel_ip",
+      "split": "dev",
+      "kind": "report",
+      "input": {
+        "target": "192.0.2.12",
+        "task_type": "threat_intel",
+        "tool_results": [],
+        "limitations": [
+          "fixture 工具超时，未获得可验证发现；不得声称没有漏洞。"
+        ]
+      }
+    },
+    {
+      "id": "audit_xss_plan",
+      "group": "audit_xss",
+      "split": "validation",
+      "kind": "plan",
+      "input": {
+        "task": "审计以下 JavaScript 代码，不要执行：node.innerHTML = location.hash;",
+        "target": "sample_xss.js",
+        "task_type": "code_audit"
+      },
+      "expected_plan": [
+        {
+          "tool": "code_auditor",
+          "args": {
+            "code": "node.innerHTML = location.hash;",
+            "language": "javascript"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "audit_xss_report",
+      "group": "audit_xss",
+      "split": "validation",
+      "kind": "report",
+      "input": {
+        "target": "sample_xss.js",
+        "task_type": "code_audit",
+        "tool_results": [
+          {
+            "tool": "code_auditor",
+            "result": {
+              "findings": [
+                {
+                  "title": "audit_xss 待验证风险",
+                  "severity": "medium",
+                  "description": "静态提示，尚未复现。",
+                  "verification_status": "verified"
+                }
+              ]
+            }
+          }
+        ],
+        "limitations": [
+          "仅根据固定工具输出回放，不代表真实环境验证。"
+        ]
+      }
+    },
+    {
+      "id": "report_scan_plan",
+      "group": "report_scan",
+      "split": "validation",
+      "kind": "plan",
+      "input": {
+        "task": "解释以下已有扫描输出，不要重新扫描。原文：192.0.2.24 port 443 open https",
+        "target": "scan_fixture",
+        "task_type": "comprehensive"
+      },
+      "expected_plan": [
+        {
+          "tool": "report_explainer",
+          "args": {
+            "content": "192.0.2.24 port 443 open https"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "report_scan_report",
+      "group": "report_scan",
+      "split": "validation",
+      "kind": "report",
+      "input": {
+        "target": "scan_fixture",
+        "task_type": "comprehensive",
+        "tool_results": [
+          {
+            "tool": "browser_check_xss",
+            "result": {
+              "url": "https://lab.example.invalid",
+              "parameter": "q",
+              "results": [
+                {
+                  "payload": "fixture-marker",
+                  "dialog_triggered": true
+                }
+              ],
+              "findings": [
+                {
+                  "title": "report_scan 回放观察",
+                  "severity": "low",
+                  "evidence": "fixture-marker"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "code_auditor",
+            "result": {
+              "findings": [
+                {
+                  "title": "report_scan 待验证风险",
+                  "severity": "medium",
+                  "description": "静态提示，尚未复现。",
+                  "verification_status": "verified"
+                }
+              ]
+            }
+          }
+        ],
+        "limitations": [
+          "仅根据固定工具输出回放，不代表真实环境验证。"
+        ]
+      }
+    },
+    {
+      "id": "intel_domain_plan",
+      "group": "intel_domain",
+      "split": "validation",
+      "kind": "plan",
+      "input": {
+        "task": "只富化 IOC example.invalid，类型为 domain，不要执行探测。",
+        "target": "example.invalid",
+        "task_type": "threat_intel"
+      },
+      "expected_plan": [
+        {
+          "tool": "threat_intel_enrich",
+          "args": {
+            "ioc": "example.invalid",
+            "ioc_type": "domain"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "intel_domain_report",
+      "group": "intel_domain",
+      "split": "validation",
+      "kind": "report",
+      "input": {
+        "target": "example.invalid",
+        "task_type": "threat_intel",
+        "tool_results": [],
+        "limitations": [
+          "fixture 工具超时，未获得可验证发现；不得声称没有漏洞。"
+        ]
+      }
+    },
+    {
+      "id": "audit_secret_plan",
+      "group": "audit_secret",
+      "split": "test",
+      "kind": "plan",
+      "input": {
+        "task": "审计以下 Python 代码，不要运行：password = \"fixture-placeholder\"",
+        "target": "sample_secret.py",
+        "task_type": "code_audit"
+      },
+      "expected_plan": [
+        {
+          "tool": "code_auditor",
+          "args": {
+            "code": "password = \"fixture-placeholder\"",
+            "language": "python"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "audit_secret_report",
+      "group": "audit_secret",
+      "split": "test",
+      "kind": "report",
+      "input": {
+        "target": "sample_secret.py",
+        "task_type": "code_audit",
+        "tool_results": [
+          {
+            "tool": "code_auditor",
+            "result": {
+              "findings": [
+                {
+                  "title": "audit_secret 待验证风险",
+                  "severity": "medium",
+                  "description": "静态提示，尚未复现。",
+                  "verification_status": "verified"
+                }
+              ]
+            }
+          }
+        ],
+        "limitations": [
+          "仅根据固定工具输出回放，不代表真实环境验证。"
+        ]
+      }
+    },
+    {
+      "id": "rule_yara_plan",
+      "group": "rule_yara",
+      "split": "test",
+      "kind": "plan",
+      "input": {
+        "task": "只生成 yara 检测规则，不要执行扫描。需求原文：检测包含 fixture-marker 字符串的测试文件",
+        "target": "rule_fixture",
+        "task_type": "comprehensive"
+      },
+      "expected_plan": [
+        {
+          "tool": "rule_generator",
+          "args": {
+            "requirement": "检测包含 fixture-marker 字符串的测试文件",
+            "rule_type": "yara"
+          },
+          "reason": "完成限定任务"
+        }
+      ]
+    },
+    {
+      "id": "rule_yara_report",
+      "group": "rule_yara",
+      "split": "test",
+      "kind": "report",
+      "input": {
+        "target": "rule_fixture",
+        "task_type": "comprehensive",
+        "tool_results": [
+          {
+            "tool": "browser_check_xss",
+            "result": {
+              "url": "https://lab.example.invalid",
+              "parameter": "q",
+              "results": [
+                {
+                  "payload": "fixture-marker",
+                  "dialog_triggered": true
+                }
+              ],
+              "findings": [
+                {
+                  "title": "rule_yara 回放观察",
+                  "severity": "low",
+                  "evidence": "fixture-marker"
+                }
+              ]
+            }
+          },
+          {
+            "tool": "code_auditor",
+            "result": {
+              "findings": [
+                {
+                  "title": "rule_yara 待验证风险",
+                  "severity": "medium",
+                  "description": "静态提示，尚未复现。",
+                  "verification_status": "verified"
+                }
+              ]
+            }
+          }
+        ],
+        "limitations": [
+          "仅根据固定工具输出回放，不代表真实环境验证。"
+        ]
+      }
+    },
+    {
+      "id": "browser_surface_plan",
+      "group": "browser_surface",
+      "split": "test",
+      "kind": "plan",
+      "input": {
+        "task": "在已授权隔离靶场 https://lab.example.invalid 中只获取页面信息，再截图；不要执行端口或漏洞扫描。",
+        "target": "https://lab.example.invalid",
+        "task_type": "comprehensive"
+      },
+      "expected_plan": [
+        {
+          "tool": "browser_navigate",
+          "args": {
+            "url": "https://lab.example.invalid"
+          },
+          "reason": "完成限定任务"
+        },
+        {
+          "tool": "browser_screenshot",
+          "args": {
+            "url": "https://lab.example.invalid"
+          },
+          "reason": "记录页面"
+        }
+      ]
+    },
+    {
+      "id": "browser_surface_report",
+      "group": "browser_surface",
+      "split": "test",
+      "kind": "report",
+      "input": {
+        "target": "https://lab.example.invalid",
+        "task_type": "comprehensive",
+        "tool_results": [],
+        "limitations": [
+          "fixture 工具超时，未获得可验证发现；不得声称没有漏洞。"
+        ]
+      }
+    }
+  ]
+}

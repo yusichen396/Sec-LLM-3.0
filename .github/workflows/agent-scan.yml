@@ -4,9 +4,92 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   push:
-    branches: [main]
+    branches: [main, 'codex/rsi-*']
 
 jobs:
+  rsi-regression:
+    name: Agent and code RSI regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements-rsi.lock.txt
+      - run: python -m pip install -r backend/requirements-rsi.lock.txt
+      - name: Fixed regression including apply and rollback recovery
+        working-directory: backend
+        run: >-
+          python -m pytest tests/test_code_rsi.py tests/test_rsi_hardening.py
+          tests/test_agent_optimization.py tests/test_agent_orchestrator.py
+          tests/test_agent_supervisor.py tests/test_tool_registry.py tests/test_rag_optimization.py
+          tests/test_rerank.py -q
+          -k 'not run_recon_no_tools and not run_exploit_empty_blackboard and not run_supervisor_basic'
+      - name: End-to-end authored task harness (no model capability claim)
+        working-directory: backend
+        run: python -m tools.evaluate_agent_tasks --executor local
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent-task-harness
+          path: artifacts/agent_tasks
+  rsi-containment:
+    name: Real Docker containment and offline code acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r backend/requirements-rsi.lock.txt
+      - run: docker build --target tests -f sandbox/rsi/Dockerfile -t sec-llm-rsi:tests .
+      - name: Network, filesystem, secrets and timeout containment
+        working-directory: backend
+        env:
+          RSI_DOCKER_TESTS: '1'
+        run: python -m pytest tests/test_rsi_docker.py -q
+      - name: Exercise candidate code through the container evaluator
+        working-directory: backend
+        run: python -m tools.make_rsi_candidate
+      - name: Isolated acceptance smoke (never applies)
+        working-directory: backend
+        run: >-
+          python -m tools.code_rsi --candidate ../artifacts/code_rsi_proposals/chinese_spans.json
+          --smoke --image sec-llm-rsi:tests --max-seconds 300
+      - name: Isolated authored Agent task replay
+        working-directory: backend
+        run: python -m tools.evaluate_agent_tasks --image sec-llm-rsi:tests
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isolated-rsi-evaluation
+          path: |
+            artifacts/code_rsi
+            artifacts/agent_tasks
+  rag-regression:
+    name: Offline RAG regression and smoke evaluation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install CPU smoke dependencies
+        run: python -m pip install pytest langchain-core pydantic-settings
+      - name: Run retrieval regression tests
+        working-directory: backend
+        run: python -m pytest tests/test_rag_optimization.py tests/test_rerank.py -q
+      - name: Run bounded lexical smoke search
+        working-directory: backend
+        run: python -m tools.optimize_rag --lexical-only
+      - name: Save evaluation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-evaluation
+          path: backend/data/rag_optimization/runs
   static-scan:
     name: Bandit medium/high-severity scan
     runs-on: ubuntu-latest

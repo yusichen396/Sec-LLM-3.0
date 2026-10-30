@@ -19,6 +19,7 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
+from core.rag.rerank import rerank
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import requests
 import httpx
@@ -1995,6 +1996,28 @@ async def chat(
     provider_model_name = settings.OLLAMA_MODEL_NAME if active_provider == "local" else settings.DEEPSEEK_MODEL_NAME
     print(f"[QUERY] User: {req.message} | rag_only={req.rag_only} | provider={active_provider}")
 
+    # 🔒 0. 安全护栏：越界/越权请求在进入 LLM 前拦下
+    if getattr(settings, "SAFETY_GUARD_ENABLED", True):
+        from core.safety.guard import check as _safety_check
+        _verdict = _safety_check(req.message)
+        if _verdict.decision != "allow":
+            print(f"[SAFETY] {_verdict.decision}/{_verdict.category} {_verdict.reasons}")
+            _msg = (
+                "这个问题涉及对未授权目标的攻击方法，我不能提供。如果属于授权范围内的测试，请补充授权主体、范围或工单号后再试。"
+                if _verdict.decision == "clarify"
+                else "抱歉，我只处理网络安全相关的问题：防御、加固、审计、应急、合规，以及已授权的安全测试。这个问题超出范围。"
+            )
+
+            async def _blocked():
+                yield _msg
+
+            return StreamingResponse(
+                _blocked(),
+                media_type="text/plain; charset=utf-8",
+                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+            )
+
+
     # 🔥 1. 查询重写 (Step 1)
     search_query = req.message
     if vector_store and req.history:
@@ -2009,22 +2032,21 @@ async def chat(
             if req.rag_only and hasattr(vector_store, "similarity_search_with_score"):
                 scored_results = vector_store.similarity_search_with_score(
                     search_query,
-                    k=5,
+                    k=8,
                     filter=rag_filter,
                 )
                 kept_docs = []
-                kept_sources = []
                 for doc, score in scored_results:
                     # Chroma 距离越小越相关；仅保留高相关文档
                     if score <= settings.RAG_ONLY_MAX_DISTANCE:
                         kept_docs.append(doc)
-                        kept_sources.append(doc.metadata.get("source", "未知"))
                 if kept_docs:
-                    candidate_context = "\n\n".join([doc.page_content for doc in kept_docs[:3]])
+                    selected_docs = await asyncio.to_thread(rerank, search_query, kept_docs)
+                    candidate_context = "\n\n".join(doc.page_content for doc in selected_docs)
                     # 仅RAG严格模式：关键词必须命中上下文，否则视为未命中
                     if _query_matches_context(search_query, candidate_context):
                         context_text = candidate_context
-                        sources = list(set(kept_sources))
+                        sources = list(set(doc.metadata.get("source", "未知") for doc in selected_docs))
                         print(
                             f"[RAG] rag_only kept {len(kept_docs)} docs for '{search_query}', "
                             f"max_distance={settings.RAG_ONLY_MAX_DISTANCE}"
@@ -2043,7 +2065,11 @@ async def chat(
                         f"max_distance={settings.RAG_ONLY_MAX_DISTANCE}"
                     )
             else:
-                results = vector_store.similarity_search(search_query, k=3, filter=rag_filter)
+                from pathlib import Path
+                from core.rag.policy import RetrievalPolicy, load_policy, retrieve
+                baseline = RetrievalPolicy(strategy="hybrid" if settings.HYBRID_RECALL_ENABLED else "vector")
+                policy = load_policy(Path(settings.RAG_POLICY_PATH) if settings.RAG_POLICY_PATH else None, baseline)
+                results = await asyncio.to_thread(retrieve, vector_store, search_query, policy, where=rag_filter)
                 if results:
                     context_text = "\n\n".join([doc.page_content for doc in results])
                     sources = list(set([doc.metadata.get("source", "未知") for doc in results]))

@@ -1,0 +1,320 @@
+{
+  "documents": [
+    {
+      "id": "sql_parameterization",
+      "text": "防止 SQL 注入应把用户输入作为参数绑定到预编译语句，避免拼接 SQL 字符串；数据库账号还应遵循最小权限。"
+    },
+    {
+      "id": "sql_detection",
+      "text": "SQL 注入检测可通过错误回显、布尔条件和时间延迟等方式发现可疑入口，但扫描必须获得授权并限制频率。"
+    },
+    {
+      "id": "xss_output",
+      "text": "防止反射型 XSS 要按 HTML、属性、URL 或脚本上下文进行输出编码，避免把不可信内容直接写入页面。"
+    },
+    {
+      "id": "xss_csp",
+      "text": "内容安全策略 CSP 可限制脚本来源，降低部分 XSS 利用风险，但不能代替输出编码和安全的 DOM 操作。"
+    },
+    {
+      "id": "csrf_token",
+      "text": "CSRF 防护通常使用不可预测的请求令牌，并结合 SameSite Cookie、来源校验和敏感操作二次确认。"
+    },
+    {
+      "id": "cors_policy",
+      "text": "CORS 控制浏览器是否允许跨源脚本读取响应；服务端应精确配置允许的 Origin，不能把它当作身份认证。"
+    },
+    {
+      "id": "ssrf_egress",
+      "text": "SSRF 防护应限制服务端出站目标，解析并校验最终 IP，阻止访问内网、云元数据地址和不允许的协议。"
+    },
+    {
+      "id": "redirect_validation",
+      "text": "开放重定向防护应使用可信目标白名单或相对路径，并避免直接信任用户提交的跳转 URL。"
+    },
+    {
+      "id": "jwt_validation",
+      "text": "验证 JWT 时应固定允许的签名算法，检查签名、过期时间、发行者和受众，并妥善轮换签名密钥。"
+    },
+    {
+      "id": "session_cookie",
+      "text": "会话 Cookie 应设置 HttpOnly、Secure、SameSite 和适当的有效期；注销时应使服务端会话失效。"
+    },
+    {
+      "id": "rate_limit",
+      "text": "接口限流应按用户、IP 或令牌设置速率和突发额度，对超限请求返回明确状态，并避免影响正常共享出口用户。"
+    },
+    {
+      "id": "captcha",
+      "text": "验证码可增加自动化攻击成本，但不能单独承担鉴权或限流；高风险操作仍需服务端风控。"
+    },
+    {
+      "id": "audit_log",
+      "text": "安全审计日志应记录操作者、时间、资源、动作和结果，保护日志完整性，并避免写入明文密钥或敏感数据。"
+    },
+    {
+      "id": "alert_monitoring",
+      "text": "安全监控把事件指标与阈值或规则关联，形成告警；应处理误报、告警聚合和通知升级。"
+    },
+    {
+      "id": "secret_scanning",
+      "text": "密钥扫描可在代码提交和构建阶段发现泄露凭据；发现后应立即轮换密钥，而不是只删除仓库里的字符串。"
+    },
+    {
+      "id": "data_encryption",
+      "text": "静态数据加密与传输加密保护数据机密性，密钥管理、访问控制和轮换同样重要。"
+    },
+    {
+      "id": "container_privilege",
+      "text": "容器内执行不可信工具时应使用非 root 用户、禁止提权、限制能力集，并设置只读文件系统和资源上限。"
+    },
+    {
+      "id": "container_network",
+      "text": "容器网络隔离应按工具需要配置网络：离线分析可断网，扫描工具只允许访问授权目标，不应默认开放全部出站流量。"
+    },
+    {
+      "id": "prompt_injection",
+      "text": "RAG 提示注入来自检索文档中的恶意指令；应用应把检索文本当作不可信数据，限制其对系统指令和工具调用的影响。"
+    },
+    {
+      "id": "rag_poisoning",
+      "text": "知识库投毒是攻击者修改或加入错误资料以影响检索结果；应核验资料来源、版本和入库权限。"
+    },
+    {
+      "id": "tool_arguments",
+      "text": "Agent 调用工具前应校验参数结构、目标范围和权限，不能让模型生成的命令绕过白名单或执行边界。"
+    },
+    {
+      "id": "browser_evidence",
+      "text": "浏览器验证 XSS 时应保留与载荷匹配的实际页面事件证据；模型生成的漏洞描述不能代替真实执行观察。"
+    },
+    {
+      "id": "ioc_indicator",
+      "text": "IOC 是 IP、域名、文件哈希等可观测入侵指标；关联情报时要核对来源、时间和误报风险。"
+    },
+    {
+      "id": "attack_tactics",
+      "text": "MITRE ATT&CK 描述攻击者战术与技术，可用于映射检测覆盖和事件分析，但单个 IOC 不等同于完整攻击链。"
+    },
+    {
+      "id": "patch_management",
+      "text": "漏洞修复应评估资产影响、测试补丁、安排发布窗口并验证回滚方案，最后复测确认问题消失。"
+    },
+    {
+      "id": "vulnerability_scan",
+      "text": "漏洞扫描用于发现疑似风险并生成待核查线索；扫描结果需要人工或自动化证据验证，不能直接视为已证实漏洞。"
+    }
+  ],
+  "queries": [
+    {
+      "id": "c01",
+      "text": "用户填的内容被直接拼到数据库语句里，怎么从写代码的层面堵住",
+      "relevant_ids": [
+        "sql_parameterization"
+      ]
+    },
+    {
+      "id": "c02",
+      "text": "怀疑某个站点的输入框能被塞东西进去，看什么现象能确认，扫的时候要注意什么",
+      "relevant_ids": [
+        "sql_detection"
+      ]
+    },
+    {
+      "id": "c03",
+      "text": "别人往页面里塞的脚本怎么才能不生效，输出的时候要按位置区分处理吗",
+      "relevant_ids": [
+        "xss_output"
+      ]
+    },
+    {
+      "id": "c04",
+      "text": "浏览器加一条策略，能不能直接把脚本注入的问题免掉",
+      "relevant_ids": [
+        "xss_csp"
+      ]
+    },
+    {
+      "id": "c05",
+      "text": "用户明明登录着，怎么防止他在别的站点被借用掉手里的登录态",
+      "relevant_ids": [
+        "csrf_token"
+      ]
+    },
+    {
+      "id": "c06",
+      "text": "浏览器跨域读数据被拦了，后端怎么配，这东西能不能当成登录校验用",
+      "relevant_ids": [
+        "cors_policy"
+      ]
+    },
+    {
+      "id": "c07",
+      "text": "后端根据用户给的地址去请求，怎么防止它被诱导去访问内网",
+      "relevant_ids": [
+        "ssrf_egress"
+      ]
+    },
+    {
+      "id": "c08",
+      "text": "点了站内链接结果跳到钓鱼站，怎么限制跳转目标",
+      "relevant_ids": [
+        "redirect_validation"
+      ]
+    },
+    {
+      "id": "c09",
+      "text": "接口用令牌认身份，怎么校验才不至于被伪造",
+      "relevant_ids": [
+        "jwt_validation"
+      ]
+    },
+    {
+      "id": "c10",
+      "text": "登录态存在浏览器里，怎么设置才不易被脚本读走，退出后怎么让它立刻作废",
+      "relevant_ids": [
+        "session_cookie"
+      ]
+    },
+    {
+      "id": "c11",
+      "text": "接口被刷得厉害，怎么按来源限制频率又不误伤共用出口的人",
+      "relevant_ids": [
+        "rate_limit"
+      ]
+    },
+    {
+      "id": "c12",
+      "text": "加个人机验证是不是就能挡住自动化，光靠它够不够",
+      "relevant_ids": [
+        "captcha"
+      ]
+    },
+    {
+      "id": "c13",
+      "text": "出了事故要查是谁干的，平时该记哪些字段，记录本身怎么防篡改",
+      "relevant_ids": [
+        "audit_log"
+      ]
+    },
+    {
+      "id": "c14",
+      "text": "监控告警老是刷屏，怎么收敛和分级",
+      "relevant_ids": [
+        "alert_monitoring"
+      ]
+    },
+    {
+      "id": "c15",
+      "text": "代码里不小心提交了访问密钥，删掉就行了吗",
+      "relevant_ids": [
+        "secret_scanning"
+      ]
+    },
+    {
+      "id": "c16",
+      "text": "数据放在磁盘上和传输过程中怎么保证别人看不到，密钥归谁管",
+      "relevant_ids": [
+        "data_encryption"
+      ]
+    },
+    {
+      "id": "c17",
+      "text": "容器里跑不受信任的工具，怎么限制它别把宿主机搞坏",
+      "relevant_ids": [
+        "container_privilege"
+      ]
+    },
+    {
+      "id": "c18",
+      "text": "容器要不要联网，怎么按需给网络权限",
+      "relevant_ids": [
+        "container_network"
+      ]
+    },
+    {
+      "id": "c19",
+      "text": "检索回来的资料里藏着指令，模型照着做了怎么办",
+      "relevant_ids": [
+        "prompt_injection"
+      ]
+    },
+    {
+      "id": "c20",
+      "text": "知识库里的资料被人偷偷改过，怎么防止",
+      "relevant_ids": [
+        "rag_poisoning"
+      ]
+    },
+    {
+      "id": "c21",
+      "text": "模型生成的命令直接拿去执行，怎么卡住越界参数",
+      "relevant_ids": [
+        "tool_arguments"
+      ]
+    },
+    {
+      "id": "c22",
+      "text": "模型说这里有问题，怎么确认它真的执行成功了",
+      "relevant_ids": [
+        "browser_evidence"
+      ]
+    },
+    {
+      "id": "c23",
+      "text": "拿到一个可疑 IP 或文件指纹，怎么判断它是不是真有问题",
+      "relevant_ids": [
+        "ioc_indicator"
+      ]
+    },
+    {
+      "id": "c24",
+      "text": "怎么知道自己的检测覆盖了攻击者的哪些阶段",
+      "relevant_ids": [
+        "attack_tactics"
+      ]
+    },
+    {
+      "id": "c25",
+      "text": "补丁上线前后要做哪些事，怎么保证能回滚",
+      "relevant_ids": [
+        "patch_management"
+      ]
+    },
+    {
+      "id": "c26",
+      "text": "扫描器报了一堆问题，能不能直接当作已经确认",
+      "relevant_ids": [
+        "vulnerability_scan"
+      ]
+    },
+    {
+      "id": "c27",
+      "text": "别人拿到我的令牌，能不能改个用户 ID 就冒充别人",
+      "relevant_ids": [
+        "jwt_validation"
+      ]
+    },
+    {
+      "id": "c28",
+      "text": "秒杀的时候接口被打爆，怎么保护后端",
+      "relevant_ids": [
+        "rate_limit"
+      ]
+    },
+    {
+      "id": "c29",
+      "text": "备份文件被人拷走了，里面的数据还算安全吗",
+      "relevant_ids": [
+        "data_encryption"
+      ]
+    },
+    {
+      "id": "c30",
+      "text": "内部审核要证明谁在哪台机器上做了什么，怎么留证据",
+      "relevant_ids": [
+        "audit_log"
+      ]
+    }
+  ]
+}

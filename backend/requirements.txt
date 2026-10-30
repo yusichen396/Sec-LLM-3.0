@@ -25,6 +25,7 @@ langchain-ollama>=1.0.1
 langchain-chroma>=1.1.0
 langchain-text-splitters>=1.1.0
 chromadb>=1.4.1
+sentence-transformers>=3.0.0
 pypdf>=6.6.2
 python-multipart>=0.0.22
 openai>=2.16.0
