@@ -14,18 +14,6 @@
   <b>第一作者：雨思晨</b> | 开发团队：灵犀网卫
 </p>
 
-> **关于本仓库**：这是团队项目 [Sec-LLM 3.0](https://github.com/yusichen396/Sec-LLM-3.0) 的个人工作副本，主仓库在团队负责人名下。我的提交集中在 [PR #13](https://github.com/yusichen396/Sec-LLM-3.0/pull/13)（待合并）。
-
-**我负责的模块**
-
-| 模块 | 具体工作 |
-|---|---|
-| Agent 编排 | 基于 LangGraph 的状态机（plan / execute / reflect / report），支持检查点恢复与结果纠错 |
-| 多 Agent 协作 | 侦察 / 检测 / 报告三类专家的调度，共享黑板的归属校验与快照读写 |
-| 检索链路 | BM25 + 向量 RRF 混合召回 + BGE 重排，评测集构建与 Top-k 命中率统计 |
-| 安全边界 | 话题识别与授权判定的前置拦截，工具沙箱执行与单轮步数上限 |
-| 评测与受控 RSI | RAG / Agent 策略评测、代码候选生成与 Docker 验收、独立计分、达标应用与回滚、多轮改进管理 |
-
 <p align="center">
   <a href="#-核心能力">核心能力</a> •
   <a href="#评测与受控-rsi">评测与受控 RSI</a> •
