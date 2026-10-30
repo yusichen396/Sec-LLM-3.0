@@ -30,9 +30,12 @@ def check(*, root, smoke, generate, executor, image):
         raise RuntimeError("Missing RSI test dependencies: " + ", ".join(missing))
     result = {"python": sys.version, "executor": executor}
     if not smoke:
-        for model in ("nomic-embed-text-v1.5", "bge-reranker-base"):
+        from core.rag.model_paths import reranker_path
+        reranker = reranker_path(root)
+        result["reranker_path"] = str(reranker)
+        for model in (root / "models/nomic-embed-text-v1.5", reranker):
             for filename in ("config.json", "model.safetensors"):
-                if not (root / "models" / model / filename).is_file():
+                if not (model / filename).is_file():
                     raise RuntimeError(f"Missing local model file: {model}/{filename}")
         if importlib.util.find_spec("sentence_transformers") is None:
             raise RuntimeError("Full RSI evaluation needs sentence-transformers")

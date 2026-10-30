@@ -233,4 +233,5 @@ if __name__ == "__main__":
     elif args.tool_input:
         print("RSI_RESULT=" + json.dumps(static_audit(json.loads(args.tool_input.read_text(encoding="utf-8"))["code"])), flush=True)
     else:
-        asyncio.run(evaluate(args))
+        result = asyncio.run(evaluate(args))
+        raise SystemExit(0 if all(row["success"] for row in result["rows"]) else 1)

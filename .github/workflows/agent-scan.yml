@@ -24,8 +24,8 @@ jobs:
           python -m pytest tests/test_code_rsi.py tests/test_rsi_hardening.py
           tests/test_agent_optimization.py tests/test_agent_orchestrator.py
           tests/test_agent_supervisor.py tests/test_tool_registry.py tests/test_rag_optimization.py
-          tests/test_rerank.py -q
-          -k 'not run_recon_no_tools and not run_exploit_empty_blackboard and not run_supervisor_basic'
+          tests/test_rerank.py tests/test_tools.py -q
+          -k 'not run_recon_no_tools and not run_exploit_empty_blackboard and not run_supervisor_basic and not safe_nmap_command_accepted'
       - name: End-to-end authored task harness (no model capability claim)
         working-directory: backend
         run: python -m tools.evaluate_agent_tasks --executor local

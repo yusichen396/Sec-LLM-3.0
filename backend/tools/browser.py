@@ -1,5 +1,6 @@
 """Playwright browser automation tools for web security testing."""
 from tools.registry import register_tool
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 
 @register_tool(
@@ -73,7 +74,9 @@ async def browser_check_xss(url: str, param: str) -> dict:
 
         for payload in payloads:
             try:
-                test_url = f"{url}?{param}={payload}"
+                parts = urlsplit(url)
+                query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != param]
+                test_url = urlunsplit(parts._replace(query=urlencode([*query, (param, payload)]), fragment=""))
                 # Register dialog handler BEFORE goto so it catches alert() from XSS
                 dialog_triggered = False
                 async def handle_dialog(dialog):

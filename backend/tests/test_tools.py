@@ -102,8 +102,14 @@ class TestShellExec:
         class Process:
             returncode = 0
 
-            async def communicate(self):
-                return b"", b""
+            def __init__(self):
+                from unittest.mock import AsyncMock
+                from types import SimpleNamespace
+                self.stdout = SimpleNamespace(read=AsyncMock(return_value=b""))
+                self.stderr = SimpleNamespace(read=AsyncMock(return_value=b""))
+
+            async def wait(self):
+                return 0
 
         async def fake_exec(*args, **kwargs):
             calls.append(args)
@@ -137,8 +143,11 @@ class TestShellExec:
             returncode = None
             killed = False
 
-            async def communicate(self):
-                raise asyncio.TimeoutError
+            def __init__(self):
+                from unittest.mock import AsyncMock
+                from types import SimpleNamespace
+                self.stdout = SimpleNamespace(read=AsyncMock(side_effect=asyncio.TimeoutError))
+                self.stderr = SimpleNamespace(read=AsyncMock(return_value=b""))
 
             def kill(self):
                 self.killed = True
@@ -174,7 +183,13 @@ class TestShellExec:
         class RunProcess:
             returncode = None
 
-            async def communicate(self):
+            def __init__(self):
+                from unittest.mock import AsyncMock
+                from types import SimpleNamespace
+                self.stdout = SimpleNamespace(read=self.read)
+                self.stderr = SimpleNamespace(read=AsyncMock(return_value=b""))
+
+            async def read(self, size):
                 started.set()
                 await asyncio.Future()
 

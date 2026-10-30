@@ -15,13 +15,13 @@ import time
 import uuid
 
 from core.rag.policy import RetrievalPolicy, load_policy
-from tools.optimize_rag import atomic_json, model_manifest, qualifies
+from tools.optimize_rag import atomic_json, qualifies
 
 ROOT = Path(__file__).resolve().parents[1]
 ALLOWED = frozenset({"core/rag/hybrid.py", "core/rag/rerank.py"})
 TESTS = ("tests/test_code_rsi.py", "tests/test_rsi_hardening.py", "tests/test_rag_optimization.py", "tests/test_rerank.py", "tests/test_agent_optimization.py",
-         "tests/test_agent_orchestrator.py", "tests/test_agent_supervisor.py", "tests/test_tool_registry.py")
-EXCLUDE = "not run_recon_no_tools and not run_exploit_empty_blackboard and not run_supervisor_basic"
+         "tests/test_agent_orchestrator.py", "tests/test_agent_supervisor.py", "tests/test_tool_registry.py", "tests/test_tools.py")
+EXCLUDE = "not run_recon_no_tools and not run_exploit_empty_blackboard and not run_supervisor_basic and not safe_nmap_command_accepted"
 IGNORED = {".venv", "venv", "__pycache__", ".pytest_cache", ".git", ".aws", ".ssh", ".codex", ".agents"}
 RUNTIME_DIRS = {"models", "data", "temp", "uploads"}
 
@@ -94,6 +94,15 @@ def execute(command, cwd, log, deadline, env):
                                 timeout=remaining, check=False)
     if result.returncode:
         raise RuntimeError(f"Acceptance command failed ({result.returncode}); see {log}")
+
+
+def host_step(action, request, run_dir, deadline):
+    stem = run_dir / ("host_" + action + "_" + uuid.uuid4().hex[:8])
+    source, output = stem.with_suffix(".request.json"), stem.with_suffix(".result.json")
+    atomic_json(source, request)
+    execute([sys.executable, "-m", "tools.rsi_host", action, str(source), str(output)], ROOT,
+            stem.with_suffix(".log"), deadline, {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"})
+    return json.loads(output.read_text(encoding="utf-8"))
 
 
 def quality_gate(before, after, *, gain):
@@ -260,10 +269,8 @@ def run(args):
     deadline = time.monotonic() + args.max_seconds
     baseline, candidate = run_dir / "baseline", run_dir / "candidate"
     from tools.rsi_dataset import read_bundle, public_projection, reserve_holdout, reject_published_holdout
-    from tools.rsi_preflight import check
     from tools.rsi_sandbox import DEFAULT_IMAGE
     from tools.code_rsi_grade import score_rankings
-    from tools.rsi_vectors import prepare
     dataset = ROOT / "tests" / "data" / "rag_optimization_v1.json"
     bundle_path = getattr(args, "dataset_bundle", None)
     bundle = read_bundle(bundle_path.resolve()) if bundle_path else None
@@ -288,7 +295,8 @@ def run(args):
     try:
         if executor == "local" and (args.generate or not getattr(args, "trusted_candidate", False)):
             raise ValueError("Local execution requires --trusted-candidate and cannot execute generated code")
-        report["preflight"] = check(root=ROOT, smoke=args.smoke, generate=args.generate, executor=executor, image=image)
+        report["preflight"] = host_step("preflight", {"root": str(ROOT), "smoke": args.smoke,
+                   "generate": args.generate, "executor": executor, "image": image}, run_dir, deadline)
         image = report["preflight"].get("image_id", image)
         if bundle:
             if bundle_path.resolve().is_relative_to(ROOT):
@@ -298,12 +306,10 @@ def run(args):
             reserve_holdout(bundle, ROOT / "data/code_rsi/holdouts.json", str(run_dir))
             report["holdout_reserved"] = True
         if not args.smoke:
-            report["embedding_manifest"] = model_manifest(ROOT / "models" / "nomic-embed-text-v1.5")
-            report["reranker_manifest"] = model_manifest(ROOT / "models" / "bge-reranker-base")
-        snapshot(ROOT, baseline)
-        report["baseline_manifest"] = manifest(baseline)
-        if manifest(ROOT) != report["baseline_manifest"]:
-            raise ValueError("Working source changed during snapshot")
+            reranker = Path(report["preflight"]["reranker_path"])
+            report.update(host_step("models", {"embedding": str(ROOT / "models/nomic-embed-text-v1.5"),
+                                      "reranker": str(reranker)}, run_dir, deadline))
+        report["baseline_manifest"] = host_step("snapshot", {"source": str(ROOT), "target": str(baseline)}, run_dir, deadline)
         env = {**os.environ, "HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1",
                "HF_HOME": str(ROOT / "models" / ".hf_cache"), "OMP_NUM_THREADS": "2",
                "MKL_NUM_THREADS": "2", "OPENBLAS_NUM_THREADS": "2", "PYTHONDONTWRITEBYTECODE": "1"}
@@ -326,9 +332,11 @@ def run(args):
 
         def measure(root, label, split):
             print(f"[Code RSI] {label}: {split} quality evaluation", flush=True)
-            request = {"mode": report["mode"], "policy": asdict(policy), "repeats": 2,
-                       **prepare(public_projection(data, split), report["mode"], ROOT,
-                                 model_identity=digest(json.dumps(report.get("embedding_manifest"), sort_keys=True).encode()))}
+            if split not in prepared:
+                prepared[split] = host_step("vectors", {"projection": public_projection(data, split),
+                    "mode": report["mode"], "root": str(ROOT), "cache_dir": str(ROOT / "data/code_rsi/vector_cache"),
+                    "model_identity": digest(json.dumps(report.get("embedding_manifest"), sort_keys=True).encode())}, run_dir, deadline)
+            request = {"mode": report["mode"], "policy": asdict(policy), "repeats": 2, **prepared[split]}
             request_path, output = run_dir / f"{label}_{split}_request.json", run_dir / f"{label}_{split}.json"
             atomic_json(request_path, request)
             log = run_dir / f"{label}_{split}.log"
@@ -338,13 +346,13 @@ def run(args):
                 mounts = [(baseline, "/workspace"), (root / "core/rag", "/candidate/core/rag"),
                           (request_path, "/inputs/request.json")]
                 if not args.smoke:
-                    mounts.append((ROOT / "models", "/models"))
+                    mounts.append((reranker, "/models/reranker"))
                 sandbox_run(image, mounts, ["python", "-m", "tools.code_rsi_grade", "/inputs/request.json",
                             "--candidate-root", "/candidate"],
                             timeout=max(0.01, deadline - time.monotonic()), log=log)
                 raw = read_result(log)
             else:
-                local_env = {**env, "RERANKER_MODEL_PATH": str(ROOT / "models/bge-reranker-base")}
+                local_env = {**env, "RERANKER_MODEL_PATH": str(reranker)} if not args.smoke else env
                 execute([sys.executable, "-m", "tools.code_rsi_grade", str(request_path), str(output),
                          "--candidate-root", str(root)], baseline, log, deadline, local_env)
                 raw = json.loads(output.read_text(encoding="utf-8"))
@@ -359,13 +367,14 @@ def run(args):
             atomic_json(run_dir / "result.json", report)
             return result
 
+        prepared = {}
         tests(baseline, "baseline")
         before = measure(baseline, "baseline", "dev")
         proposal = (asyncio.run(generate(baseline, before, deadline - time.monotonic(), dataset=data)) if args.generate else
                     json.loads(args.candidate.read_text(encoding="utf-8")))
         changes = validate_candidate(proposal, baseline)
         atomic_json(run_dir / "proposal.json", proposal)
-        snapshot(baseline, candidate)
+        host_step("snapshot", {"source": str(baseline), "target": str(candidate)}, run_dir, deadline)
         for change in changes:
             (candidate / change["path"]).write_bytes(change["content"].encode("utf-8"))
         report["candidate_manifest"] = manifest(candidate)

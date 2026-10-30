@@ -74,7 +74,7 @@ def command(image, mounts, arguments, name):
               "--env", "HF_HUB_OFFLINE=1", "--env", "TRANSFORMERS_OFFLINE=1",
               "--env", "HF_HOME=/tmp/huggingface", "--env", "HOME=/tmp",
               "--env", "OMP_NUM_THREADS=2", "--env", "MKL_NUM_THREADS=2",
-              "--env", "OPENBLAS_NUM_THREADS=2", "--env", "RERANKER_MODEL_PATH=/models/bge-reranker-base"]
+              "--env", "OPENBLAS_NUM_THREADS=2", "--env", "RERANKER_MODEL_PATH=/models/reranker"]
     for source, target in mounts:
         source = Path(source).resolve()
         if "," in str(source) or not source.exists():

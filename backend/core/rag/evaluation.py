@@ -34,9 +34,16 @@ def load_dataset(path: Path):
             raise ValueError("Queries must have unique IDs and normalized text")
         ids.add(q["id"])
         texts.add(text)
+        where = q.get("where", {})
+        if (not isinstance(where, dict) or any(not isinstance(k, str) or k.startswith("$")
+                or type(v) not in (str, int, float, bool) for k, v in where.items())):
+            raise ValueError("Query where must contain simple metadata equality filters")
         split = q["split"]
         if split not in ("dev", "validation", "test") or not q["relevant_ids"] or not set(q["relevant_ids"]) <= doc_ids:
             raise ValueError("Invalid split or relevance labels")
+        if any(not all(doc.get("metadata", {}).get(k) == v for k, v in where.items())
+               for doc in docs if doc["id"] in q["relevant_ids"]):
+            raise ValueError("Relevance labels violate the query's document filter")
         group = q["group"]
         if groups.setdefault(group, split) != split:
             raise ValueError("A topic group occurs in multiple splits")
@@ -53,14 +60,14 @@ def evaluate(policies, store, queries, repeats=3):
     if not queries or repeats < 2:
         raise ValueError("Evaluation requires queries and at least two repeats")
     for policy in policies:
-        retrieve(store, queries[0]["text"], policy, strict=True)
+        retrieve(store, queries[0]["text"], policy, where=queries[0].get("where"), strict=True)
     rows = {policy.version: [] for policy in policies}
     for repeat in range(repeats):
         for index, q in enumerate(queries):
             offset = (repeat + index) % len(policies)
             for policy in policies[offset:] + policies[:offset]:
                 start = time.perf_counter()
-                docs = retrieve(store, q["text"], policy, strict=True)
+                docs = retrieve(store, q["text"], policy, where=q.get("where"), strict=True)
                 elapsed = (time.perf_counter() - start) * 1000
                 rows[policy.version].append({
                     "id": q["id"], "repeat": repeat,

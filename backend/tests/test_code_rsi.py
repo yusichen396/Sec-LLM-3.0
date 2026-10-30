@@ -236,7 +236,10 @@ def test_search_stages_freeze_policy_and_never_consult_later_splits_after_failur
     atomic_json(candidate_path, proposal(root))
     initial = rsi.manifest(root)
     monkeypatch.setattr(rsi, "ROOT", root)
-    monkeypatch.setattr("tools.rsi_preflight.check", lambda **kwargs: {"executor": "local"})
+    from tools.rsi_host import perform
+    monkeypatch.setattr(rsi, "host_step", lambda action, request, *args: perform(action, request))
+    monkeypatch.setattr("tools.rsi_preflight.check", lambda **kwargs:
+                        {"executor": "local", "reranker_path": str(root / "models/bge-reranker-base")})
     monkeypatch.setattr("tools.rsi_vectors.prepare", lambda projection, *args, **kwargs: projection)
     calls, policies = [], []
 

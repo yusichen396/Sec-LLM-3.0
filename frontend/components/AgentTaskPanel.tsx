@@ -18,6 +18,7 @@ export default function AgentTaskPanel({ onTaskStart, running }: AgentTaskPanelP
   const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };

@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Next.js-14-black.svg" alt="Next.js">
   <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6.svg" alt="TypeScript">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/RSI_regression-110_passed-green.svg" alt="RSI fixed regression: 110 passed">
+  <img src="https://img.shields.io/badge/RSI_regression-137_passed-green.svg" alt="RSI fixed regression: 137 passed">
 </p>
 
 <p align="center">
@@ -370,7 +370,7 @@ export SEC_LLM_SKILL_API_KEY="your-secure-key"
 | **浏览器自动化** | Playwright (Chromium) |
 | **沙箱** | Docker + docker-py |
 | **CLI/TUI** | Typer, Textual, Rich |
-| **测试** | pytest；RSI 固定回归 110 项通过，另有真实 Docker 约束测试 |
+| **测试** | pytest；RSI 固定回归 137 项通过，另有真实 Docker 约束与浏览器交互测试 |
 | **CI/CD** | GitHub Actions |
 
 ---
@@ -406,7 +406,7 @@ python -m tools.evaluate_agent_tasks --image sec-llm-rsi:tests
 
 ### 当前验收状态（2026-10-30）
 
-- 固定回归 **110 passed，3 deselected**；另有真实 Docker 容器约束测试 **2 passed**。这是指定测试范围，非全项目测试总数。
+- 固定回归 **137 passed，4 deselected**；另有真实 Docker 容器约束测试 **2 passed**、前端流回归 **3 passed** 和真实浏览器交互 **1 passed**。这是指定测试范围，非全项目测试总数。
 - 四项远端 CI 全部通过，含真实容器验收及 Bandit 中高风险扫描。
 - 已运行的本地完整模型候选开发集 MRR@3 为 **0.783 → 0.783**，无增益，已拒绝，未应用候选源码。
 - **真实模型自动生成、独立业务盲测及人工复核尚未验收**；公开样本和离线回放不能证明模型能力提升或持续自我改进成功。

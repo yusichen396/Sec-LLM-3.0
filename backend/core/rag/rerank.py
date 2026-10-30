@@ -1,6 +1,5 @@
 """Cross-encoder reranking for RAG candidates."""
 from functools import lru_cache
-from pathlib import Path
 
 
 MODEL_NAME = "BAAI/bge-reranker-base"
@@ -11,8 +10,8 @@ def _model():
     from sentence_transformers import CrossEncoder
     from config import settings
 
-    local_model = (Path(settings.RERANKER_MODEL_PATH) if settings.RERANKER_MODEL_PATH else
-                   Path(__file__).resolve().parents[2] / "models" / "bge-reranker-base")
+    from core.rag.model_paths import reranker_path
+    local_model = reranker_path()
     source = str(local_model) if (local_model / "model.safetensors").is_file() else MODEL_NAME
     if settings.RERANKER_MODEL_PATH and source == MODEL_NAME:
         raise FileNotFoundError(f"Configured reranker model is incomplete: {local_model}")

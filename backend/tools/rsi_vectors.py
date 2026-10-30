@@ -15,9 +15,21 @@ def vector(path, text, document, identity=""):
     return embedding_model(path, identity).encode(prefix + text, normalize_embeddings=True).tolist()
 
 
-def prepare(projection, mode, root, *, model_identity=""):
+def prepare(projection, mode, root, *, model_identity="", cache_dir=None):
     if mode == "smoke":
         return projection
     path = str((Path(root) / "models/nomic-embed-text-v1.5").resolve())
-    return {"documents": [{**d, "vector": vector(path, d["text"], True, model_identity)} for d in projection["documents"]],
-            "queries": [{**q, "vector": vector(path, q["text"], False, model_identity)} for q in projection["queries"]]}
+    def cached(text, document):
+        import hashlib
+        import json
+        from tools.optimize_rag import atomic_json
+        key = hashlib.sha256(json.dumps([path, model_identity, text, document]).encode()).hexdigest()
+        cache = Path(cache_dir) / (key + ".json") if cache_dir else None
+        if cache and cache.is_file():
+            return json.loads(cache.read_text(encoding="utf-8"))
+        value = vector(path, text, document, model_identity)
+        if cache:
+            atomic_json(cache, value)
+        return value
+    return {"documents": [{**d, "vector": cached(d["text"], True)} for d in projection["documents"]],
+            "queries": [{**q, "vector": cached(q["text"], False)} for q in projection["queries"]]}

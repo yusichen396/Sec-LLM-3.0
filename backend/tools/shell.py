@@ -5,6 +5,30 @@ import uuid
 from tools.registry import register_tool
 
 _ALLOWED_TOOLS = {"nmap", "sqlmap", "nuclei", "ffuf", "nikto", "whatweb", "semgrep", "bandit"}
+_STDOUT_LIMIT = 1_000_000
+_STDERR_LIMIT = 256_000
+
+
+async def _capture(proc):
+    import asyncio
+
+    async def read(stream, limit):
+        content = bytearray()
+        while chunk := await stream.read(16384):
+            if len(content) + len(chunk) > limit:
+                raise ValueError("Tool output exceeded its size budget")
+            content.extend(chunk)
+        return bytes(content)
+
+    tasks = [asyncio.create_task(read(proc.stdout, _STDOUT_LIMIT)),
+             asyncio.create_task(read(proc.stderr, _STDERR_LIMIT)), asyncio.create_task(proc.wait())]
+    try:
+        stdout, stderr, _ = await asyncio.gather(*tasks)
+        return stdout, stderr
+    finally:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
 
 @register_tool(
@@ -54,14 +78,14 @@ async def shell_exec(command: str, timeout: int = 300) -> dict:
             stderr=asyncio.subprocess.PIPE,
         )
         stdout, stderr = await asyncio.wait_for(
-            proc.communicate(), timeout=effective_timeout
+            _capture(proc), timeout=effective_timeout
         )
         return {
             "stdout": stdout.decode("utf-8", errors="replace")[:50000],
             "stderr": stderr.decode("utf-8", errors="replace")[:10000],
             "exit_code": proc.returncode or 0,
         }
-    except (asyncio.TimeoutError, asyncio.CancelledError) as error:
+    except (asyncio.TimeoutError, asyncio.CancelledError, ValueError) as error:
         cleanup_error = ""
         try:
             cleanup = await asyncio.create_subprocess_exec(
@@ -81,7 +105,8 @@ async def shell_exec(command: str, timeout: int = 300) -> dict:
             await proc.wait()
         if isinstance(error, asyncio.CancelledError):
             raise
-        return {"stdout": "", "stderr": f"Command timed out after {effective_timeout}s{cleanup_error}", "exit_code": -1}
+        reason = str(error) if isinstance(error, ValueError) else f"Command timed out after {effective_timeout}s"
+        return {"stdout": "", "stderr": reason + cleanup_error, "exit_code": -1}
     except FileNotFoundError:
         return {"stdout": "", "stderr": "Docker is not available on this system", "exit_code": -1}
     except Exception as e:

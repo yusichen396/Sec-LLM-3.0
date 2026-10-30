@@ -56,7 +56,7 @@ def grade(request, candidate_root):
     policy = RetrievalPolicy(**request["policy"])
     store = ReplayStore(request["documents"], request["queries"])
     queries = request["queries"]
-    retrieve(store, queries[0]["text"], policy, strict=True)
+    retrieve(store, queries[0]["text"], policy, where=queries[0].get("where"), strict=True)
     rows = []
     for repeat in range(request["repeats"]):
         for query in queries:
@@ -74,7 +74,7 @@ def score_rankings(raw, data, split, *, repeats, policy, dataset_sha256):
     from tools.optimize_rag import safety_regression
 
     gold = {q["id"]: q for q in data["queries"] if q["split"] == split}
-    documents = {d["id"] for d in data["documents"]}
+    documents = {d["id"]: d for d in data["documents"]}
     rows = raw.get("rows")
     if not isinstance(rows, list) or len(rows) != len(gold) * repeats:
         raise ValueError("Worker omitted or added evaluation cases")
@@ -87,6 +87,9 @@ def score_rankings(raw, data, split, *, repeats, policy, dataset_sha256):
                 or not all(isinstance(i, str) and i in documents for i in ids) or len(set(ids)) != len(ids)
                 or type(latency) not in (float, int) or not math.isfinite(latency) or latency < 0):
             raise ValueError("Invalid worker ranking, identity or latency")
+        where = gold[identity[0]].get("where") or {}
+        if any(not all(documents[i].get("metadata", {}).get(k) == v for k, v in where.items()) for i in ids):
+            raise ValueError("Worker ranking violates the query's document filter")
         seen.add(identity)
         scored.append({**row, "relevant_ids": gold[row["id"]]["relevant_ids"]})
     return {"metrics": summarize(scored), "rows": scored, "policy": policy, "dataset_sha256": dataset_sha256,

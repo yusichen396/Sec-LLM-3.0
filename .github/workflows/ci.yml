@@ -53,6 +53,10 @@ jobs:
           cd frontend
           npm run lint
 
+      - name: Agent stream regression
+        working-directory: frontend
+        run: node --test tests/agent-stream.test.cjs
+
       - name: Build frontend
         run: |
           cd frontend

@@ -79,7 +79,8 @@ def reserve_holdout(bundle, ledger_path, run_id):
 def public_projection(data, split):
     return {"documents": [{"id": d["id"], "text": d["text"], "metadata": d.get("metadata", {})}
                           for d in data["documents"]],
-            "queries": [{"id": q["id"], "text": q["text"]} for q in data["queries"] if q["split"] == split]}
+            "queries": [{"id": q["id"], "text": q["text"], **({"where": q["where"]} if "where" in q else {})}
+                        for q in data["queries"] if q["split"] == split]}
 
 
 def reject_published_holdout(bundle, fixture_dir):

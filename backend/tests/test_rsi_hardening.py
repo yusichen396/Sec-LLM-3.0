@@ -188,9 +188,9 @@ def test_preflight_failure_does_not_load_models_or_copy_sources(tmp_path, monkey
     root = tmp_path / "backend"
     atomic_json(root / "tests/data/rag_optimization_v1.json", dataset())
     monkeypatch.setattr(code_rsi, "ROOT", root)
-    def unavailable(**kwargs):
+    def unavailable(*args, **kwargs):
         raise RuntimeError("model unavailable")
-    monkeypatch.setattr("tools.rsi_preflight.check", unavailable)
+    monkeypatch.setattr(code_rsi, "host_step", unavailable)
     args = Namespace(output_dir=tmp_path / "runs", max_seconds=5, smoke=False, generate=False,
                      candidate=tmp_path / "not_read.json", apply=False, trusted_candidate=True, executor="local")
     with pytest.raises(RuntimeError, match="unavailable"):
@@ -318,3 +318,154 @@ def test_recovery_binds_id_tuple_without_dynamic_sql(monkeypatch):
     with driver.cursor() as real_cursor:
         rendered = real_cursor.mogrify(sql, parameters)
         assert "IN ('one\\'quoted','two')" in rendered
+
+
+@pytest.mark.parametrize("success", [False, True])
+def test_task_cli_exit_code_tracks_contract_result_and_preserves_report(tmp_path, success):
+    data = json.loads((code_rsi.ROOT / "tests/data/agent_tasks_v1.json").read_text(encoding="utf-8"))
+    data["cases"] = data["cases"][:1]
+    if not success:
+        data["cases"][0]["expected_titles"] = ["Deliberate mismatch"]
+    source = tmp_path / "task.json"
+    atomic_json(source, data)
+    process = subprocess.run([sys.executable, "-m", "tools.evaluate_agent_tasks", "--executor", "local",
+                "--dataset", str(source), "--output-dir", str(tmp_path / "runs")],
+                cwd=code_rsi.ROOT, capture_output=True, text=True, timeout=30)
+    assert process.returncode == (0 if success else 1), process.stderr
+    report = json.loads(next((tmp_path / "runs").glob("*/result.json")).read_text(encoding="utf-8"))
+    assert report["task_contract_success_rate"] == float(success)
+    assert report["approved"] is False  # Fixture rejection is not an execution failure.
+
+
+@pytest.mark.parametrize("action,expected", [("/search", "https://example.com/search"),
+    ("https://example.com/search", "https://example.com/search"),
+    ("search", "https://example.com/path/search"), ("https://other.example/search", None)])
+def test_form_targets_resolve_and_reject_cross_origin(monkeypatch, action, expected):
+    from unittest.mock import AsyncMock
+    from agents.collaboration import Blackboard
+    from agents.specialists import exploit
+    invoke = AsyncMock(return_value={})
+    monkeypatch.setattr(exploit, "invoke_tool", invoke)
+    result = asyncio.run(exploit.run_exploit("https://example.com/path/page", "local", Blackboard(),
+        {"forms": [{"action": action, "inputs": [{"type": "text", "name": "q"}]}]}))
+    urls = [c.kwargs["url"] for c in invoke.call_args_list if c.args[0] == "browser_check_xss"]
+    assert urls == ([expected] if expected else [])
+    assert bool(result["errors"]) == (expected is None)
+
+
+def test_xss_query_encoding_preserves_existing_parameters(monkeypatch):
+    from unittest.mock import AsyncMock
+    from urllib.parse import urlsplit, parse_qs
+    from tools.browser import browser_check_xss
+    page = SimpleNamespace(goto=AsyncMock(), content=AsyncMock(return_value=""), on=MagicMock())
+    browser = SimpleNamespace(new_page=AsyncMock(return_value=page), close=AsyncMock())
+    engine = SimpleNamespace(chromium=SimpleNamespace(launch=AsyncMock(return_value=browser)))
+    context = MagicMock()
+    context.__aenter__ = AsyncMock(return_value=engine)
+    context.__aexit__ = AsyncMock(return_value=False)
+    monkeypatch.setitem(sys.modules, "playwright.async_api", SimpleNamespace(async_playwright=lambda: context))
+    asyncio.run(browser_check_xss("https://example.com/search?token=a%26b&q=old#fragment", "q"))
+    urls = [urlsplit(c.args[0]) for c in page.goto.call_args_list]
+    assert len(urls) == 4
+    for url in urls:
+        query = parse_qs(url.query)
+        assert query["token"] == ["a&b"] and len(query["q"]) == 1
+        assert query["q"] != ["old"] and not url.fragment
+
+
+def test_projection_and_host_scoring_enforce_tenant_boundary():
+    data = dataset()
+    data["documents"][0]["metadata"] = {"user_id": "mine"}
+    data["documents"][1]["metadata"] = {"user_id": "other"}
+    data["queries"][0]["where"] = {"user_id": "mine"}
+    assert rsi_dataset.public_projection(data, "dev")["queries"][0]["where"] == {"user_id": "mine"}
+    raw = {"rows": [{"id": "aq0", "repeat": i, "ranked_ids": ["a0"], "latency_ms": 1} for i in range(2)]}
+    assert score_rankings(raw, data, "dev", repeats=2, policy={}, dataset_sha256="x")["metrics"]["mrr_at_3"] == 1
+    raw["rows"][0]["ranked_ids"] = ["a1"]
+    with pytest.raises(ValueError, match="document filter"):
+        score_rankings(raw, data, "dev", repeats=2, policy={}, dataset_sha256="x")
+
+
+def test_strategy_evaluation_applies_filter_to_warmup_and_measurement(monkeypatch):
+    from core.rag import evaluation
+    calls = []
+    def retrieve(store, text, policy, **kwargs):
+        calls.append(kwargs)
+        return [SimpleNamespace(metadata={"id": "mine"})]
+    monkeypatch.setattr(evaluation, "retrieve", retrieve)
+    query = {"id": "q", "text": "same", "where": {"user_id": "mine"}, "relevant_ids": ["mine"]}
+    evaluation.evaluate([SimpleNamespace(version="policy")], None, [query], repeats=2)
+    assert len(calls) == 3 and all(call["where"] == query["where"] for call in calls)
+
+
+def test_preflight_resolves_custom_reranker_instead_of_default(tmp_path, monkeypatch):
+    from config import settings
+    from tools.rsi_preflight import check
+    root, model = tmp_path / "backend", tmp_path / "custom-model"
+    for directory in (root / "models/nomic-embed-text-v1.5", model):
+        directory.mkdir(parents=True)
+        for name in ("config.json", "model.safetensors"):
+            (directory / name).write_text("fixture", encoding="utf-8")
+    monkeypatch.setattr(settings, "RERANKER_MODEL_PATH", str(model))
+    monkeypatch.setattr("importlib.util.find_spec", lambda name: True)
+    result = check(root=root, smoke=False, generate=False, executor="local", image="unused")
+    assert result["reranker_path"] == str(model.resolve())
+
+
+def test_host_preparation_is_killed_at_remaining_deadline(tmp_path, monkeypatch):
+    import time
+    original = subprocess.run
+    timeouts = []
+    def slow_worker(arguments, **kwargs):
+        assert arguments[2] == "tools.rsi_host"
+        timeouts.append(kwargs["timeout"])
+        return original([sys.executable, "-c", "import time; time.sleep(30)"], **kwargs)
+    monkeypatch.setattr(subprocess, "run", slow_worker)
+    start = time.monotonic()
+    with pytest.raises(subprocess.TimeoutExpired):
+        code_rsi.host_step("vectors", {}, tmp_path, start + 0.2)
+    assert 0 < timeouts[0] <= 0.2 and time.monotonic() - start < 5
+
+
+def test_vector_cache_survives_worker_restart_and_tracks_model_identity(tmp_path, monkeypatch):
+    from tools import rsi_vectors
+    calls = []
+    monkeypatch.setattr(rsi_vectors, "vector", lambda *args: calls.append(args) or [1.0, 0.0])
+    projection = {"documents": [{"id": "d", "text": "same"}], "queries": [{"id": "q", "text": "same"}]}
+    for _ in range(2):
+        rsi_vectors.prepare(projection, "full", tmp_path, model_identity="one", cache_dir=tmp_path / "cache")
+    assert len(calls) == 2  # Distinct query/document prefixes; second worker uses disk cache.
+    rsi_vectors.prepare(projection, "full", tmp_path, model_identity="two", cache_dir=tmp_path / "cache")
+    assert len(calls) == 4
+
+
+@pytest.mark.parametrize("channel", ["stdout", "stderr"])
+def test_shell_overflow_stops_reading_and_removes_container(monkeypatch, channel):
+    from unittest.mock import AsyncMock
+    from tools import shell
+    calls, reads = [], []
+    class Stream:
+        async def read(self, size):
+            reads.append(size)
+            await asyncio.sleep(0)
+            return b"x" * size
+    class Process:
+        returncode = None
+        def __init__(self):
+            self.stdout = Stream() if channel == "stdout" else SimpleNamespace(read=AsyncMock(return_value=b""))
+            self.stderr = Stream() if channel == "stderr" else SimpleNamespace(read=AsyncMock(return_value=b""))
+        async def wait(self):
+            if self.returncode is None:
+                await asyncio.Future()
+            return self.returncode
+        def kill(self):
+            self.returncode = -9
+    process = Process()
+    async def execute(*args, **kwargs):
+        calls.append(args)
+        return process if args[1] == "run" else SimpleNamespace(wait=AsyncMock(return_value=0))
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", execute)
+    result = asyncio.run(shell.shell_exec("nmap example.com"))
+    assert result["exit_code"] == -1 and "size budget" in result["stderr"]
+    assert process.returncode == -9 and len(reads) <= 62
+    assert calls[1][:3] == ("docker", "rm", "-f")

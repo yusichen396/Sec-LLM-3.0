@@ -109,7 +109,7 @@ export function createAgentStream(
       let buffer = "";
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) throw new Error("Stream ended before task completion");
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";
