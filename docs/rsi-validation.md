@@ -14,7 +14,7 @@
 
 ## 本机证据
 
-- 最终 Windows 固定回归：**107 passed，3 deselected**。三项既有模型/浏览器测试不属于纯离线固定测试。
+- 最终 Windows 固定回归：**110 passed，3 deselected**。三项既有模型/浏览器测试不属于纯离线固定测试。
 - 实际 Linux Docker 镜像：使用已有 `python:3.10-slim` 基础镜像构建；默认 Dockerfile/CI 为 Python 3.11。测试依赖版本记录在 `backend/requirements-rsi.lock.txt`。
 - 真实容器约束测试：**2 passed**，核对禁网、只读、非 root、宿主凭据不传入、无 Docker socket、超时后进程树清理。
 - Docker 内完整代码验收冒烟：基线和候选各 **107 passed，3 deselected**。候选开发集无增益，被拒绝；未查看验证/测试集，未应用源码。
@@ -23,6 +23,8 @@
 - 从 Git HEAD 导出并只覆盖拟提交文件的干净副本已通过固定回归与 Agent 任务回放；原有其他工作区文件不用于补足依赖。
 
 容器验收还发现了既有会话单元测试依赖本机 MySQL 的问题：测试现在显式隔离数据库读取与会话 claim 操作，生产实现未因此改为绕过数据库。
+
+静态扫描补修：会话 claim 与恢复查询均改为固定 SQL 和绑定参数，并增加三项回归；容器私有 tmpfs 与 API 监听地址的误报作逐处说明。Bandit 1.9.4 本机扫描无中高风险问题。
 
 ## 未发生的行为
 

@@ -314,7 +314,7 @@ def run(args):
 
         def tests(root, label):
             print(f"[Code RSI] {label}: fixed regression tests", flush=True)
-            temp = "/tmp/pytest" if executor == "docker" else str(run_dir / (label + "_test_tmp"))
+            temp = "/tmp/pytest" if executor == "docker" else str(run_dir / (label + "_test_tmp"))  # nosec B108: private per-container tmpfs
             arguments = ["-m", "pytest", *TESTS, "-q", "-k", EXCLUDE, "-p", "no:cacheprovider", "--basetemp", temp]
             if executor == "docker":
                 from tools.rsi_sandbox import run as sandbox_run

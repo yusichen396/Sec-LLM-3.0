@@ -8,6 +8,7 @@ import sys
 from types import SimpleNamespace
 
 import pytest
+from unittest.mock import MagicMock
 
 from tools import code_rsi, rsi_dataset, rsi_sandbox, rsi_campaign
 from tools.code_rsi_grade import score_rankings, ReplayStore
@@ -284,3 +285,36 @@ def test_embedding_cache_reuses_identical_document_vectors(monkeypatch):
         assert calls == ["search_document: document"] * 2
     finally:
         rsi_vectors.vector.cache_clear()
+
+
+@pytest.mark.parametrize("recovered", [False, True])
+def test_session_claim_uses_one_fixed_parameterized_query(monkeypatch, recovered):
+    import agents.orchestrator as orch
+    connection, cursor = MagicMock(), MagicMock()
+    connection.__enter__.return_value.cursor.return_value.__enter__.return_value = cursor
+    cursor.execute.return_value = 1
+    monkeypatch.setattr(orch, "_db_connection", lambda: connection)
+    identity = "session'; DROP TABLE agent_sessions; --"
+    assert orch._claim_session(identity, recovered)
+    sql, parameters = cursor.execute.call_args.args
+    assert identity not in sql and sql.count("%s") == 3
+    assert parameters == (identity, int(recovered), orch.settings.AGENT_TASK_TIMEOUT_SECONDS + 30)
+
+
+def test_recovery_binds_id_tuple_without_dynamic_sql(monkeypatch):
+    import agents.orchestrator as orch
+    import pymysql
+    connection, cursor = MagicMock(), MagicMock()
+    connection.__enter__.return_value.cursor.return_value.__enter__.return_value = cursor
+    cursor.fetchall.return_value = [{"id": "one'quoted", "phase": "execute"}, {"id": "two", "phase": "report"}]
+    cursor.execute.return_value = 2
+    monkeypatch.setattr(orch, "_db_connection", lambda: connection)
+    assert asyncio.run(orch.recover_agent_sessions()) == 0
+    sql, parameters = cursor.execute.call_args.args
+    assert "WHERE id IN %s" in sql and "one'quoted" not in sql
+    assert parameters[0] == ("one'quoted", "two")
+    driver = pymysql.connect(defer_connect=True)
+    driver.server_status = 0
+    with driver.cursor() as real_cursor:
+        rendered = real_cursor.mogrify(sql, parameters)
+        assert "IN ('one\\'quoted','two')" in rendered

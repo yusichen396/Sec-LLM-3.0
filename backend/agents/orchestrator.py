@@ -513,9 +513,9 @@ def _claim_session(session_id: str, recovered: bool = False) -> bool:
         with conn.cursor() as cursor:
             return bool(cursor.execute(
                 """UPDATE agent_sessions SET phase='claimed'
-                   WHERE id=%s AND status='running' AND (phase IS NULL OR phase='')"""
-                + (" AND TIMESTAMPDIFF(SECOND, updated_at, NOW()) > %s" if recovered else ""),
-                (session_id, settings.AGENT_TASK_TIMEOUT_SECONDS + 30) if recovered else (session_id,),
+                   WHERE id=%s AND status='running' AND (phase IS NULL OR phase='')
+                   AND (%s=0 OR TIMESTAMPDIFF(SECOND, updated_at, NOW()) > %s)""",
+                (session_id, int(bool(recovered)), settings.AGENT_TASK_TIMEOUT_SECONDS + 30),
             ))
 
 
@@ -641,13 +641,12 @@ async def recover_agent_sessions() -> int:
                 interrupted = [row["id"] for row in rows if row.get("phase")]
                 failed_count = 0
                 if interrupted:
-                    placeholders = ",".join(["%s"] * len(interrupted))
                     failed_count = cursor.execute(
-                        f"UPDATE agent_sessions SET status='failed', phase='interrupted' "
-                        f"WHERE id IN ({placeholders}) AND status='running' "
+                        "UPDATE agent_sessions SET status='failed', phase='interrupted' "
+                        "WHERE id IN %s AND status='running' "
                         "AND phase IS NOT NULL AND phase<>'' "
                         "AND TIMESTAMPDIFF(SECOND, updated_at, NOW()) > %s",
-                        (*interrupted, settings.AGENT_TASK_TIMEOUT_SECONDS + 30),
+                        (tuple(interrupted), settings.AGENT_TASK_TIMEOUT_SECONDS + 30),
                     )
                 return pending, failed_count
 

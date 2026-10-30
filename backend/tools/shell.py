@@ -41,7 +41,7 @@ async def shell_exec(command: str, timeout: int = 300) -> dict:
         "--pids-limit", "64",
         "--security-opt", "no-new-privileges",
         "--read-only",
-        "--tmpfs", "/tmp:rw,noexec",
+        "--tmpfs", "/tmp:rw,noexec",  # nosec B108: private per-container tmpfs, not a host temporary file
         "--env", "HOME=/tmp",
         sandbox_image,
         *args,

@@ -69,7 +69,7 @@ def command(image, mounts, arguments, name):
     result = ["docker", "run", "--rm", "--name", name, "--network", "none", "--read-only",
               "--cap-drop", "ALL", "--security-opt", "no-new-privileges:true", "--pids-limit", "64",
               "--memory", "4g", "--cpus", "2", "--user", "65534:65534", "--log-driver", "none",
-              "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g", "--workdir", "/workspace",
+              "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g", "--workdir", "/workspace",  # nosec B108: private per-container tmpfs, not host /tmp
               "--env", "PYTHONDONTWRITEBYTECODE=1", "--env", "PYTHONPATH=/workspace",
               "--env", "HF_HUB_OFFLINE=1", "--env", "TRANSFORMERS_OFFLINE=1",
               "--env", "HF_HOME=/tmp/huggingface", "--env", "HOME=/tmp",
