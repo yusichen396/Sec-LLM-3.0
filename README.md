@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Next.js-14-black.svg" alt="Next.js">
   <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6.svg" alt="TypeScript">
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/Tests-42+-green.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/RSI_regression-110_passed-green.svg" alt="RSI fixed regression: 110 passed">
 </p>
 
 <p align="center">
@@ -24,9 +24,11 @@
 | 多 Agent 协作 | 侦察 / 检测 / 报告三类专家的调度，共享黑板的归属校验与快照读写 |
 | 检索链路 | BM25 + 向量 RRF 混合召回 + BGE 重排，评测集构建与 Top-k 命中率统计 |
 | 安全边界 | 话题识别与授权判定的前置拦截，工具沙箱执行与单轮步数上限 |
+| 评测与受控 RSI | RAG / Agent 策略评测、代码候选生成与 Docker 验收、独立计分、达标应用与回滚、多轮改进管理 |
 
 <p align="center">
   <a href="#-核心能力">核心能力</a> •
+  <a href="#评测与受控-rsi">评测与受控 RSI</a> •
   <a href="#-快速开始">快速开始</a> •
   <a href="#-项目架构">项目架构</a> •
   <a href="#-api-文档">API 文档</a> •
@@ -101,7 +103,7 @@ sec-llm-4.0/
 │   │   ├── llm/             # LLM 抽象层 (base, ollama, deepseek, router)
 │   │   ├── auth/            # 认证 (jwt, password, dependencies)
 │   │   └── rag/             # RAG 查询重写
-│   ├── tools/               # Agent 工具注册表 (10 工具)
+│   ├── tools/               # Agent 工具、RAG/Agent 评测与代码级 RSI
 │   ├── agents/              # Agent 引擎
 │   │   ├── orchestrator.py  # LangGraph 状态图
 │   │   ├── supervisor.py    # Multi-Agent 编排器
@@ -109,7 +111,7 @@ sec-llm-4.0/
 │   │   ├── reporting.py     # CVSS + OWASP
 │   │   └── specialists/     # Recon, Exploit, Fix
 │   ├── db/models.py         # SQLAlchemy ORM (6 张表)
-│   └── tests/               # 42+ 项测试
+│   └── tests/               # 单元/集成测试、RSI 固定回归与容器约束测试
 ├── frontend/                # Next.js 14
 │   ├── app/agent/           # Agent Web 控制台
 │   ├── components/          # AgentTaskPanel, AgentLogStream
@@ -118,7 +120,9 @@ sec-llm-4.0/
 │   ├── main.py              # Typer CLI (6 命令)
 │   └── tui.py               # Textual TUI
 ├── sandbox/
-│   └── Dockerfile           # 隔离安全工具容器
+│   ├── Dockerfile           # 隔离安全工具容器
+│   └── rsi/Dockerfile       # RSI 测试 / 完整模型运行镜像
+├── docs/                    # RAG、Agent、代码级 RSI 操作与验收记录
 └── openclaw-skill/          # OpenClaw 集成
 ```
 
@@ -366,10 +370,48 @@ export SEC_LLM_SKILL_API_KEY="your-secure-key"
 | **浏览器自动化** | Playwright (Chromium) |
 | **沙箱** | Docker + docker-py |
 | **CLI/TUI** | Typer, Textual, Rich |
-| **测试** | pytest (42+ 项) |
+| **测试** | pytest；RSI 固定回归 110 项通过，另有真实 Docker 约束测试 |
 | **CI/CD** | GitHub Actions |
 
 ---
+
+## 评测与受控 RSI
+
+新增的 RSI（递归自我改进）采用受控闭环：**预检 → 固定基线 → 生成候选 → 测试与开发集筛选 → 独立验证 → 测试集否决 → 应用或保留基线 → 必要时回滚**。目前代码候选只允许修改混合检索与重排实现；评分器、安全规则、权限、测试和执行器保持固定。
+
+| 能力 | 已实现的行为 | 操作说明 |
+|---|---|---|
+| RAG 评测与策略搜索 | 主题隔离的开发/验证/测试集，Top-k、MRR、耗时与安全回归，策略版本及模型指纹 | [RAG 评测与离线优化](docs/rag-optimization.md) |
+| Agent 策略评测 | 规划、工具选择与报告策略候选对比；七个任务覆盖规划→隔离静态工具→报告；启用要求匹配版本的真实任务验收与人工复核 | [Agent 策略优化](docs/agent-optimization.md) |
+| 代码修改与测试验收 | 环境和生成服务预检；Docker 禁网、只读、非 root、资源限额；宿主保管答案并独立计分 | [代码级 RSI](docs/code-rsi.md) |
+| 独立数据与多轮管理 | 来源和标注/复核身份声明、数据封存、防公开样本和跨轮次复用、总预算、停滞停止与改进谱系 | [数据封存与多轮改进](docs/code-rsi.md#数据封存与多轮改进) |
+| 应用与回滚 | 达标后显式应用、源码指纹检查、部分写入失败恢复、中断恢复、拒绝覆盖后续人工修改 | [应用与回滚](docs/code-rsi.md#应用回滚与自动化验证) |
+| 持续验证 | RAG 回归、Agent/RSI 固定回归、真实 Docker 验收、Bandit 中高风险扫描四项 CI；Node.js 24 Actions、固定 Ubuntu 24.04 | [CI 工作流](.github/workflows/agent-scan.yml) |
+
+### 快速体验执行链
+
+以下命令不下载模型、不执行外部目标扫描；使用开发者候选和公开人工样本验证执行链，不授予晋级资格。在已安装 Python 和 Docker 的环境中，从仓库根目录执行：
+
+```bash
+python -m pip install -r backend/requirements-rsi.lock.txt
+docker build --target tests -f sandbox/rsi/Dockerfile -t sec-llm-rsi:tests .
+cd backend
+python -m tools.rsi_preflight --smoke --executor docker --image sec-llm-rsi:tests
+python -m tools.make_rsi_candidate
+python -m tools.code_rsi --candidate ../artifacts/code_rsi_proposals/chinese_spans.json --smoke --image sec-llm-rsi:tests
+python -m tools.evaluate_agent_tasks --image sec-llm-rsi:tests
+```
+
+完整模型评测、自动生成、私有业务数据导入、多轮运行及回滚命令见 [代码级 RSI](docs/code-rsi.md)。完整评测需要本地嵌入/重排模型，自动生成还需要可用的 Ollama 服务；受控代码验收需要 Docker。
+
+### 当前验收状态（2026-10-30）
+
+- 固定回归 **110 passed，3 deselected**；另有真实 Docker 容器约束测试 **2 passed**。这是指定测试范围，非全项目测试总数。
+- 四项远端 CI 全部通过，含真实容器验收及 Bandit 中高风险扫描。
+- 已运行的本地完整模型候选开发集 MRR@3 为 **0.783 → 0.783**，无增益，已拒绝，未应用候选源码。
+- **真实模型自动生成、独立业务盲测及人工复核尚未验收**；公开样本和离线回放不能证明模型能力提升或持续自我改进成功。
+
+具体证据与限制见 [RSI 验收记录](docs/rsi-validation.md)。
 
 ## 测试
 
@@ -385,15 +427,7 @@ pip install pytest pytest-asyncio
 python -m pytest tests/ -v
 ```
 
-```
-tests/test_tool_registry.py .........   9 passed
-tests/test_agent_orchestrator.py .....  5 passed
-tests/test_llm_router.py ......         6 passed
-tests/test_auth.py ....                 4 passed
-tests/test_tools.py ............       12 passed
-tests/test_agent_supervisor.py ......  10 passed
-====================================== 46 passed ==============================
-```
+固定 RSI 回归与真实容器验收的准确命令见 [CI 工作流](.github/workflows/agent-scan.yml)，实际已执行范围见 [验收记录](docs/rsi-validation.md)。上面的全项目测试命令可能还需要数据库、模型、浏览器或其他集成依赖。
 
 ---
 
@@ -408,7 +442,7 @@ tests/test_agent_supervisor.py ......  10 passed
 | CLI | 无 | 6 命令 + TUI |
 | Web 控制台 | 仪表盘 | 仪表盘 + Agent 控制台 |
 | 代码结构 | 1 个单体文件 (2,500 行) | 50+ 模块化文件 |
-| 测试 | 0 | 46 项 |
+| 测试 | 0 | 单元/集成测试、RSI 固定回归与真实容器验收 |
 | 数据库 | 原始 SQL | 原始 SQL + ORM + Alembic |
 
 ---
