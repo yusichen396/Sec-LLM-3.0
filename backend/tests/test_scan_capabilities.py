@@ -141,12 +141,15 @@ def test_checks_are_bounded_deduplicated_and_declare_gaps():
 
     active = [c for c in plan if c["check"] == "reflected_xss"]
     assert 1 <= len(active) <= 12
-    keys = [(c.get("url"), c.get("parameter")) for c in active]
+    assert any(c["check"] == "sqli_probe" for c in plan)
+    assert any(c["check"] == "lfi_probe" for c in plan)
+    keys = [(c.get("check"), c.get("url"), c.get("parameter")) for c in plan if c["check"] != "skipped"]
     assert len(keys) == len(set(keys))
 
     gaps = next(c for c in plan if c["check"] == "skipped")["reasons"]
-    assert any("sql_injection" in reason for reason in gaps)
+    assert any("ssrf" in reason for reason in gaps)
     assert any("api" in reason for reason in gaps)
+    assert any("POST" in reason for reason in gaps)
     assert "未覆盖" in summarize_plan(plan)
 
 
@@ -197,3 +200,160 @@ def test_tool_layer_enforces_allowlist(monkeypatch):
     assert browser_tools.validate_target_url("https://example.com/x") == "https://example.com/x"
     with pytest.raises(ValueError):
         browser_tools.validate_target_url("https://not-allowed.example/x")
+
+
+# --------------------------------------------------------------- SQLi / LFI probes
+def _fake_response(body: str, status: int = 200, url: str = "https://example.com/?q=x"):
+    return {
+        "status": status,
+        "headers": {},
+        "body": body,
+        "elapsed_ms": 5,
+        "request": {"method": "GET", "url": url, "headers": {}},
+        "response_meta": {"status": status, "url": url, "headers": {}, "body_excerpt": body[:800]},
+    }
+
+
+def test_sqli_requires_two_agreeing_signals(monkeypatch):
+    from tools import sqli
+
+    calls = []
+
+    async def fake_fetch(url, params=None, timeout=15.0):
+        calls.append(url)
+        if "AND 1=1" in url:
+            return _fake_response("hello " * 100)
+        if "AND 1=2" in url:
+            return _fake_response("empty")
+        if url.endswith("q=%27"):
+            return _fake_response("You have an error in your SQL syntax near ''")
+        return _fake_response("hello " * 100)
+
+    monkeypatch.setattr(sqli, "fetch", fake_fetch)
+    result = asyncio.run(sqli.sqli_probe("https://example.com/?q=x", "q"))
+
+    assert result["vulnerable"] is True
+    assert result["conclusion"] == "confirmed"
+    assert result["findings"][0]["parameter"] == "q"
+    conclusive = [r for r in result["results"] if r.get("conclusive")]
+    assert conclusive and conclusive[0]["signal"] in {"db_error_signature", "boolean_differential"}
+    assert conclusive[0]["request"]["url"].startswith("https://example.com/")
+    assert len(calls) <= 12  # 有请求上限
+
+
+def test_sqli_stays_quiet_without_signals(monkeypatch):
+    from tools import sqli
+
+    async def fake_fetch(url, params=None, timeout=15.0):
+        return _fake_response("stable page body " * 50)
+
+    monkeypatch.setattr(sqli, "fetch", fake_fetch)
+    result = asyncio.run(sqli.sqli_probe("https://example.com/?q=x", "q"))
+    assert result["vulnerable"] is False
+    assert result["findings"] == []
+    assert result["conclusion"] == "no_signal"
+
+
+def test_lfi_only_reports_when_a_file_marker_appears(monkeypatch):
+    from tools import lfi
+
+    async def hit(url, params=None, timeout=15.0):
+        lowered = url.lower()
+        if "etc/passwd" in lowered or "etc%2fpasswd" in lowered:
+            return _fake_response("root:x:0:0:root:/root:/bin/bash")
+        return _fake_response("nice page")
+
+    monkeypatch.setattr(lfi, "fetch", hit)
+    result = asyncio.run(lfi.lfi_probe("https://example.com/?file=x", "file"))
+    assert result["vulnerable"] is True
+    assert result["findings"][0]["title"].startswith("Path traversal")
+    assert any(r["signal"] == "file_marker" for r in result["results"])
+
+    async def miss(url, params=None, timeout=15.0):
+        return _fake_response("nice page")
+
+    monkeypatch.setattr(lfi, "fetch", miss)
+    quiet = asyncio.run(lfi.lfi_probe("https://example.com/?file=x", "file"))
+    assert quiet["vulnerable"] is False
+
+
+# --------------------------------------------------------------- API discovery / rule lint
+def test_api_discovery_parses_published_spec(monkeypatch):
+    from tools import api_discovery
+
+    spec = '{"paths": {"/users": {"get": {"parameters": [{"name": "id"}]}}, "/login": {"post": {}}}}'
+
+    async def fake_fetch(url, params=None, timeout=15.0):
+        if url.endswith("/openapi.json"):
+            return _fake_response(spec, url=url)
+        return _fake_response("not found", status=404, url=url)
+
+    monkeypatch.setattr(api_discovery, "fetch", fake_fetch)
+    result = asyncio.run(api_discovery.api_discovery("https://example.com/app"))
+    assert result["status"] == "success"
+    assert result["endpoint_count"] == 2
+    assert {e["method"] for e in result["endpoints"]} == {"GET", "POST"}
+    assert result["endpoints"][0]["parameters"] == ["id"]
+
+
+def test_api_discovery_reports_absence_without_guessing(monkeypatch):
+    from tools import api_discovery
+
+    async def fake_fetch(url, params=None, timeout=15.0):
+        return _fake_response("nothing", status=404, url=url)
+
+    monkeypatch.setattr(api_discovery, "fetch", fake_fetch)
+    result = asyncio.run(api_discovery.api_discovery("https://example.com/app"))
+    assert result["endpoint_count"] == 0
+    assert "未发现" in result["note"]
+
+
+def test_rule_lint_flags_missing_structure():
+    from tools.rule_gen import lint_rule
+
+    good_yara = 'rule demo { strings: $a = "x" condition: $a }'
+    assert lint_rule(good_yara, "yara")["ok"] is True
+    bad_yara = 'rule demo { strings: $a = "x" }'
+    assert lint_rule(bad_yara, "yara")["ok"] is False
+
+    good_suricata = 'alert http any any -> any any (msg:"t"; sid:1000001; classtype:trojan-activity;)'
+    assert lint_rule(good_suricata, "suricata")["ok"] is True
+    assert lint_rule('alert http any any -> any any (msg:"t";)', "suricata")["ok"] is False
+    assert lint_rule("", "yara")["ok"] is False
+
+
+# --------------------------------------------------------------- scan diff
+def test_scan_diff_classifies_new_resolved_and_persistent():
+    from core.scan_diff import diff_findings
+
+    previous = [
+        {"title": "XSS", "severity": "High", "source_tool": "browser_check_xss",
+         "parameter": "q", "verification_status": "verified"},
+        {"title": "Old issue", "severity": "Low", "source_tool": "code_auditor", "parameter": ""},
+    ]
+    current = [
+        {"title": "XSS", "severity": "High", "source_tool": "browser_check_xss",
+         "parameter": "q", "verification_status": "unverified"},
+        {"title": "New SQLi", "severity": "High", "source_tool": "sqli_probe", "parameter": "id"},
+    ]
+    result = diff_findings(previous, current)
+    assert result["counts"]["new"] == 1 and result["counts"]["resolved"] == 1
+    assert result["counts"]["persistent"] == 1
+    assert result["counts"]["verified_previous"] == 1
+    assert result["counts"]["verified_current"] == 0
+    assert result["new"][0]["title"] == "New SQLi"
+    assert result["verdict"] == "unchanged"
+
+
+def test_scan_diff_reports_improvement_and_empty_baseline():
+    from core.scan_diff import diff_findings
+
+    improved = diff_findings(
+        [{"title": "A", "severity": "High"}, {"title": "B", "severity": "Medium"}],
+        [{"title": "A", "severity": "High"}],
+    )
+    assert improved["verdict"] == "improved"
+    assert improved["counts"]["resolved"] == 1
+
+    empty = diff_findings([], [{"title": "A", "severity": "High"}])
+    assert empty["counts"]["previous"] == 0 and empty["counts"]["new"] == 1

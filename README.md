@@ -41,7 +41,7 @@
 - **Multi-Agent 协作**：ReconAgent → ExploitAgent → ReportAgent，通过 Blackboard 共享发现
 - **会话持久化**：Agent 会话自动写入 MySQL，支持异步非阻塞
 
-### 14 个 Agent 工具
+### 17 个 Agent 工具
 
 | 工具 | 类别 | 功能 |
 |------|------|------|
@@ -49,7 +49,10 @@
 | `browser_login` | 侦察 | 表单登录一次，按源保存会话（storage_state），让后续扫描覆盖登录后页面 |
 | `browser_session_status` | 侦察 | 查询某源是否已有可复用会话（年龄/过期/ Cookie 数，不返回密钥） |
 | `browser_navigate` | 侦察 | Playwright 页面侦察，提取链接、表单、技术栈（可用已存会话） |
-| `browser_check_xss` | 漏洞利用 | 反射型 XSS：4 类 payload，**以浏览器实际执行**判定，并返回请求/响应素材 |
+| `api_discovery` | 侦察 | 读取公开 OpenAPI/Swagger 规范得到端点/方法/参数，不做隐藏端点爆破 |
+| `browser_check_xss` | 漏洞利用 | 反射型 XSS：4 类 payload，**以浏览器实际执行**判定，返回请求/响应素材 |
+| `sqli_probe` | 漏洞利用 | SQL 注入：**报错特征 + 布尔差异双信号一致**才判定，附带完整请求/响应 |
+| `lfi_probe` | 漏洞利用 | 路径穿越/任意文件读取：命中文件特征且基线不含才判定 |
 | `browser_screenshot` | 侦察 | 网页截图 |
 | `shell_exec` | 侦察 | Docker 沙箱执行 nmap、sqlmap、nuclei 等工具（argv 直传，无 shell） |
 | `read_source` | 侦察 | 在 `AGENT_CODE_AUDIT_ROOT` 内读取源码，供代码审计使用 |
@@ -57,7 +60,7 @@
 | `phishing_analyzer` | 侦察 | 邮件钓鱼分析，风险评分，可疑 URL/IP 提取 |
 | `threat_intel_enrich` | 侦察 | IOC 富化（AbuseIPDB + AlienVault OTX），全源失败显式报错 |
 | `threat_intel_report` | 报告 | AI 威胁情报研判报告（流式 Markdown） |
-| `rule_generator` | 报告 | YARA/Suricata 蓝队检测规则生成 |
+| `rule_generator` | 报告 | YARA/Suricata 规则生成 + 离线结构 lint（缺 condition/sid 会标出） |
 | `report_explainer` | 报告 | Nmap/Nessus 扫描 → 管理层执行摘要 |
 
 ### 扫描纪律、证据与授权
@@ -65,7 +68,8 @@
 - **证据链**：一个发现只有在 `artifacts/evidence/<session>/` 里留下"请求 + 响应 + payload + 哈希 + 可重放 PoC(`.repro.sh`)"时才会被标为 `verified`；否则一律是 `unverified` 线索。`evidence_sha256` 可复核，篡改后校验失败。
 - **测试纪律**：浏览器侧所有请求按源限速（`AGENT_MIN_REQUEST_INTERVAL_SECONDS`），爬虫有页数/深度硬上限。
 - **授权范围**：`AGENT_ALLOWED_TARGETS` 在**入口与工具层双重校验**（planner 给出的 URL 也要过）；生产环境（`ENV_MODE=prod`）额外强制 `authorization_ref`（工单号），并与目标、时间窗一起写入 `scan_audit` 审计表。
-- **策略而非写死**：recon 先做爬虫与资产分类，`agents/strategy.py` 依据 web_app / api / host 选择检查项，并把**没有检测器的项**（SQLi、SSRF、IDOR 等）作为 `coverage_gaps` 显式写进报告。
+- **策略而非写死**：recon 先做爬虫与资产分类，`agents/strategy.py` 依据 web_app / api / host 选择检查项，并把**当前没有检测器的项**作为 `coverage_gaps` 显式写进报告（目前是 SSRF、XXE、IDOR/POST body、CVE 匹配）。
+- **扫描对比**：`GET /api/agent/{id}/diff` 与同一目标的上一次扫描比较，输出 `new / resolved / persistent` 与 `verdict`（regressed / improved / unchanged），并统计已验证数量变化。
 
 
 ### 接口与界面
@@ -298,6 +302,7 @@ python tui.py
 | GET | `/api/agent/{id}/status` | JWT / Skill Key | 会话状态与进度 |
 | GET | `/api/agent/{id}/stream` | JWT / Skill Key | SSE 实时日志流 |
 | GET | `/api/agent/{id}/report` | JWT / Skill Key | 最终安全报告 |
+| GET | `/api/agent/{id}/diff` | JWT / Skill Key | 与同一目标上次扫描比较（new / resolved / persistent） |
 | DELETE | `/api/agent/{id}` | JWT / Skill Key | 取消任务（跨 Worker 为协作取消） |
 
 `task_type=web_scan` 使用侦察→检测→报告的多 Agent 图；`code_audit`、`threat_intel`、`comprehensive` 保留规划→执行图。两条路径共用同一会话、状态和报告接口。POST 创建会话后立即返回，任务在后台执行；进度查询中的 `steps_*` 分别表示多 Agent 阶段数或规划工具步数。

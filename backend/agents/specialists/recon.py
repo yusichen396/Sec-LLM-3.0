@@ -68,6 +68,19 @@ async def run_recon(target: str, provider: str, blackboard: Blackboard) -> Dict[
     except Exception as e:
         findings.append({"type": "error", "tool": "browser_crawl", "error": str(e)})
 
+    # Step 1b: published API spec (no guessing of hidden endpoints)
+    try:
+        api = await invoke_tool("api_discovery", url=target)
+        if isinstance(api, dict) and api.get("endpoints"):
+            blackboard.publish("api_endpoints", api["endpoints"], "recon")
+            findings.append({"type": "api_spec", "spec_url": api.get("spec_url"),
+                             "endpoint_count": api.get("endpoint_count", 0)})
+        elif isinstance(api, dict):
+            findings.append({"type": "skipped", "tool": "api_discovery",
+                             "reason": api.get("note") or "未发现公开 API 规范"})
+    except Exception as e:
+        findings.append({"type": "skipped", "tool": "api_discovery", "reason": str(e)[:120]})
+
     # Step 2: port scan via shell (extract hostname if target is a URL)
     from config import settings
 

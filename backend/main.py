@@ -369,6 +369,10 @@ import tools.report        # noqa: E402
 import tools.threat_intel  # noqa: E402
 import tools.browser       # noqa: E402
 import tools.shell         # noqa: E402
+import tools.source_reader  # noqa: E402
+import tools.sqli           # noqa: E402
+import tools.lfi            # noqa: E402
+import tools.api_discovery  # noqa: E402
 
 # 配置 CORS：默认只放行本机前端，不再使用通配符 + 凭据的组合
 _cors_origins = [item.strip() for item in settings.CORS_ALLOW_ORIGINS.split(",") if item.strip()]

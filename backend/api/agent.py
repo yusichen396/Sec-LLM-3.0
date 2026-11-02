@@ -204,6 +204,59 @@ async def get_agent_report(
     }
 
 
+@router.get("/{session_id}/diff")
+async def get_agent_diff(
+    session_id: str,
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_user_or_skill),
+    db=Depends(get_db),
+):
+    """Compare the findings of this scan with the previous scan of the same target."""
+    from core.scan_diff import diff_findings
+
+    session = await _owned_session(session_id, current_user["id"])
+    if session["status"] == "running":
+        raise HTTPException(status_code=400, detail="Task still running")
+
+    def previous_for(target: str):
+        with db.cursor() as cursor:
+            cursor.execute(
+                """SELECT id, findings, status FROM agent_sessions
+                   WHERE user_id=%s AND target=%s AND id<>%s
+                     AND status IN ('completed','failed','cancelled')
+                   ORDER BY created_at DESC LIMIT 1""",
+                (current_user["id"], target, session_id),
+            )
+            return cursor.fetchone()
+
+    previous_row = await asyncio.to_thread(previous_for, session.get("task", {}).get("target", ""))
+    if not previous_row:
+        return {
+            "session_id": session_id,
+            "baseline_session_id": None,
+            "counts": {"previous": 0, "current": len(session.get("findings", [])),
+                       "new": len(session.get("findings", [])), "resolved": 0,
+                       "persistent": 0, "verified_previous": 0,
+                       "verified_current": sum(1 for f in session.get("findings", [])
+                                               if f.get("verification_status") == "verified")},
+            "new": session.get("findings", []),
+            "resolved": [],
+            "persistent": [],
+            "verdict": "baseline",
+            "note": "该目标没有可比较的历史扫描",
+        }
+
+    previous_findings = previous_row.get("findings") or []
+    if isinstance(previous_findings, str):
+        try:
+            previous_findings = json.loads(previous_findings)
+        except ValueError:
+            previous_findings = []
+
+    result = diff_findings(previous_findings, session.get("findings", []))
+    return {"session_id": session_id, "baseline_session_id": previous_row["id"], **result}
+
+
 @router.delete("/{session_id}")
 async def cancel_agent_task(
     session_id: str,

@@ -30,6 +30,9 @@ import tools.threat_intel  # noqa: E402
 import tools.browser       # noqa: E402
 import tools.shell         # noqa: E402
 import tools.source_reader  # noqa: E402
+import tools.sqli           # noqa: E402
+import tools.lfi            # noqa: E402
+import tools.api_discovery  # noqa: E402
 
 # Live cache; MySQL keeps the recoverable session record.
 _sessions: Dict[str, Dict[str, Any]] = {}
