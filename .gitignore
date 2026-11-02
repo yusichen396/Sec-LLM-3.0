@@ -80,5 +80,9 @@ venv/
 *.pem
 secrets.json
 
-# Local evaluation outputs (not fixtures)
-backend/tests/data/
+# Local scratch dirs used by tests / CI reproduction (never fixtures)
+.cilock/
+.tmpci/
+.tmp_caps_*/
+.tmp_sessions_*/
+.tmp_evidence_*/
