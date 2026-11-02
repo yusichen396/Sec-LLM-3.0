@@ -37,7 +37,7 @@
 
 ### Agent 引擎
 - **自主执行**：Agent 接收目标 → 规划 → 执行工具 → 反思 → 生成报告，无需人工干预
-- **LangGraph 状态图**：5 节点图 `plan → execute → reflect → report`，最多 20 步
+- **LangGraph 状态图**：4 节点图 `plan → execute → reflect → report`，最多 20 步
 - **Multi-Agent 协作**：ReconAgent → ExploitAgent → ReportAgent，通过 Blackboard 共享发现
 - **会话持久化**：Agent 会话自动写入 MySQL，支持异步非阻塞
 
@@ -69,7 +69,7 @@
 ### 安全能力
 
 - **CVSS 3.1 评分** + **OWASP Top 10 分类**
-- **Auto-Fix PR**：自动创建分支 → 应用补丁 → 提交 → 推送 → 开 GitHub PR
+- **Auto-Fix PR（默认关闭）**：`AGENT_AUTOFIX_ENABLED=true` + 运维脚本显式调用，不暴露给 Agent 规划器
 - **双引擎**：local (Ollama) / cloud (DeepSeek) 运行时切换
 - **沙箱隔离**：Docker 容器执行安全工具，内存/CPU/网络限制
 
@@ -80,7 +80,7 @@
 ```
 sec-llm-4.0/
 ├── backend/
-│   ├── main.py              # FastAPI 入口 (~2,060 行, 从 v3.1 减少 18%)
+│   ├── main.py              # FastAPI 入口 (~2,300 行)
 │   ├── config.py            # Pydantic Settings (集中式配置)
 │   ├── requirements.txt
 │   ├── alembic.ini          # 数据库迁移配置
@@ -98,7 +98,7 @@ sec-llm-4.0/
 │   │   ├── collaboration.py # Blackboard 共享状态
 │   │   ├── reporting.py     # CVSS + OWASP
 │   │   └── specialists/     # Recon, Exploit, Fix
-│   ├── db/models.py         # SQLAlchemy ORM (6 张表)
+│   ├── db/models.py         # SQLAlchemy ORM (5 张表)
 │   └── tests/               # 单元/集成测试、RSI 固定回归与容器约束测试
 ├── frontend/                # Next.js 14
 │   ├── app/agent/           # Agent Web 控制台
@@ -183,6 +183,8 @@ docker build -t sec-llm-sandbox:latest .
 
 ## 配置说明（backend/.env）
 
+完整变量清单见 [backend/.env.example](backend/.env.example)（含 CORS、登录限流、上传限制、代码审计根目录等新增项）。常用项：
+
 ```env
 # LLM 引擎
 INITIAL_ADMIN_PASSWORD=replace-with-a-unique-password-of-at-least-12-characters
@@ -232,11 +234,16 @@ SEC_LLM_SKILL_API_KEY=your-secure-key
 # 安装
 cd cli && pip install typer httpx
 
-# Web 扫描
-python main.py scan https://example.com --mode quick
+# 凭据：JWT 或 OpenClaw Skill Key 二选一（所有命令都需要）
+export SEC_LLM_TOKEN="<登录后拿到的 access_token>"
+# export SEC_LLM_SKILL_API_KEY="<backend/.env 里的 SEC_LLM_SKILL_API_KEY>"
+export SEC_LLM_BASE_URL="http://localhost:8000"
 
-# 代码审计
-python main.py audit ./src --language python
+# Web 扫描
+python main.py scan https://example.com
+
+# 代码审计（路径是服务端路径，必须在 AGENT_CODE_AUDIT_ROOT 之内）
+python main.py audit ./src
 
 # 实时查看 Agent 日志
 python main.py stream <session_id>
@@ -250,9 +257,12 @@ python main.py report <session_id>
 # 威胁情报查询
 python main.py intel 8.8.8.8
 
-# 自定义 API 地址
-python main.py --base-url https://your-server:8000 scan example.com
+# 自定义 API 地址（选项写在子命令之后）
+python main.py scan example.com --base-url https://your-server:8000
 ```
+
+> `audit` 的路径由服务端读取；需要先在 `backend/.env` 配置 `AGENT_CODE_AUDIT_ROOT`，
+> 否则 `read_source` 会拒绝（这是为了防止 LLM 驱动的任意文件读取）。
 
 ### TUI 终端界面
 
@@ -438,10 +448,16 @@ python -m pytest tests/ -v
 ## 安全提示
 
 - 首次启动必须配置 `INITIAL_ADMIN_PASSWORD`（至少 12 位）；已有管理员不会在启动时被重新激活
-- 生产环境必须设置安全的 `JWT_SECRET_KEY`
+- 生产环境必须设置安全的 `JWT_SECRET_KEY`，并设置 `ENV_MODE=prod`
 - 不要将 API Key 提交到代码仓库
 - 建议使用专用 MySQL 账号并限制权限
-- Docker 沙箱对网络扫描工具使用 bridge 网络，对离线代码扫描工具禁用网络；均限制内存/CPU 并使用只读根文件系统
+- CORS 默认只放行本机前端（`CORS_ALLOW_ORIGINS`），不再使用 `*` + 凭据
+- 登录失败 5 次后按「客户端 + 用户名」锁定 5 分钟（`LOGIN_MAX_FAILURES` / `LOGIN_FAILURE_WINDOW_SECONDS`）；注册密码最少 10 位
+- 浏览器工具默认拒绝 loopback/私网/链路本地地址；只有扫描自建内网/靶场时才设 `AGENT_ALLOW_PRIVATE_TARGETS=true`
+- 代码审计只允许读取 `AGENT_CODE_AUDIT_ROOT` 内的路径；留空则禁用 `read_source`
+- `code_audit` / 聊天等依赖本地模型的路径需要 `backend/models/` 下的模型文件（默认不入库）；缺失时启动日志会提示，语义护栏会自动降级而不是拦死聊天
+- 上传默认限制 20MB 且只接受 `UPLOAD_ALLOWED_EXTENSIONS` 中的扩展名
+- Docker 沙箱对网络扫描工具使用 bridge 网络，对离线代码扫描工具禁用网络；均限制内存/CPU、去掉全部 capability 并使用只读根文件系统
 - 生产环境的 web_scan/comprehensive 任务要求配置 `AGENT_ALLOWED_TARGETS`；这是提交入口的范围控制，不是网络层隔离。实际部署仍须使用网络策略限制浏览器与 Docker 沙箱的出站地址，防止重定向、DNS 变化或 Agent 工具参数越界。
 
 ---

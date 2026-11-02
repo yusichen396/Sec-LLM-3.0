@@ -51,6 +51,12 @@ export default function AgentPage() {
     const recover = (error: string) => {
       if (!active) return;
       stream?.abort();
+      // token 过期就回登录页，不要每 3 秒重试一次
+      if (error.includes("401")) {
+        localStorage.removeItem("token");
+        router.push("/login");
+        return;
+      }
       setStatus("reconnecting");
       setLogs((previous) => previous[previous.length - 1] === `[STREAM] ${error}`
         ? previous : [...previous, `[STREAM] ${error}`]);
@@ -69,11 +75,14 @@ export default function AgentPage() {
           await showReport();
           return;
         }
-        if (reconnects >= 3) {
-          timer = setTimeout(() => { void syncStatus(); }, 3000);
+        if (reconnects >= 5) {
+          // 之前这里是无上限重试：达到上限后明确停下，由用户手动刷新
+          setStatus("disconnected");
+          setLogs((previous) => [...previous, "[STREAM] 重连次数已达上限，请刷新页面"]);
           return;
         }
         reconnects += 1;
+        setStatus("reconnecting");
         // The server replays logs from the start for every new stream.
         setLogs([]);
         stream = createAgentStream(

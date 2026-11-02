@@ -356,21 +356,47 @@ def test_form_targets_resolve_and_reject_cross_origin(monkeypatch, action, expec
 def test_xss_query_encoding_preserves_existing_parameters(monkeypatch):
     from unittest.mock import AsyncMock
     from urllib.parse import urlsplit, parse_qs
-    from tools.browser import browser_check_xss
-    page = SimpleNamespace(goto=AsyncMock(), content=AsyncMock(return_value=""), on=MagicMock())
+    from tools import browser as browser_tools
+
+    page = SimpleNamespace(
+        goto=AsyncMock(),
+        content=AsyncMock(return_value=""),
+        on=MagicMock(),
+        wait_for_timeout=AsyncMock(),
+        evaluate=AsyncMock(return_value=False),
+        remove_listener=MagicMock(),
+    )
     browser = SimpleNamespace(new_page=AsyncMock(return_value=page), close=AsyncMock())
     engine = SimpleNamespace(chromium=SimpleNamespace(launch=AsyncMock(return_value=browser)))
     context = MagicMock()
     context.__aenter__ = AsyncMock(return_value=engine)
     context.__aexit__ = AsyncMock(return_value=False)
     monkeypatch.setitem(sys.modules, "playwright.async_api", SimpleNamespace(async_playwright=lambda: context))
-    asyncio.run(browser_check_xss("https://example.com/search?token=a%26b&q=old#fragment", "q"))
+    # 该用例只验证查询参数编码，不依赖真实 DNS/网络
+    monkeypatch.setattr(browser_tools, "validate_target_url", lambda url: url)
+    asyncio.run(browser_tools.browser_check_xss("https://example.com/search?token=a%26b&q=old#fragment", "q"))
     urls = [urlsplit(c.args[0]) for c in page.goto.call_args_list]
     assert len(urls) == 4
     for url in urls:
         query = parse_qs(url.query)
         assert query["token"] == ["a&b"] and len(query["q"]) == 1
         assert query["q"] != ["old"] and not url.fragment
+
+
+def test_browser_tools_reject_internal_targets(monkeypatch):
+    from config import settings
+    from tools import browser as browser_tools
+
+    monkeypatch.setattr(settings, "AGENT_ALLOW_PRIVATE_TARGETS", False)
+    for blocked in (
+        "http://127.0.0.1:8000/admin",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://10.0.0.5/",
+        "file:///etc/passwd",
+        "http://localhost:3000/",
+    ):
+        with pytest.raises(ValueError):
+            browser_tools.validate_target_url(blocked)
 
 
 def test_projection_and_host_scoring_enforce_tenant_boundary():

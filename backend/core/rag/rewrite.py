@@ -1,8 +1,6 @@
 """Query rewriting for RAG — resolves pronouns and adds context."""
 from typing import Dict, List
 
-import httpx
-
 from config import settings, normalize_provider
 
 
@@ -11,12 +9,10 @@ async def rewrite_query(user_msg: str, history: List[Dict[str, str]], provider: 
     if not history:
         return user_msg
 
-    print(f"[Rewriting] Original: {user_msg} | provider={provider}")
-
     history_text = ""
     for msg in history[-4:]:
-        role = "User" if msg["role"] == "user" else "Assistant"
-        history_text += role + ": " + msg["content"] + "\n"
+        role = "User" if msg.get("role") == "user" else "Assistant"
+        history_text += role + ": " + (msg.get("content") or "") + "\n"
 
     system_prompt = (
         "You are a search query optimization expert. "
@@ -27,37 +23,25 @@ async def rewrite_query(user_msg: str, history: List[Dict[str, str]], provider: 
     user_prompt = "[History]: " + history_text + "\n[Question]: " + user_msg + "\n[Rewritten]:"
 
     selected = normalize_provider(provider)
+    if selected == "cloud" and not settings.DEEPSEEK_API_KEY:
+        return user_msg
     try:
-        if selected == "cloud":
-            if not settings.DEEPSEEK_API_KEY:
-                return user_msg
-            from openai import OpenAI
-            client = OpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url=settings.DEEPSEEK_BASE_URL)
-            response = client.chat.completions.create(
-                model=settings.DEEPSEEK_MODEL_NAME,
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-                temperature=0.1, max_tokens=200,
-            )
-            new_query = response.choices[0].message.content.strip()
-        else:
-            url = f"{settings.OLLAMA_BASE_URL}/api/chat"
-            payload = {
-                "model": settings.OLLAMA_MODEL_NAME,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                "stream": False,
-                "options": {"temperature": 0.1},
-            }
-            async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
-                resp = await client.post(url, json=payload)
-                resp.raise_for_status()
-                new_query = resp.json()["message"]["content"].strip()
-        print(f"[Rewriting] Result: {new_query}")
-        return new_query
+        # 走统一的异步路由，避免在事件循环里调用同步 OpenAI 客户端
+        from core.llm.router import single_shot_completion
+
+        new_query = (await single_shot_completion(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            provider=selected,
+            temperature=0.1,
+        )).strip()
+        if settings.LOG_USER_QUERIES:
+            print(f"[Rewriting] {len(user_msg)} chars -> {len(new_query)} chars")
+        return new_query or user_msg
     except Exception as e:
-        print(f"[Rewriting Error] {e}")
+        print(f"[Rewriting Error] {type(e).__name__}")
     return user_msg
 
 

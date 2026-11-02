@@ -79,7 +79,6 @@ async def _fetch_abuseipdb(ioc: str) -> Dict[str, Any]:
                 "source": "abuseipdb",
                 "status": "success",
                 "score": score,
-                "confidence": min(100, 40 + score // 2),
                 "tags": [],
                 "summary": f"近90天上报次数: {_safe_int(data.get('totalReports'), 0)}",
                 "evidence": {
@@ -113,12 +112,12 @@ async def _fetch_otx(ioc: str, ioc_type: str) -> Dict[str, Any]:
             pulses = (data.get("pulse_info") or {}).get("pulses") or []
             pulse_count = len(pulses)
             score = min(100, pulse_count * 15)
+            tags = sorted({tag for pulse in pulses for tag in (pulse.get("tags") or []) if tag})[:20]
             return {
                 "source": "alienvault_otx",
                 "status": "success",
                 "score": score,
-                "confidence": min(100, 30 + pulse_count * 10),
-                "tags": [],
+                "tags": tags,
                 "summary": f"关联情报脉冲数: {pulse_count}",
                 "evidence": {"pulse_count": pulse_count},
             }
@@ -144,6 +143,9 @@ async def enrich_ioc(ioc: str, ioc_type: str = "auto") -> dict:
     if ioc_type != "auto":
         if ioc_type not in {"ip", "domain", "md5", "sha256"}:
             raise ValueError("ioc_type must be auto/ip/domain/md5/sha256")
+        # 声明类型与检测结果冲突时拒绝，避免把任意字符串塞进第三方 API 路径
+        if detected_type != "unknown" and ioc_type != detected_type:
+            raise ValueError(f"ioc_type 不匹配：检测为 {detected_type}")
         detected_type = ioc_type
 
     if detected_type == "unknown":
@@ -156,19 +158,31 @@ async def enrich_ioc(ioc: str, ioc_type: str = "auto") -> dict:
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
     successful = [r for r in results if isinstance(r, dict) and r.get("status") == "success"]
+    source_status = {}
+    for item in results:
+        if isinstance(item, Exception):
+            source_status[type(item).__name__] = "error"
+        elif isinstance(item, dict):
+            source_status[item.get("source", "unknown")] = item.get("status", "unknown")
 
     if not successful:
+        # 全部情报源不可用时必须明确标为 error，否则调用方会把"没查到"当成"无害"
         return {
+            "status": "error",
+            "error": "所有情报源均不可用（缺 Key / 超时 / 配额）",
             "ioc": ioc_raw,
             "detected_type": detected_type,
             "total_score": 0,
-            "verdict": "未见明显恶意",
+            "verdict": "未知（情报不可用，不代表无害）",
             "source_hits": 0,
+            "source_status": source_status,
             "enrichment": {"signals": [], "tags": [], "confidence": 0, "summary": ""},
         }
 
     total_score = min(100, max(_safe_int(x.get("score"), 0) for x in successful))
     return {
+        "status": "success",
+        "source_status": source_status,
         "ioc": ioc_raw,
         "detected_type": detected_type,
         "total_score": total_score,
@@ -176,8 +190,9 @@ async def enrich_ioc(ioc: str, ioc_type: str = "auto") -> dict:
         "source_hits": len(successful),
         "enrichment": {
             "signals": successful,
-            "tags": [],
-            "confidence": min(100, sum(_safe_int(x.get("confidence"), 0) for x in successful) // len(successful)),
+            "tags": sorted({tag for item in successful for tag in (item.get("tags") or [])})[:20],
+            # 这是"情报源覆盖率"，不是对恶意程度的置信度
+            "source_coverage": int(100 * len(successful) / max(1, len(tasks))),
             "summary": " | ".join(x.get("summary", "") for x in successful)[:600],
         },
     }

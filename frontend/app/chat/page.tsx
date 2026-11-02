@@ -75,6 +75,10 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const chatAbortRef = useRef<AbortController | null>(null);
+
+  // 离开页面时中断还在进行的流式请求，避免对已卸载组件 setState
+  useEffect(() => () => chatAbortRef.current?.abort(), []);
 
   useEffect(() => {
     // 检查认证状态
@@ -178,12 +182,6 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const stripSources = (text: string) =>
-    text
-      .replace(/\n?\s*>?\s*(?:📚\s*)?(?:\*\*)?参考(?:来源|资料)(?:\*\*)?:[\s\S]*/g, '')
-      .replace(/\n?>\s*$/g, '')
-      .trimEnd();
 
   const handleSelectHistory = (history: ChatHistory) => {
     setSelectedHistoryId(history.id);
@@ -326,8 +324,12 @@ export default function ChatPage() {
       }));
 
       const backendBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+      chatAbortRef.current?.abort();
+      const controller = new AbortController();
+      chatAbortRef.current = controller;
       const response = await fetch(`${backendBaseUrl}/api/chat`, {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
@@ -360,20 +362,19 @@ export default function ChatPage() {
         // 解码并追加内容
         const chunk = decoder.decode(value, { stream: true });
         aiContent += chunk;
-        const sanitized = stripSources(aiContent);
+        const sanitized = aiContent;
 
-        // 5. 实时更新 UI (找到最后一条消息并更新它)
-        setMessages((prev) => {
-          const newMessages = [...prev];
-          const lastMsg = newMessages[newMessages.length - 1];
-          if (lastMsg.role === 'ai') {
-            lastMsg.content = sanitized;
-          }
-          return newMessages;
-        });
+        // 5. 实时更新 UI（不可变更新，避免直接改状态对象）
+        setMessages((prev) =>
+          prev.map((item, index) =>
+            index === prev.length - 1 && item.role === 'ai'
+              ? { ...item, content: sanitized }
+              : item
+          )
+        );
       }
 
-      const finalContent = stripSources(aiContent);
+      const finalContent = aiContent;
       const finalMessages = messagesRef.current.map((item, idx) => {
         if (idx === messagesRef.current.length - 1 && item.role === 'ai') {
           return { ...item, content: finalContent };
@@ -404,15 +405,18 @@ export default function ChatPage() {
       }
 
     } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        // 用户切换了页面或发起了新请求：静默结束，不写错误气泡
+        return;
+      }
       console.error('Chat error:', error);
-      setMessages((prev) => {
-        const newMessages = [...prev];
-        const lastMsg = newMessages[newMessages.length - 1];
-        if (lastMsg.role === 'ai') {
-          lastMsg.content += `\n[系统错误: ${error.message || '连接中断'}]`;
-        }
-        return newMessages;
-      });
+      setMessages((prev) =>
+        prev.map((item, index) =>
+          index === prev.length - 1 && item.role === 'ai'
+            ? { ...item, content: `${item.content}\n[系统错误: ${error.message || '连接中断'}]` }
+            : item
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -869,7 +873,7 @@ export default function ChatPage() {
                       }`}
                     >
                       <div className="whitespace-pre-wrap break-words">
-                        {stripSources(message.content)}
+                        {message.content}
                         {message.role === 'ai' && isLoading && index === messages.length - 1 && (
                           <span className="inline-block w-2 h-4 ml-1 align-middle bg-cyan-400 animate-pulse"></span>
                         )}

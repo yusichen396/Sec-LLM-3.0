@@ -1,4 +1,4 @@
-# Sec-LLM 3.0 CI - 后端与前端检查
+# Sec-LLM CI - backend tests + frontend type check, lint and build
 name: CI
 
 on:
@@ -18,17 +18,33 @@ jobs:
         uses: actions/setup-python@v7.1.0
         with:
           python-version: "3.10"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
 
       - name: Install backend dependencies
         run: |
           cd backend
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-      - name: Check backend (syntax & deps)
+      - name: Byte-compile every backend module
         run: |
           cd backend
-          python -m py_compile main.py
+          python -m compileall -q . -x '(\.venv|__pycache__)' && echo "compileall OK"
+
+      - name: Unit and regression tests
+        working-directory: backend
+        env:
+          # Integration/browser suites stay opt-in; everything else must run.
+          RUN_AGENT_INTEGRATION: "0"
+          RUN_AGENT_UI: "0"
+        run: >-
+          python -m pytest tests/ -q
+          -k "not run_recon_no_tools and not run_exploit_empty_blackboard
+          and not run_supervisor_basic and not safe_nmap_command_accepted
+          and not run_agent_ui"
 
   frontend:
     name: Frontend
@@ -47,6 +63,10 @@ jobs:
         run: |
           cd frontend
           npm ci
+
+      - name: Type check
+        working-directory: frontend
+        run: npx tsc --noEmit --incremental false
 
       - name: Lint frontend
         run: |

@@ -27,6 +27,7 @@ import tools.report        # noqa: E402
 import tools.threat_intel  # noqa: E402
 import tools.browser       # noqa: E402
 import tools.shell         # noqa: E402
+import tools.source_reader  # noqa: E402
 
 # Live cache; MySQL keeps the recoverable session record.
 _sessions: Dict[str, Dict[str, Any]] = {}
@@ -163,6 +164,7 @@ async def create_session(task: AgentTask, user_id: int | None = None) -> str:
             "status": "running",
             "logs": [],
             "findings": [],
+            "_synced_at": time.monotonic(),
         }
         _session_events[session_id] = asyncio.Event()
     try:
@@ -175,7 +177,15 @@ async def create_session(task: AgentTask, user_id: int | None = None) -> str:
 
 
 def get_session(session_id: str) -> Optional[Dict[str, Any]]:
-    return _load_session(session_id) or _sessions.get(session_id)
+    """Serve the live in-memory snapshot when it is fresh, else fall back to MySQL.
+
+    The previous order (DB first) opened a new MySQL connection on every SSE tick,
+    which was one connect+auth per second per watcher.
+    """
+    live = _sessions.get(session_id)
+    if live is not None and time.monotonic() - live.get("_synced_at", 0.0) < 5.0:
+        return live
+    return _load_session(session_id) or live
 
 
 def list_sessions(limit: int = 20, user_id: int | None = None) -> List[Dict[str, Any]]:
@@ -197,6 +207,7 @@ async def _store_progress(session_id: str, state: Dict[str, Any]) -> None:
         session["findings"] = state.get("findings", [])
         session["logs"] = state.get("logs", [])
         session["report"] = state.get("report")
+        session["_synced_at"] = time.monotonic()
     await asyncio.to_thread(_persist_session, session_id)
     _session_events.setdefault(session_id, asyncio.Event()).set()
 
@@ -312,12 +323,19 @@ async def report_node(state: AgentState) -> AgentState:
                    "tool_errors": [line for line in state["logs"] if "[ERROR]" in line or "[TIMEOUT]" in line]}
 
     try:
+        from core.safety.prompt_injection import validate_model_output, wrap_untrusted_data
+        _, evidence_scan = wrap_untrusted_data(
+            "agent_report_input",
+            {"target": state["target"], "task_type": state["task_type"],
+             "findings": findings, "limitations": limitations},
+        )
         report = await single_shot_completion(
             report_messages(state["target"], state["task_type"], findings, limitations, policy),
             provider=state.get("provider", "local"), temperature=0.3
         )
-        if not report or not report.strip():
-            raise ValueError("Empty report")
+        verdict = validate_model_output(report, evidence_scan.requested_outputs)
+        if not verdict.allowed:
+            raise ValueError(f"Report output guard rejected response: {', '.join(verdict.reasons)}")
         if policy.reporting != "baseline":
             from agents.evaluation import score_report
             if not score_report(report, findings)["success"]:
@@ -435,7 +453,8 @@ def _validate_task(task: AgentTask) -> str:
     target = task.get("target", "")
     if not target:
         raise ValueError("Task must include a 'target' field")
-    if task.get("task_type", "web_scan") in {"web_scan", "comprehensive"}:
+    task_type = task.get("task_type", "web_scan")
+    if task_type in {"web_scan", "comprehensive"}:
         try:
             parsed = urlsplit(target if "://" in target else f"//{target}")
             hostname = (parsed.hostname or "").lower().rstrip(".")
@@ -448,15 +467,37 @@ def _validate_task(task: AgentTask) -> str:
             raise ValueError("AGENT_ALLOWED_TARGETS must be configured for production scans")
         if allowed and hostname not in allowed:
             raise ValueError("Scan target is outside AGENT_ALLOWED_TARGETS")
+    elif task_type == "code_audit" and (settings.AGENT_CODE_AUDIT_ROOT or "").strip():
+        # 配置了审计根目录时，先在这里把越界路径挡掉
+        from pathlib import Path
+
+        root = Path(settings.AGENT_CODE_AUDIT_ROOT).expanduser().resolve()
+        candidate = Path(target).expanduser()
+        resolved = candidate.resolve() if candidate.is_absolute() else (root / candidate).resolve()
+        try:
+            resolved.relative_to(root)
+        except ValueError as error:
+            raise ValueError("code_audit target is outside AGENT_CODE_AUDIT_ROOT") from error
     return target
 
 
 async def _execute_agent(session_id: str, task: AgentTask) -> None:
     target = task["target"]
+    task_type = task.get("task_type", "web_scan")
+    if task_type == "code_audit":
+        # 明确要求先读源码再审计；read_source 只在 AGENT_CODE_AUDIT_ROOT 内可用
+        task_text = (
+            f"Audit the source code under '{target}'. "
+            "Step 1: call read_source(path=...). "
+            "Step 2: pass the returned code to code_auditor. "
+            "Never invent code that read_source did not return."
+        )
+    else:
+        task_text = task.get("task", f"Security assessment of {target}")
     initial_state: AgentState = {
-        "task": task.get("task", f"Security assessment of {target}"),
+        "task": task_text,
         "target": target,
-        "task_type": task.get("task_type", "web_scan"),
+        "task_type": task_type,
         "provider": task.get("provider", settings.LLM_PROVIDER),
         "messages": [],
         "plan": [],

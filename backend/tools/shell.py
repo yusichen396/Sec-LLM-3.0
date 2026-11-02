@@ -2,6 +2,7 @@
 import shlex
 import uuid
 
+from config import settings
 from tools.registry import register_tool
 
 _ALLOWED_TOOLS = {"nmap", "sqlmap", "nuclei", "ffuf", "nikto", "whatweb", "semgrep", "bandit"}
@@ -52,20 +53,26 @@ async def shell_exec(command: str, timeout: int = 300) -> dict:
     if not args or args[0] not in _ALLOWED_TOOLS:
         return {"stdout": "", "stderr": "Command rejected: unsupported tool", "exit_code": -1}
 
-    sandbox_image = "sec-llm-sandbox:latest"
+    sandbox_image = settings.AGENT_SANDBOX_IMAGE
     container_name = f"sec-llm-{uuid.uuid4().hex}"
     effective_timeout = min(max(timeout, 1), 300)
+
+    tool_name = args[0]
+    needs_network = tool_name in {"nmap", "sqlmap", "nuclei", "ffuf", "nikto", "whatweb"}
 
     cmd = [
         "docker", "run", "--rm",
         "--name", container_name,
-        "--network", "bridge" if args[0] in {"nmap", "sqlmap", "nuclei", "ffuf", "nikto", "whatweb"} else "none",
+        "--network", "bridge" if needs_network else "none",
         "--memory", "512m",
         "--cpus", "1",
         "--pids-limit", "64",
-        "--security-opt", "no-new-privileges",
+        # 与 RSI 沙箱对齐：去掉所有 capability、禁止提权、不作 root 运行
+        "--cap-drop", "ALL",
+        "--security-opt", "no-new-privileges:true",
         "--read-only",
-        "--tmpfs", "/tmp:rw,noexec",  # nosec B108: private per-container tmpfs, not a host temporary file
+        "--tmpfs", "/tmp:rw,noexec,nosuid,nodev",  # nosec B108: private per-container tmpfs, not a host temporary file
+        "--log-driver", "none",
         "--env", "HOME=/tmp",
         sandbox_image,
         *args,

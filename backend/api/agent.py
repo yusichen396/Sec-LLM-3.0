@@ -100,6 +100,10 @@ async def list_sessions(
     }
 
 
+# Logs grow for the whole task; returning all of them on every poll is O(n^2) traffic.
+_MAX_STATUS_LOGS = 500
+
+
 @router.get("/{session_id}/status")
 async def get_agent_status(
     session_id: str,
@@ -111,6 +115,7 @@ async def get_agent_status(
     session = await _owned_session(session_id, current_user["id"])
 
     state = session.get("state") or {}
+    logs = session.get("logs", [])
     return AgentStatusResponse(
         session_id=session_id,
         status=session["status"],
@@ -118,7 +123,7 @@ async def get_agent_status(
         findings_count=len(session.get("findings", [])),
         steps_completed=state.get("steps_completed", state.get("current_step", 0)),
         steps_total=state.get("steps_total", len(state.get("plan", []))),
-        logs=session.get("logs", []),
+        logs=logs[-_MAX_STATUS_LOGS:],
         report=session.get("report"),
     )
 

@@ -23,7 +23,8 @@ def annotate_finding(finding: dict, tool: str, result: dict) -> dict:
                 "payload": evidence,
                 "observed": "browser_dialog_triggered",
             }
-    return annotated
+    # CVSS/OWASP 之前只定义未接线，导致报告里没有评分与分类
+    return enhance_finding(annotated)
 
 # OWASP Top 10 (2021) mapping by keyword
 OWASP_CATEGORIES = {

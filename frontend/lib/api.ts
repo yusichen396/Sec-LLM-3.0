@@ -109,14 +109,17 @@ export interface ChatRequest {
   message: string;
 }
 
-export interface ChatResponse {
-  reply: string;
-  sources?: string[];
-}
-
-export const chat = async (request: ChatRequest): Promise<ChatResponse> => {
-  const response = await api.post<ChatResponse>('/api/chat', request);
-  return response.data;
+/**
+ * POST /api/chat returns a text/plain stream (not JSON). Callers that need
+ * incremental rendering use fetch + ReadableStream; this helper buffers the whole
+ * answer for one-shot use.
+ */
+export const chat = async (request: ChatRequest): Promise<string> => {
+  const response = await api.post('/api/chat', request, {
+    responseType: 'text',
+    transformResponse: [(data) => data],
+  });
+  return typeof response.data === 'string' ? response.data : String(response.data ?? '');
 };
 
 export interface UploadResponse {
@@ -174,7 +177,8 @@ export interface DashboardStatsResponse {
   total_events: number;
   active_threats: number;
   online_users: number;
-  system_load: number;
+  /** null 表示后端未接入负载采集（不是 0%） */
+  system_load: number | null;
   ai_interactions: number;
   high_unresolved_count: number;
   chart_data: Array<{ time: string; value: number }>;

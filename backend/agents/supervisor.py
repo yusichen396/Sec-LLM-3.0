@@ -9,6 +9,7 @@ from agents.specialists.exploit import run_exploit
 from core.llm.router import single_shot_completion
 from dataclasses import asdict
 from agents.policy import load_policy, policy_for, report_messages
+from core.safety.prompt_injection import validate_model_output, wrap_untrusted_data
 
 
 class SupervisorState(TypedDict):
@@ -54,12 +55,22 @@ async def _report_node(state: SupervisorState) -> dict:
     logs = state["logs"] + ["[SUPERVISOR] Generating final report..."]
     report = None
     try:
+        report_input = {
+            "target": state["target"],
+            "task_type": state["task_type"],
+            "findings": all_findings,
+            "limitations": {
+                "recon": state["recon_state"].get("findings", []),
+                "tool_errors": state["exploit_state"].get("errors", []),
+            },
+        }
+        _, evidence_scan = wrap_untrusted_data("agent_report_input", report_input)
         messages = report_messages(state["target"], state["task_type"], all_findings,
-                                   {"recon": state["recon_state"].get("findings", []),
-                                    "tool_errors": state["exploit_state"].get("errors", [])}, policy_for(state))
+                                   report_input["limitations"], policy_for(state))
         report = await single_shot_completion(messages, provider=state["provider"], temperature=0.3)
-        if not report or not report.strip():
-            raise ValueError("Empty report")
+        verdict = validate_model_output(report, evidence_scan.requested_outputs)
+        if not verdict.allowed:
+            raise ValueError(f"Report output guard rejected response: {', '.join(verdict.reasons)}")
         if policy_for(state).reporting != "baseline":
             from agents.evaluation import score_report
             if not score_report(report, all_findings)["success"]:

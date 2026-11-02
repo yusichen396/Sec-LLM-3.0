@@ -44,3 +44,10 @@ docker>=7.0.0
 typer>=0.15.0
 rich>=13.0.0
 PyGithub>=2.5.0
+
+# Schema migrations (README quickstart runs `alembic upgrade head`)
+alembic>=1.13,<2
+SQLAlchemy>=2.0,<3
+
+# Real host metrics for the dashboard (optional at runtime, installed by default)
+psutil>=5.9,<8
