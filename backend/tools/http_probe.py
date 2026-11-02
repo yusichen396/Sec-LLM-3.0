@@ -28,7 +28,8 @@ async def fetch(url: str, *, params: Optional[dict] = None, timeout: float = 15.
     await get_limiter().wait(url)
 
     started = time.monotonic()
-    request_meta = {"method": "GET", "url": httpx.URL(url, params=params).human_repr(), "headers": {}}
+    request_url = str(httpx.URL(url, params=params))
+    request_meta = {"method": "GET", "url": request_url, "headers": {}}
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(timeout, connect=5.0),
         follow_redirects=False,
