@@ -4,6 +4,7 @@ Recon output is turned into explicit assets; the checks that make sense for thos
 assets are then selected, and everything the project *cannot* test is reported as a
 coverage gap instead of silently producing an empty result.
 """
+import re
 from typing import Any, Dict, List
 
 WEB_APP = "web_app"
@@ -12,6 +13,7 @@ HOST = "host"
 
 MAX_CHECKS = 18
 MAX_PARAMETERS = 3
+_URL_LIKE = re.compile(r"url|uri|link|next|redirect|callback|fetch|src|dest|target", re.IGNORECASE)
 
 
 def classify(discoveries: Dict[str, Any]) -> Dict[str, Any]:
@@ -77,16 +79,39 @@ def checks_for(assets: Dict[str, Any], discoveries: Dict[str, Any]) -> List[Dict
             checks.append({"check": "sqli_probe", "via": "query", "url": page_url, "parameter": parameter})
             checks.append({"check": "lfi_probe", "via": "query", "url": page_url, "parameter": parameter})
 
+        # URL 形态的参数做 SSRF（错误回显型）
+        for parameter in [p for p in parameters if _URL_LIKE.search(p)][:2]:
+            checks.append({"check": "ssrf_probe", "via": "query",
+                           "url": assets.get("parameter_pages", {}).get(parameter),
+                           "parameter": parameter})
+
+        # POST 表单做一次 SQLi（urlencoded body）
+        for form in forms[:3]:
+            if (form.get("method") or "get").lower() != "post":
+                continue
+            fields = {
+                str(field.get("name")): ""
+                for field in (form.get("inputs") or [])
+                if field.get("name") and field.get("type") not in ("submit", "button", "checkbox", "radio", "file")
+            }
+            for name in list(fields)[:2]:
+                checks.append({
+                    "check": "sqli_probe", "via": "form_post",
+                    "url": form.get("action"), "parameter": name,
+                    "method": "POST", "form_fields": fields,
+                })
+
     skipped: List[str] = []
     if API in types:
         skipped.append(
             f"api：已从规范发现 {len(assets.get('api_spec_endpoints') or [])} 个端点，"
-            "但越权(IDOR)与 POST/JSON body 测试尚未实现"
+            "但越权(IDOR)测试尚未实现"
         )
     if HOST in types:
         skipped.append("host：只做了 nmap 服务识别，未做 CVE 匹配")
-    skipped.append("ssrf / xxe / 反序列化：缺少专用检测器（SSRF 需带外回连，当前环境无法验证）")
-    skipped.append("检查仅覆盖 GET/query 形态；POST 表单与 JSON body 未纳入自动验证")
+    skipped.append("SSRF 仅覆盖错误回显型；带外（DNS/HTTP 回连）未覆盖")
+    skipped.append("xxe / 反序列化：缺少专用检测器")
+    skipped.append("POST 仅测试 urlencoded 表单；JSON body 与 multipart 未纳入")
 
     unique: List[Dict[str, Any]] = []
     seen = set()

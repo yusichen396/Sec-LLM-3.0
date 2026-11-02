@@ -32,6 +32,7 @@ import tools.shell         # noqa: E402
 import tools.source_reader  # noqa: E402
 import tools.sqli           # noqa: E402
 import tools.lfi            # noqa: E402
+import tools.ssrf           # noqa: E402
 import tools.api_discovery  # noqa: E402
 
 # Live cache; MySQL keeps the recoverable session record.

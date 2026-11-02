@@ -110,9 +110,11 @@ def _error(url: str, message: str, **extra) -> dict:
 async def _launch(playwright):
     from config import settings
 
-    return await playwright.chromium.launch(
-        headless=bool(getattr(settings, "AGENT_BROWSER_HEADLESS", True))
-    )
+    channel = (getattr(settings, "AGENT_BROWSER_CHANNEL", "") or "").strip()
+    kwargs = {"headless": bool(getattr(settings, "AGENT_BROWSER_HEADLESS", True))}
+    if channel:
+        kwargs["channel"] = channel
+    return await playwright.chromium.launch(**kwargs)
 
 
 async def _new_context(browser, url: str, use_session: bool):

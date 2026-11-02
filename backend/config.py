@@ -89,6 +89,9 @@ class Settings(BaseSettings):
     # Bounded crawl used for attack-surface discovery.
     AGENT_CRAWL_MAX_PAGES: int = 20
     AGENT_CRAWL_MAX_DEPTH: int = 2
+    # Use an installed system browser instead of the bundled Chromium:
+    # "msedge" / "chrome" (empty = Playwright's own download).
+    AGENT_BROWSER_CHANNEL: str = ""
     # Authenticated scanning: where storage_state blobs live and how long they last.
     AGENT_SESSION_DIR: str = "data/sessions"
     AGENT_SESSION_TTL_SECONDS: int = 1800

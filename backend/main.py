@@ -372,6 +372,7 @@ import tools.shell         # noqa: E402
 import tools.source_reader  # noqa: E402
 import tools.sqli           # noqa: E402
 import tools.lfi            # noqa: E402
+import tools.ssrf           # noqa: E402
 import tools.api_discovery  # noqa: E402
 
 # 配置 CORS：默认只放行本机前端，不再使用通配符 + 凭据的组合

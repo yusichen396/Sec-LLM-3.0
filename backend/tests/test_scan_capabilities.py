@@ -147,9 +147,10 @@ def test_checks_are_bounded_deduplicated_and_declare_gaps():
     assert len(keys) == len(set(keys))
 
     gaps = next(c for c in plan if c["check"] == "skipped")["reasons"]
-    assert any("ssrf" in reason for reason in gaps)
-    assert any("api" in reason for reason in gaps)
-    assert any("POST" in reason for reason in gaps)
+    lowered = [reason.lower() for reason in gaps]
+    assert any("ssrf" in reason for reason in lowered)
+    assert any("api" in reason for reason in lowered)
+    assert any("post" in reason for reason in lowered)
     assert "未覆盖" in summarize_plan(plan)
 
 

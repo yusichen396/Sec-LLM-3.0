@@ -1,16 +1,16 @@
-"""SQL injection probing (error-based + boolean-based).
+"""SQL injection probing (error-based + boolean-based), GET and form POST.
 
 Two independent signals have to agree before anything is reported:
 
 - **error-based**: an injected quote produces a database error signature that the
   baseline response did not contain;
 - **boolean-based**: ``AND 1=1`` keeps the page (nearly) identical to the baseline while
-  ``AND 1=2`` changes it materially — measured on normalised body length, twice.
+  ``AND 1=2`` changes it materially — measured on normalised body length.
 
 Reflection-only or single-attempt noise is reported as a lead, never as a finding.
 """
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from tools.http_probe import fetch
@@ -53,18 +53,32 @@ def _similar(a: int, b: int, tolerance: float = 0.05) -> bool:
     return abs(a - b) / max(a, b) <= tolerance
 
 
+async def _send(url: str, param: str, value: str, method: str, form_fields: Optional[dict]) -> Dict[str, Any]:
+    if method.upper() == "POST":
+        data = {str(k): str(v) for k, v in (form_fields or {}).items()}
+        data[param] = value
+        return await fetch(url, method="POST", data=data)
+    return await fetch(_with_param(url, param, value))
+
+
 @register_tool(
     name="sqli_probe",
-    description="Probe one query parameter for SQL injection using error-based and "
-    "boolean-based signals. Requires two agreeing signals; returns request/response "
-    "material so a replayable artifact can be stored.",
+    description="Probe one parameter for SQL injection using error-based and "
+    "boolean-based signals, over GET or a form POST. Requires two agreeing signals; "
+    "returns request/response material so a replayable artifact can be stored.",
     category="exploit",
     requires_provider=False,
 )
-async def sqli_probe(url: str, param: str) -> dict:
+async def sqli_probe(
+    url: str,
+    param: str,
+    method: str = "GET",
+    form_fields: Optional[dict] = None,
+) -> dict:
     """Probe a single parameter; never more than a handful of requests."""
+    method = "POST" if (method or "").upper() == "POST" else "GET"
     try:
-        baseline = await fetch(url)
+        baseline = await _send(url, param, "1", method, form_fields)
     except ValueError as error:
         return {"url": url, "status": "error", "error": str(error)[:300]}
     except Exception as error:  # network failure must be explicit
@@ -91,7 +105,7 @@ async def sqli_probe(url: str, param: str) -> dict:
         })
         if conclusive:
             findings.append({
-                "title": f"SQL injection in {param}",
+                "title": f"SQL injection in {param}" + (" (POST)" if method == "POST" else ""),
                 "severity": "High",
                 "evidence": payload,
                 "parameter": param,
@@ -104,7 +118,7 @@ async def sqli_probe(url: str, param: str) -> dict:
         if len(results) >= _MAX_PAYLOADS:
             break
         try:
-            probe = await fetch(_with_param(url, param, payload))
+            probe = await _send(url, param, payload, method, form_fields)
         except Exception as error:
             results.append({"payload": payload, "conclusive": False, "signal": "request_failed",
                             "detail": str(error)[:200]})
@@ -117,8 +131,8 @@ async def sqli_probe(url: str, param: str) -> dict:
 
     # --- boolean-based: AND 1=1 keeps the page, AND 1=2 changes it ------------------
     try:
-        true_probe = await fetch(_with_param(url, param, "1 AND 1=1"))
-        false_probe = await fetch(_with_param(url, param, "1 AND 1=2"))
+        true_probe = await _send(url, param, "1 AND 1=1", method, form_fields)
+        false_probe = await _send(url, param, "1 AND 1=2", method, form_fields)
         true_len = _norm_len(true_probe["body"])
         false_len = _norm_len(false_probe["body"])
         conclusive = (
@@ -130,7 +144,6 @@ async def sqli_probe(url: str, param: str) -> dict:
         detail = f"baseline={base_len} AND1=1:{true_len} AND1=2:{false_len}"
         record("1 AND 1=1 / 1 AND 1=2", false_probe, conclusive, "boolean_differential", detail)
         if conclusive:
-            # 把 1=1 的请求也留档，便于人工对冲
             results.append({
                 "payload": "1 AND 1=1",
                 "conclusive": False,
@@ -148,6 +161,7 @@ async def sqli_probe(url: str, param: str) -> dict:
     return {
         "url": url,
         "status": "success",
+        "method": method,
         "parameter": param,
         "payloads_tested": len(results),
         "vulnerable": vulnerable,

@@ -58,6 +58,35 @@ def test_lfi_detected_against_real_target(target, private_lab):
     assert any(r["signal"] == "file_marker" for r in result["results"])
 
 
+def test_sqli_detected_over_form_post(target, private_lab):
+    from tools import sqli
+
+    result = asyncio.run(sqli.sqli_probe(
+        f"{target}/search", "q", method="POST", form_fields={"q": "", "note": "x"}
+    ))
+    assert result["status"] == "success"
+    assert result["method"] == "POST"
+    assert result["vulnerable"] is True, result
+    assert result["findings"][0]["title"].endswith("(POST)")
+
+
+def test_ssrf_detected_from_upstream_error(target, private_lab):
+    from tools import ssrf
+
+    result = asyncio.run(ssrf.ssrf_probe(f"{target}/proxy?url=http://example.com/", "url"))
+    assert result["vulnerable"] is True, result
+    assert result["findings"][0]["severity"] == "High"
+    assert all(r["request"]["method"] == "GET" for r in result["results"] if r.get("request"))
+
+
+def test_ssrf_stays_quiet_without_internal_signal(target, private_lab):
+    from tools import ssrf
+
+    result = asyncio.run(ssrf.ssrf_probe(f"{target}/openapi.json?url=x", "url"))
+    assert result["vulnerable"] is False
+    assert result["findings"] == []
+
+
 def test_api_discovery_reads_real_spec(target, private_lab):
     from tools import api_discovery
 
