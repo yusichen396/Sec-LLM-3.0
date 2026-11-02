@@ -31,8 +31,18 @@ def get_db():
 
 
 async def get_current_active_user(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
+    db=Depends(get_db),
 ) -> Dict[str, Any]:
+    """Resolve the JWT user and require an active account.
+
+    ``db`` must be injected here: ``core.auth.jwt.get_current_user`` declares
+    ``db=None`` and returns None when it is not passed, so depending on that
+    function directly made every endpoint below ``get_current_active_user``
+    answer 401 for valid tokens.
+    """
+    current_user = await get_current_user(token, db)
     if current_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

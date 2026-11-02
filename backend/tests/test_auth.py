@@ -1,6 +1,9 @@
 """Tests for the auth module."""
+import inspect
+
 import pytest
-from core.auth.password import verify_password, get_password_hash
+from core.auth.password import verify_password, get_password_hash, password_needs_rehash
+from core.auth.dependencies import get_current_active_user
 from core.auth.jwt import create_access_token, get_current_user
 
 
@@ -11,6 +14,22 @@ class TestPasswordHashing:
         assert hashed != pw
         assert verify_password(pw, hashed)
         assert not verify_password("wrong-password", hashed)
+        assert not password_needs_rehash(hashed)
+
+    def test_legacy_passlib_hash_still_verifies(self):
+        """升级前用 passlib 写入的 $pbkdf2$ 哈希必须继续可用，否则老账号全被锁死。"""
+        passlib = pytest.importorskip("passlib.context")
+        legacy = passlib.CryptContext(schemes=["pbkdf2_sha256"]).hash("admin123")
+        assert verify_password("admin123", legacy)
+        assert not verify_password("wrong", legacy)
+        assert password_needs_rehash(legacy)
+
+    def test_access_token_dependency_injects_db(self):
+        """get_current_active_user 必须自己注入 db；否则所有依赖它的端点恒 401。"""
+        params = inspect.signature(get_current_active_user).parameters
+        assert "db" in params
+        assert params["db"].default is not inspect.Parameter.empty
+        assert "token" in params
 
     def test_different_hashes(self):
         h1 = get_password_hash("pw1")

@@ -885,8 +885,10 @@ def get_dashboard_stats(current_user: Dict[str, Any] = Depends(get_current_activ
             chart_rows = cursor.fetchall()
 
             # 6. 在线用户：最近 15 分钟内有登录记录的用户数
+            #    users.last_login 由 Python 写入 UTC 时间，这里必须用 UTC_TIMESTAMP()
+            #    比较；用 NOW()（服务器本地时间）会因时区差让结果恒为 0。
             cursor.execute(
-                "SELECT COUNT(*) AS count FROM users WHERE last_login >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)"
+                "SELECT COUNT(*) AS count FROM users WHERE last_login >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 15 MINUTE)"
             )
             online_users = cursor.fetchone()["count"]
 
