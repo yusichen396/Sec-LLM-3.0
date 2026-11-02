@@ -92,6 +92,21 @@ class TestExploitSpecialist:
     def test_only_observed_execution_is_verified(self, monkeypatch):
         import asyncio
         import agents.specialists.exploit as specialist
+        import agents.evidence_flow as evidence_flow
+
+        class Recorder:
+            """Stand-in for the artifact store: verification must depend on a reference."""
+            def __init__(self, *args, **kwargs):
+                pass
+
+            def record(self, **kwargs):
+                if kwargs.get("payload") != "executed":
+                    raise AssertionError("only executed payloads may be recorded")
+                return {"evidence_id": "EV-test", "evidence_path": "mem://EV-test",
+                        "evidence_sha256": "0" * 64, "poc_path": "mem://EV-test.repro.sh",
+                        "kind": "reflected_xss", "tool": kwargs.get("tool"), "payload": "executed"}
+
+        monkeypatch.setattr(evidence_flow, "EvidenceRecorder", Recorder)
 
         async def tool(name, **kwargs):
             if name == "browser_check_xss":
@@ -102,8 +117,10 @@ class TestExploitSpecialist:
                         {"title": "XSS", "evidence": "reflected"},
                     ],
                     "results": [
-                        {"payload": "executed", "dialog_triggered": True, "url": "http://example.com/?q=executed"},
-                        {"payload": "reflected", "dialog_triggered": False},
+                        {"payload": "executed", "executed": True, "dialog_triggered": True,
+                         "url": "http://example.com/?q=executed", "status": 200,
+                         "response_excerpt": "<script>alert(1)</script>"},
+                        {"payload": "reflected", "executed": False, "dialog_triggered": False},
                     ],
                 }
             return {"findings": [{"title": "SQL injection hypothesis"}]}
@@ -111,9 +128,10 @@ class TestExploitSpecialist:
         monkeypatch.setattr(specialist, "invoke_tool", tool)
         bb = Blackboard()
         discoveries = {"forms": [{"action": "/", "inputs": [{"name": "q", "type": "text"}]}]}
-        asyncio.run(run_exploit("http://example.com", "local", bb, discoveries))
+        asyncio.run(run_exploit("http://example.com", "local", bb, discoveries, session_id="s1"))
         findings = bb.get("all_findings")
         assert [f["verification_status"] for f in findings] == ["verified", "unverified", "unverified"]
+        assert findings[0]["evidence_id"] == "EV-test"
         assert findings[0]["reproduction"]["observed"] == "browser_dialog_triggered"
         assert "reproduction" not in findings[1]
 
@@ -184,7 +202,7 @@ class TestSupervisor:
             blackboard.publish("forms", [{"action": "/search", "inputs": []}], "recon")
             return {"phase": "recon_complete"}
 
-        async def exploit(target, provider, blackboard, discoveries):
+        async def exploit(target, provider, blackboard, discoveries, **kwargs):
             assert discoveries["forms"][0]["action"] == "/search"
             blackboard.publish("all_findings", [{"title": "sample"}], "exploit")
             return {"phase": "exploit_complete", "findings_count": 1}

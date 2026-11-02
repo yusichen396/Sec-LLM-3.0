@@ -84,6 +84,16 @@ class Settings(BaseSettings):
     # Browser tools refuse loopback/private/link-local targets unless explicitly allowed
     # (needed only for lab deployments that scan their own network).
     AGENT_ALLOW_PRIVATE_TARGETS: bool = False
+    # Politeness: minimum gap between requests to the same origin (seconds).
+    AGENT_MIN_REQUEST_INTERVAL_SECONDS: float = 1.0
+    # Bounded crawl used for attack-surface discovery.
+    AGENT_CRAWL_MAX_PAGES: int = 20
+    AGENT_CRAWL_MAX_DEPTH: int = 2
+    # Authenticated scanning: where storage_state blobs live and how long they last.
+    AGENT_SESSION_DIR: str = "data/sessions"
+    AGENT_SESSION_TTL_SECONDS: int = 1800
+    # Reproducible evidence artifacts (request/response + PoC) per session.
+    AGENT_EVIDENCE_DIR: str = "artifacts/evidence"
     # Auto-fix PR helper stays disabled and is never exposed to the planner.
     AGENT_AUTOFIX_ENABLED: bool = False
     AGENT_POLICY_PATH: Optional[str] = None  # default: data/agent_optimization/active.json

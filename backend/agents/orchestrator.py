@@ -11,8 +11,10 @@ from urllib.parse import urlsplit
 from langgraph.graph import END, StateGraph
 
 from agents.state import AgentState, AgentTask
+from agents.evidence_flow import attach_evidence
 from agents.reporting import annotate_finding
 from agents.policy import parse_plan, planning_messages, policy_for, report_messages
+from core.safety.scope import ScopeError, build_scope
 from dataclasses import asdict
 from agents.supervisor import run_multi_agent
 from config import settings
@@ -110,6 +112,37 @@ def _persist_session(session_id: str) -> None:
                     raise asyncio.CancelledError
 
 
+def _audit_scan(session_id: str, final: bool = False) -> None:
+    """Record who scanned what, under which authorisation. Never breaks the task."""
+    session = _sessions.get(session_id)
+    if not session:
+        return
+    task = session.get("task") or {}
+    scope = task.get("scope") or {}
+    try:
+        with _db_connection() as conn:
+            with conn.cursor() as cursor:
+                if not final:
+                    cursor.execute(
+                        """INSERT INTO scan_audit
+                           (session_id, user_id, target, task_type, authorization_ref, scope_json, status)
+                           VALUES (%s,%s,%s,%s,%s,%s,%s)
+                           ON DUPLICATE KEY UPDATE status=VALUES(status)""",
+                        (session_id, session.get("user_id"), task.get("target", ""),
+                         task.get("task_type", "web_scan"), scope.get("authorization_ref") or None,
+                         json.dumps(scope, ensure_ascii=False), session.get("status", "running")),
+                    )
+                else:
+                    cursor.execute(
+                        """UPDATE scan_audit
+                           SET status=%s, findings_count=%s, finished_at=NOW()
+                           WHERE session_id=%s""",
+                        (session.get("status", "unknown"), len(session.get("findings") or []), session_id),
+                    )
+    except Exception as error:  # 审计失败不影响扫描本身，但必须留痕
+        print(f"[AUDIT] failed for {session_id}: {error}")
+
+
 def _session_from_row(row: dict) -> Dict[str, Any]:
     """Reconstruct API-facing state without replaying any tool call."""
     logs = row.get("logs") or []
@@ -173,6 +206,7 @@ async def create_session(task: AgentTask, user_id: int | None = None) -> str:
         async with _sessions_lock:
             _sessions.pop(session_id, None)
         raise
+    await asyncio.to_thread(_audit_scan, session_id, False)
     return session_id
 
 
@@ -287,9 +321,14 @@ async def execute_node(state: AgentState) -> AgentState:
 
         if isinstance(result, dict):
             if "findings" in result and isinstance(result["findings"], list):
-                for f in result["findings"]:
-                    state["findings"].append(annotate_finding(f, tool_name, result))
-                    state["logs"].append(f"[FINDING] {f.get('severity', '?')}: {f.get('title', 'Untitled')}")
+                for annotated in attach_evidence(
+                    result["findings"], tool_name, result, state.get("session_id", "")
+                ):
+                    state["findings"].append(annotated)
+                    state["logs"].append(
+                        f"[FINDING] {annotated.get('severity', '?')}: {annotated.get('title', 'Untitled')}"
+                        f" ({annotated.get('verification_status')})"
+                    )
 
     except asyncio.TimeoutError:
         step["status"] = "timeout"
@@ -462,11 +501,17 @@ def _validate_task(task: AgentTask) -> str:
             raise ValueError("Invalid scan target") from error
         if not hostname or parsed.username or parsed.password:
             raise ValueError("Scan target must be a hostname, IP, or URL without credentials")
-        allowed = {item.strip().lower().rstrip(".") for item in settings.AGENT_ALLOWED_TARGETS.split(",") if item.strip()}
-        if settings.ENV_MODE.lower() in {"prod", "production"} and not allowed:
-            raise ValueError("AGENT_ALLOWED_TARGETS must be configured for production scans")
-        if allowed and hostname not in allowed:
-            raise ValueError("Scan target is outside AGENT_ALLOWED_TARGETS")
+        try:
+            scope = build_scope(
+                target,
+                env_mode=settings.ENV_MODE,
+                allowed_targets=settings.AGENT_ALLOWED_TARGETS,
+                authorization_ref=task.get("authorization_ref", ""),
+                window_minutes=task.get("window_minutes", 0),
+            )
+        except ScopeError as error:
+            raise ValueError(str(error)) from error
+        task["scope"] = scope.as_dict()
     elif task_type == "code_audit" and (settings.AGENT_CODE_AUDIT_ROOT or "").strip():
         # 配置了审计根目录时，先在这里把越界路径挡掉
         from pathlib import Path
@@ -499,6 +544,7 @@ async def _execute_agent(session_id: str, task: AgentTask) -> None:
         "target": target,
         "task_type": task_type,
         "provider": task.get("provider", settings.LLM_PROVIDER),
+        "session_id": session_id,
         "messages": [],
         "plan": [],
         "current_step": 0,
@@ -522,6 +568,7 @@ async def _execute_agent(session_id: str, task: AgentTask) -> None:
                 on_progress=lambda state: _store_progress(session_id, {
                     **state, "logs": initial_state["logs"] + state["logs"],
                 }),
+                session_id=session_id,
             )
             final_state = {
                 "phase": result["phase"], "status": result["status"],
@@ -619,6 +666,7 @@ async def _run_limited(session_id: str, task: AgentTask, recovered: bool = False
                 await heartbeat
             except asyncio.CancelledError:
                 pass
+        await asyncio.to_thread(_audit_scan, session_id, True)
 
 
 async def run_agent(task: AgentTask, user_id: int | None = None) -> str:

@@ -1,4 +1,4 @@
-"""Reconnaissance specialist agent — attack surface mapping."""
+"""Reconnaissance specialist agent — attack surface mapping (bounded crawl)."""
 from typing import Any, Dict
 
 from agents.collaboration import Blackboard
@@ -15,7 +15,7 @@ Available recon tools:
 Target: {target}
 
 Instructions:
-1. Start with broad recon (browser navigate, port scan via shell_exec)
+1. Start with broad recon (bounded crawl, port scan via shell_exec)
 2. Enumerate technologies, open ports, forms, links, JavaScript files
 3. Publish ALL discoveries to the blackboard using the exact key format:
    - open_ports: list of {{port, service, version}}
@@ -32,22 +32,43 @@ async def run_recon(target: str, provider: str, blackboard: Blackboard) -> Dict[
     tool_list = "\n".join(f"- {name}: {info['description']}" for name, info in recon_tools.items())
 
     findings = []
+    pages: list[dict] = []
 
-    # Step 1: Browser recon
+    # Step 1: bounded same-origin crawl (falls back to a single page)
     try:
-        result = await invoke_tool("browser_navigate", url=target)
+        result = await invoke_tool("browser_crawl", url=target)
+        if not isinstance(result, dict) or result.get("status") != "success":
+            result = await invoke_tool("browser_navigate", url=target)
         if isinstance(result, dict) and result.get("status") == "success":
+            if result.get("pages"):
+                pages = result["pages"]
+                blackboard.publish("pages", pages, "recon")
+                endpoints = [page.get("url") for page in pages if page.get("url")]
+                if endpoints:
+                    blackboard.publish("endpoints", endpoints[:200], "recon")
+                forms = [form for page in pages for form in (page.get("forms") or [])]
+            else:
+                pages = [{"url": result.get("final_url") or target,
+                          "title": result.get("title"),
+                          "forms": result.get("forms") or [],
+                          "query_parameters": []}]
+                forms = result.get("forms") or []
+                blackboard.publish("pages", pages, "recon")
             if result.get("links"):
-                blackboard.publish("endpoints", result["links"][:50], "recon")
-            if result.get("forms"):
-                blackboard.publish("forms", result["forms"], "recon")
-            if result.get("title"):
-                findings.append({"type": "page_info", "title": result["title"]})
-            blackboard.publish("page_title", result.get("title", ""), "recon")
+                blackboard.publish("endpoints", result["links"][:200], "recon")
+            if forms:
+                blackboard.publish("forms", forms[:50], "recon")
+            blackboard.publish("page_title", pages[0].get("title", ""), "recon")
+            findings.append({
+                "type": "page_info",
+                "title": pages[0].get("title", ""),
+                "pages_crawled": len(pages),
+                "truncated": bool(result.get("truncated")),
+            })
     except Exception as e:
-        findings.append({"type": "error", "tool": "browser_navigate", "error": str(e)})
+        findings.append({"type": "error", "tool": "browser_crawl", "error": str(e)})
 
-    # Step 2: Port scan via shell (extract hostname if target is a URL)
+    # Step 2: port scan via shell (extract hostname if target is a URL)
     from config import settings
 
     scan_target = ""

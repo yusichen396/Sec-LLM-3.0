@@ -104,13 +104,24 @@ class TestSessionManagement:
         monkeypatch.setattr(orch.settings, "ENV_MODE", "prod")
         monkeypatch.setattr(orch.settings, "AGENT_ALLOWED_TARGETS", "")
         with pytest.raises(ValueError, match="AGENT_ALLOWED_TARGETS"):
-            orch._validate_task({"target": "https://example.com", "task_type": "web_scan"})
+            orch._validate_task({"target": "https://example.com", "task_type": "web_scan",
+                                 "authorization_ref": "T-1"})
         monkeypatch.setattr(orch.settings, "AGENT_ALLOWED_TARGETS", "example.com")
-        assert orch._validate_task({"target": "https://EXAMPLE.com/path", "task_type": "web_scan"})
-        with pytest.raises(ValueError, match="outside"):
-            orch._validate_task({"target": "https://other.example/path", "task_type": "web_scan"})
+        # 生产必须带授权凭据（工单号），否则拒绝
+        with pytest.raises(ValueError, match="authorization_ref|授权"):
+            orch._validate_task({"target": "https://EXAMPLE.com/path", "task_type": "web_scan"})
+        task = {"target": "https://EXAMPLE.com/path", "task_type": "web_scan",
+                "authorization_ref": "T-2026-001", "window_minutes": 30}
+        assert orch._validate_task(task)
+        assert task["scope"]["authorization_ref"] == "T-2026-001"
+        assert task["scope"]["host"] == "example.com"
+        assert task["scope"]["expires_at"]
+        with pytest.raises(ValueError, match="outside|不在"):
+            orch._validate_task({"target": "https://other.example/path", "task_type": "web_scan",
+                                 "authorization_ref": "T-2026-001"})
         with pytest.raises(ValueError, match="credentials"):
-            orch._validate_task({"target": "https://user:pass@example.com", "task_type": "web_scan"})
+            orch._validate_task({"target": "https://user:pass@example.com", "task_type": "web_scan",
+                                 "authorization_ref": "T-2026-001"})
 
     def test_heartbeat_stops_worker_after_remote_cancel(self, monkeypatch):
         import agents.orchestrator as orch
@@ -191,7 +202,7 @@ class TestSessionManagement:
         calls = []
         persisted = []
 
-        async def specialists(target, task_type, provider, on_progress=None):
+        async def specialists(target, task_type, provider, on_progress=None, **kwargs):
             calls.append("specialists")
             if on_progress:
                 await on_progress({"phase": "recon", "status": "running", "steps_completed": 1,

@@ -30,6 +30,17 @@ class AgentTaskRequest(BaseModel):
         description="web_scan | code_audit | threat_intel | comprehensive",
     )
     provider: Literal["local", "cloud"] = Field(default="local", description="LLM provider: local or cloud")
+    authorization_ref: str = Field(
+        default="",
+        max_length=200,
+        description="工单号 / 授权凭据；生产环境的 web_scan 必填，会记入扫描审计",
+    )
+    window_minutes: int = Field(
+        default=0,
+        ge=0,
+        le=1440,
+        description="本次扫描的时间窗（分钟），0 表示不限",
+    )
 
 
 class AgentTaskResponse(BaseModel):
@@ -63,6 +74,8 @@ async def run_agent_task(
         "target": req.target,
         "task_type": req.task_type,
         "provider": req.provider,
+        "authorization_ref": req.authorization_ref,
+        "window_minutes": req.window_minutes,
     }
     try:
         session_id = await start_agent(task_dict, user_id=current_user["id"])

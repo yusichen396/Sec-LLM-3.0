@@ -2,27 +2,39 @@
 import math
 
 
-def annotate_finding(finding: dict, tool: str, result: dict) -> dict:
-    """Only observed browser execution counts as verified; model claims are leads."""
+def annotate_finding(finding: dict, tool: str, result: dict, evidence: dict | None = None) -> dict:
+    """Only observed execution *with a stored artifact* counts as verified.
+
+    ``evidence`` is the reference returned by ``core.evidence.EvidenceRecorder``.
+    Without it a finding stays a lead, even when the browser observed a dialog —
+    a claim the customer cannot replay is not a verified vulnerability.
+    """
     annotated = {
         **finding,
         "source_tool": tool,
         "verification_status": "unverified",
-        "verification_reason": "No independent execution evidence",
+        "verification_reason": "No independently replayable artifact",
     }
     if tool == "browser_check_xss":
-        evidence = finding.get("evidence")
+        observed = finding.get("evidence")
         match = next((item for item in result.get("results", [])
-                      if evidence and item.get("payload") == evidence and item.get("dialog_triggered") is True), None)
-        if match:
+                      if observed and item.get("payload") == observed
+                      and (item.get("executed") or item.get("dialog_triggered"))), None)
+        if match and evidence:
             annotated["verification_status"] = "verified"
-            annotated["verification_reason"] = "Browser dialog observed for matching payload"
+            annotated["verification_reason"] = "Browser execution observed and artifact stored"
+            annotated["evidence_id"] = evidence.get("evidence_id")
+            annotated["evidence_path"] = evidence.get("evidence_path")
+            annotated["evidence_sha256"] = evidence.get("evidence_sha256")
             annotated["reproduction"] = {
                 "url": match.get("url", result.get("url")),
                 "parameter": result.get("parameter"),
-                "payload": evidence,
+                "payload": observed,
                 "observed": "browser_dialog_triggered",
+                "poc_path": evidence.get("poc_path"),
             }
+        elif match:
+            annotated["verification_reason"] = "Execution observed but no evidence artifact was stored"
     # CVSS/OWASP 之前只定义未接线，导致报告里没有评分与分类
     return enhance_finding(annotated)
 

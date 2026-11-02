@@ -278,6 +278,25 @@ def init_db():
             # --- Agent 平台新表 ---
             cursor.execute(
                 """
+                CREATE TABLE IF NOT EXISTS scan_audit (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    session_id VARCHAR(8) NOT NULL,
+                    user_id INT,
+                    target VARCHAR(500) NOT NULL,
+                    task_type VARCHAR(50),
+                    authorization_ref VARCHAR(200),
+                    scope_json JSON NULL,
+                    status VARCHAR(20) DEFAULT 'running',
+                    findings_count INT DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    finished_at DATETIME NULL,
+                    UNIQUE KEY uq_scan_audit_session (session_id),
+                    INDEX idx_scan_audit_user (user_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                """
+            )
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS agent_sessions (
                     id VARCHAR(8) PRIMARY KEY,
                     user_id INT,

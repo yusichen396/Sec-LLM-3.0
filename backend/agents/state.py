@@ -9,6 +9,9 @@ class AgentTask(TypedDict, total=False):
     target: str
     task_type: str  # "web_scan" | "code_audit" | "threat_intel" | "comprehensive"
     provider: str   # "local" | "cloud"
+    authorization_ref: str   # 工单号/授权凭据；生产环境必填
+    window_minutes: int      # 扫描时间窗（分钟），0 表示不限
+    scope: Dict[str, Any]    # 由 _validate_task 构建并冻结
 
 
 class AgentState(TypedDict):
@@ -18,6 +21,7 @@ class AgentState(TypedDict):
     target: str                        # Target URL, IP, file path, or repo
     task_type: str                     # web_scan / code_audit / threat_intel / comprehensive
     provider: str                      # local or cloud
+    session_id: str                    # Session id, used to key evidence artifacts
     policy: Dict[str, Any]              # Snapshot pinned for this execution
 
     # Conversation

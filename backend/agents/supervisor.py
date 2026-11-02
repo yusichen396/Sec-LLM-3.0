@@ -21,6 +21,7 @@ class SupervisorState(TypedDict):
     recon_state: Dict[str, Any]
     exploit_state: Dict[str, Any]
     report_state: Dict[str, Any]
+    session_id: str
     logs: list[str]
 
 
@@ -37,7 +38,8 @@ async def _recon_node(state: SupervisorState) -> dict:
 
 async def _exploit_node(state: SupervisorState) -> dict:
     result = await run_exploit(state["target"], state["provider"], state["blackboard"],
-                               discoveries=state["recon_state"]["discoveries"])
+                               discoveries=state["recon_state"]["discoveries"],
+                               session_id=state.get("session_id", ""))
     count = len(state["blackboard"].get("all_findings", []))
     errors = [f"[EXPLOIT] {item['tool']} failed: {item['error']}" for item in result.get("errors", [])]
     return {
@@ -105,12 +107,13 @@ async def run_multi_agent(
     task_type: str = "comprehensive",
     provider: str = "local",
     on_progress: Callable[[Dict[str, Any]], Awaitable[None]] | None = None,
+    session_id: str = "",
 ) -> Dict[str, Any]:
     """Run independent specialist nodes through LangGraph; keep the public result shape."""
     policy = load_policy()
     initial = {
         "target": target, "task_type": task_type, "provider": provider,
-        "policy": asdict(policy),
+        "policy": asdict(policy), "session_id": session_id,
         "blackboard": Blackboard(), "recon_state": {}, "exploit_state": {},
         "report_state": {}, "logs": [f"[POLICY] {policy.version}"],
     }
