@@ -445,6 +445,22 @@ python -m pytest tests/ -v
 
 ---
 
+## 安全评分口径（仪表盘「安全评分」）
+
+分数是**确定性的扣分制**，不是模型打分，也不是随机数：
+
+```
+score = 100 - (12×Critical未处置 + 8×High未处置 + 3×Medium未处置 + 10×已验证的 Agent 发现)
+下限 0，上限 100
+```
+
+- 统计范围：全部日志分析记录 + 最近 50 个 Agent 会话（只统计 `verification_status == "verified"` 的发现）。
+- 完全没有数据时返回 `score: null`（前端显示「—」并给出原因），**不会**因为"没观测到问题"就给 100 分。
+- 权重与分级集中定义在 [`backend/core/security_score.py`](backend/core/security_score.py)，改口径只改这一处；接口同时返回 `penalties`（每一项扣多少分）与 `formula`，前端卡片里的「计算依据」直接展示这些字段。
+- 分级：≥90 优秀、75–89 良好、60–74 一般、40–59 较差、<40 危险。
+
+---
+
 ## 安全提示
 
 - 首次启动必须配置 `INITIAL_ADMIN_PASSWORD`（至少 12 位）；已有管理员不会在启动时被重新激活

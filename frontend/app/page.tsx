@@ -32,7 +32,7 @@ import {
   Wrench,
   Activity,
 } from 'lucide-react';
-import { getDashboardStats, getLogRecords, type AnalysisResult, type LogRecord, type UserInfo } from '@/lib/api';
+import { getDashboardStats, getLogRecords, type AnalysisResult, type LogRecord, type SecurityScore, type UserInfo } from '@/lib/api';
 import LLMProviderToggle from '@/components/LLMProviderToggle';
 import {
   AreaChart,
@@ -183,6 +183,7 @@ export default function Dashboard() {
   const [aiInteractionCount, setAiInteractionCount] = useState(0);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(emptyDashboardStats());
   const [systemLoad, setSystemLoad] = useState<number | null>(null);
+  const [securityScoreDetail, setSecurityScoreDetail] = useState<SecurityScore | null>(null);
   const [threatTrafficData, setThreatTrafficData] = useState(buildThreatTrafficData([]));
   const [logRecords, setLogRecords] = useState<LogRecord[]>([]);
   const [logRecordsError, setLogRecordsError] = useState<string | null>(null);
@@ -223,13 +224,18 @@ export default function Dashboard() {
   const loadDashboardStats = async () => {
     try {
       const stats = await getDashboardStats();
+      const score = stats.security_score;
       setDashboardStats({
         totalThreats: { value: stats.active_threats ?? 0, trend: null },
-        // 网络流量与安全评分后端没有对应指标，保持"—"而不是编一个数
+        // 网络流量后端没有对应指标，保持"—"而不是编一个数
         networkTraffic: { value: UNAVAILABLE, trend: null },
         activeEndpoints: { value: stats.online_users ?? 0, trend: null },
-        securityScore: { value: UNAVAILABLE, trend: null },
+        securityScore: {
+          value: typeof score?.score === 'number' ? score.score : UNAVAILABLE,
+          trend: null,
+        },
       });
+      setSecurityScoreDetail(score ?? null);
       setThreatTrafficData(buildThreatTrafficData(stats.chart_data || []));
       setSystemLoad(typeof stats.system_load === 'number' ? stats.system_load : null);
       if (typeof stats.total_events === 'number') {
@@ -244,6 +250,7 @@ export default function Dashboard() {
     } catch (error) {
       // 接口失败时回到占位态，而不是用随机数假装有数据
       setDashboardStats(emptyDashboardStats());
+      setSecurityScoreDetail(null);
       setThreatTrafficData(buildThreatTrafficData([]));
       setSystemLoad(null);
     }
@@ -1007,12 +1014,36 @@ export default function Dashboard() {
               <div className="bg-slate-900/50 backdrop-blur border border-white/5 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Lock className="w-8 h-8 text-cyan-400" />
-                  <TrendBadge trend={dashboardStats.securityScore.trend} />
+                  <span className="text-xs text-gray-400">
+                    {securityScoreDetail?.computed ? securityScoreDetail.grade : '—'}
+                  </span>
                 </div>
                 <p className="text-3xl font-bold text-white mb-1">
                   {formatPercent(dashboardStats.securityScore.value)}
                 </p>
-                <p className="text-sm text-gray-400">安全评分（未接入）</p>
+                <p className="text-sm text-gray-400 mb-2">安全评分</p>
+                {securityScoreDetail?.computed ? (
+                  <details className="text-xs text-gray-400">
+                    <summary className="cursor-pointer text-cyan-400 hover:text-cyan-300">计算依据</summary>
+                    <ul className="mt-2 space-y-1">
+                      {securityScoreDetail.penalties.length === 0 ? (
+                        <li>当前没有扣分项（满分 100）</li>
+                      ) : (
+                        securityScoreDetail.penalties.map((item) => (
+                          <li key={item.reason}>
+                            {item.reason} ×{item.count} → −{item.points} 分
+                          </li>
+                        ))
+                      )}
+                      <li className="text-gray-500 pt-1 border-t border-white/5 mt-1">
+                        {securityScoreDetail.formula}
+                      </li>
+                      <li className="text-gray-500">统计范围：{securityScoreDetail.window}</li>
+                    </ul>
+                  </details>
+                ) : (
+                  <p className="text-xs text-gray-500">{securityScoreDetail?.reason || '暂无数据'}</p>
+                )}
               </div>
             </div>
           </div>

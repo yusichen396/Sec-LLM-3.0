@@ -844,6 +844,14 @@ def update_llm_provider(
     return {"status": "success", "provider": provider}
 
 # --- 接口 5: 仪表盘统计 (真实数据版) ---
+# 安全评分口径见 core/security_score.py：100 分起扣，每一项扣分都可追溯到观测数据。
+from core.security_score import (
+    FORMULA as SECURITY_SCORE_FORMULA,
+    WINDOW as SECURITY_SCORE_WINDOW,
+    compute_security_score,
+)
+
+
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats(current_user: Dict[str, Any] = Depends(get_current_active_user)):
     conn = get_db_connection()
@@ -901,6 +909,49 @@ def get_dashboard_stats(current_user: Dict[str, Any] = Depends(get_current_activ
             except Exception:
                 system_load = None
 
+            # 8. 安全评分输入：按等级统计未处置项（一次聚合，避免多次扫表）
+            cursor.execute(
+                """
+                SELECT
+                  SUM(CASE WHEN threat_level = 'Critical' AND status = 'unresolved' THEN 1 ELSE 0 END) AS critical_unresolved,
+                  SUM(CASE WHEN threat_level = 'High'     AND status = 'unresolved' THEN 1 ELSE 0 END) AS high_unresolved,
+                  SUM(CASE WHEN threat_level = 'Medium'   AND status = 'unresolved' THEN 1 ELSE 0 END) AS medium_unresolved
+                FROM log_records WHERE user_id=%s
+                """,
+                (current_user["id"],),
+            )
+            level_row = cursor.fetchone() or {}
+
+            # 9. 已验证的 Agent 发现：只取最近 50 个会话，避免全表解析 JSON
+            cursor.execute(
+                "SELECT findings FROM agent_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT 50",
+                (current_user["id"],),
+            )
+            verified_findings = 0
+            for row in cursor.fetchall():
+                raw = row.get("findings")
+                if isinstance(raw, (bytes, bytearray)):
+                    raw = raw.decode("utf-8", errors="ignore")
+                if isinstance(raw, str):
+                    try:
+                        raw = json.loads(raw)
+                    except (TypeError, ValueError):
+                        continue
+                if not isinstance(raw, list):
+                    continue
+                verified_findings += sum(
+                    1 for item in raw
+                    if isinstance(item, dict) and item.get("verification_status") == "verified"
+                )
+
+            security_score = compute_security_score(
+                total_events=total_events,
+                critical_unresolved=level_row.get("critical_unresolved") or 0,
+                high_unresolved=level_row.get("high_unresolved") or 0,
+                medium_unresolved=level_row.get("medium_unresolved") or 0,
+                verified_findings=verified_findings,
+            )
+
             return {
                 "total_events": total_events,
                 "active_threats": active_threats,
@@ -908,6 +959,7 @@ def get_dashboard_stats(current_user: Dict[str, Any] = Depends(get_current_activ
                 "system_load": system_load,
                 "ai_interactions": ai_interactions,
                 "high_unresolved_count": high_unresolved_count,
+                "security_score": security_score,
                 "chart_data": [
                     {"time": str(row["day"]), "value": row["count"]} for row in chart_rows
                 ],
@@ -921,6 +973,16 @@ def get_dashboard_stats(current_user: Dict[str, Any] = Depends(get_current_activ
             "system_load": None,
             "ai_interactions": 0,
             "high_unresolved_count": 0,
+            "security_score": {
+                "score": None,
+                "grade": "暂无数据",
+                "computed": False,
+                "inputs": {},
+                "penalties": [],
+                "formula": SECURITY_SCORE_FORMULA,
+                "window": SECURITY_SCORE_WINDOW,
+                "reason": "统计接口不可用",
+            },
             "chart_data": [],
             "error": "statistics_unavailable",
         }

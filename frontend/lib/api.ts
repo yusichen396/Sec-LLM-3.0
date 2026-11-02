@@ -173,6 +173,23 @@ export interface LogRecordsResponse {
   records: LogRecord[];
 }
 
+export interface SecurityScorePenalty {
+  reason: string;
+  count: number;
+  points: number;
+}
+
+export interface SecurityScore {
+  score: number | null;
+  grade: string;
+  computed: boolean;
+  inputs: Record<string, number>;
+  penalties: SecurityScorePenalty[];
+  formula: string;
+  window: string;
+  reason: string | null;
+}
+
 export interface DashboardStatsResponse {
   total_events: number;
   active_threats: number;
@@ -181,6 +198,8 @@ export interface DashboardStatsResponse {
   system_load: number | null;
   ai_interactions: number;
   high_unresolved_count: number;
+  /** 可解释的安全评分；score 为 null 表示没有足够数据 */
+  security_score?: SecurityScore;
   chart_data: Array<{ time: string; value: number }>;
 }
 
