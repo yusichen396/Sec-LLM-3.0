@@ -16,6 +16,8 @@ class RetrievalPolicy:
     vector_weight: float = 1.0
     bm25_k1: float = 1.5
     bm25_b: float = 0.75
+    # 文档选定后，每篇再展开几个块（0/1 表示不展开）
+    expand_chunks: int = 2
 
     def __post_init__(self):
         if self.strategy not in ("vector", "hybrid", "bm25"):
@@ -26,6 +28,8 @@ class RetrievalPolicy:
             raise ValueError("Invalid rerank or rrf_k")
         if not 0.1 <= self.vector_weight <= 4 or not 0.1 <= self.bm25_k1 <= 3 or not 0 <= self.bm25_b <= 1:
             raise ValueError("Retrieval weights outside allowed bounds")
+        if type(self.expand_chunks) is not int or not 0 <= self.expand_chunks <= 4:
+            raise ValueError("expand_chunks must be an integer in [0, 4]")
 
     @property
     def version(self):
@@ -57,4 +61,9 @@ def retrieve(store, query: str, policy: RetrievalPolicy, *, where=None, strict=F
             bm25_k1=policy.bm25_k1, bm25_b=policy.bm25_b,
             strict=strict,
         )]
-    return rerank(query, docs, limit=3, strict=strict) if policy.rerank else docs[:3]
+    top = rerank(query, docs, limit=3, strict=strict) if policy.rerank else docs[:3]
+    if policy.expand_chunks > 1:
+        from core.rag.hybrid import expand_documents
+
+        top = expand_documents(store, query, top, per_doc=policy.expand_chunks, where=where)
+    return top

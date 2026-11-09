@@ -1189,7 +1189,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_ssdlc"
-      ]
+      ],
+      "relevant_section": "开发阶段"
     },
     {
       "id": "L091",
@@ -1198,7 +1199,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_incident"
-      ]
+      ],
+      "relevant_section": "报告流程"
     },
     {
       "id": "L092",
@@ -1207,7 +1209,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_data_class"
-      ]
+      ],
+      "relevant_section": "脱敏规则"
     },
     {
       "id": "L093",
@@ -1216,7 +1219,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_pentest"
-      ]
+      ],
+      "relevant_section": "授权要求"
     },
     {
       "id": "L094",
@@ -1225,7 +1229,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_logging"
-      ]
+      ],
+      "relevant_section": "留存期限"
     },
     {
       "id": "L095",
@@ -1234,7 +1239,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_vendor"
-      ]
+      ],
+      "relevant_section": "权限管理"
     },
     {
       "id": "L096",
@@ -1243,7 +1249,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_cloud"
-      ]
+      ],
+      "relevant_section": "身份与访问"
     },
     {
       "id": "L097",
@@ -1252,7 +1259,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_password"
-      ]
+      ],
+      "relevant_section": "口令强度"
     },
     {
       "id": "L098",
@@ -1261,7 +1269,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_cloud"
-      ]
+      ],
+      "relevant_section": "密钥"
     },
     {
       "id": "L099",
@@ -1270,7 +1279,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_incident"
-      ]
+      ],
+      "relevant_section": "隔离措施"
     },
     {
       "id": "L100",
@@ -1279,7 +1289,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_data_class"
-      ]
+      ],
+      "relevant_section": "分级定义"
     },
     {
       "id": "L101",
@@ -1288,7 +1299,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_password"
-      ]
+      ],
+      "relevant_section": "轮换与吊销"
     },
     {
       "id": "L102",
@@ -1297,7 +1309,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_ssdlc"
-      ]
+      ],
+      "relevant_section": "需求阶段"
     },
     {
       "id": "L103",
@@ -1306,7 +1319,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_incident"
-      ]
+      ],
+      "relevant_section": "分级标准"
     },
     {
       "id": "L104",
@@ -1315,7 +1329,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_data_class"
-      ]
+      ],
+      "relevant_section": "脱敏规则"
     },
     {
       "id": "L105",
@@ -1324,7 +1339,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_pentest"
-      ]
+      ],
+      "relevant_section": "手法限制"
     },
     {
       "id": "L106",
@@ -1333,7 +1349,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_logging"
-      ]
+      ],
+      "relevant_section": "留存期限"
     },
     {
       "id": "L107",
@@ -1342,7 +1359,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_vendor"
-      ]
+      ],
+      "relevant_section": "准入评估"
     },
     {
       "id": "L108",
@@ -1351,7 +1369,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_cloud"
-      ]
+      ],
+      "relevant_section": "身份与访问"
     },
     {
       "id": "L109",
@@ -1360,7 +1379,8 @@
       "topic": "long_doc",
       "relevant_ids": [
         "doc_password"
-      ]
+      ],
+      "relevant_section": "轮换与吊销"
     }
   ]
 }

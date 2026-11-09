@@ -174,4 +174,74 @@ def hybrid_search(
 
     _, _, docs = _corpus(store, where)
     ranked = sorted(fused.items(), key=lambda kv: kv[1], reverse=True)[:k]
-    return [(docs[i], s) for i, s in ranked if i in docs]
+
+    # 返回该文档与查询最匹配的那个块，而不是折叠时保留的首块，
+    # 否则 page_content 永远是文档开头，文档命中但内容对不上。
+    out: list[tuple[Document, float]] = []
+    for doc_id, score in ranked:
+        if doc_id not in docs:
+            continue
+        best = None
+        try:
+            hits = store.similarity_search(query, k=1, filter={"id": doc_id})
+            best = hits[0] if hits else None
+        except Exception:  # noqa: BLE001
+            best = None
+        out.append((best or docs[doc_id], score))
+    return out
+
+
+def expand_documents(
+    store: Any,
+    query: str,
+    docs: list[Document],
+    per_doc: int = 2,
+    where: dict | None = None,
+) -> list[Document]:
+    """对已选中的文档补充其内部最相关的若干片段。
+
+    融合层已按文档去重（避免块数刷分），但如果同一文档的多节内容都相关，
+    只返回一块会丢掉答案的一部分。这里在文档选定之后，再把每篇文档的
+    前 per_doc 个相关块补回来。
+    """
+    if per_doc <= 1 or not docs:
+        return docs
+
+    seen_docs: list[str] = []
+    for doc in docs:
+        doc_id = str((doc.metadata or {}).get("id") or "")
+        if doc_id and doc_id not in seen_docs:
+            seen_docs.append(doc_id)
+    if not seen_docs:
+        return docs
+
+    expanded: list[Document] = []
+    emitted: set[tuple[str, str]] = set()
+
+    for doc_id in seen_docs:
+        condition = {"id": doc_id}
+        query_filter = condition if not where else {"$and": [condition, where]}
+        try:
+            candidates = store.similarity_search(query, k=per_doc, filter=query_filter)
+        except Exception:  # noqa: BLE001 —— 展开失败不影响主链路
+            candidates = []
+
+        if not candidates:
+            # 回退：保留原文档
+            for doc in docs:
+                if str((doc.metadata or {}).get("id") or "") == doc_id:
+                    key = (doc_id, str((doc.metadata or {}).get("chunk", 0)))
+                    if key not in emitted:
+                        emitted.add(key)
+                        expanded.append(doc)
+                    break
+            continue
+
+        for candidate in candidates:
+            key = (doc_id, str((candidate.metadata or {}).get("chunk", 0)))
+            if key in emitted:
+                continue
+            emitted.add(key)
+            expanded.append(candidate)
+
+    return expanded or docs
