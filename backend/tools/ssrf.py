@@ -56,6 +56,8 @@ def _markers(body: str) -> tuple[list[str], list[str]]:
     "error-based signals: internal destinations must produce upstream connection errors "
     "or metadata content that the baseline lacks.",
     category="exploit",
+        accepts="url",
+        expects="findings_list",
     requires_provider=False,
 )
 async def ssrf_probe(url: str, param: str) -> dict:

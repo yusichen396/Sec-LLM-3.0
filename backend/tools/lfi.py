@@ -45,6 +45,8 @@ def _marker(body: str) -> str:
     description="Probe one parameter for path traversal / local file inclusion by "
     "injecting traversal payloads and looking for file markers that the baseline lacks.",
     category="exploit",
+        accepts="url",
+        expects="findings_list",
     requires_provider=False,
 )
 async def lfi_probe(url: str, param: str) -> dict:

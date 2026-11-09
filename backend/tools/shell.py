@@ -34,10 +34,11 @@ async def _capture(proc):
 
 @register_tool(
     name="shell_exec",
-    description="Execute an approved security tool in an isolated Docker sandbox. "
-    "Use for running security tools like nmap, sqlmap, nuclei, ffuf, etc. "
-    "Returns stdout, stderr, and exit code. Max 300s timeout.",
-    category="recon",
+        description="Run an approved command-line security tool (nmap, sqlmap, nuclei, ffuf, "
+        "nikto, whatweb, semgrep, bandit) inside an isolated Docker sandbox and return stdout, "
+        "stderr and exit code. Use this whenever the task names a CLI tool or asks to run a "
+        "scan/detection program. It does NOT fetch, crawl or render web pages: use the browser_* "
+        "tools for page access, and the *_probe tools for single-parameter vulnerability tests.",
     requires_provider=False,
 )
 async def shell_exec(command: str, timeout: int = 300) -> dict:

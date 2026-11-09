@@ -130,6 +130,7 @@ async def _fetch_otx(ioc: str, ioc_type: str) -> Dict[str, Any]:
     description="Enrich an IOC (IP, domain, MD5, SHA256) with threat intelligence "
     "from AbuseIPDB and AlienVault OTX. Returns scores, confidence, tags, and verdict.",
     category="recon",
+        accepts="ioc",
 )
 async def enrich_ioc(ioc: str, ioc_type: str = "auto") -> dict:
     """Multi-source threat intelligence enrichment for an IOC."""
@@ -203,6 +204,7 @@ async def enrich_ioc(ioc: str, ioc_type: str = "auto") -> dict:
     description="Generate a Chinese-language threat intelligence assessment report "
     "from enrichment data. Call enrich_ioc first, then pass its output here.",
     category="report",
+        expects="content",
 )
 async def report_ioc(ioc: str, detected_type: str, enrichment: dict, provider: str = "local") -> str:
     """Generate an AI threat intelligence assessment report."""

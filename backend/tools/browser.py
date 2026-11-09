@@ -161,12 +161,12 @@ def _excerpt(text: str, limit: int = 800) -> str:
 # ---------------------------------------------------------------- login
 @register_tool(
     name="browser_login",
-    description="Log into a web application once and store the resulting cookies/localStorage "
-    "for this origin, so later crawl/scan calls run authenticated. Provide CSS selectors for "
-    "the username, password and submit controls; optionally a selector that only appears after "
-    "a successful login. Credentials are never stored or returned.",
-    category="recon",
-    requires_provider=False,
+        description="Log into a web application once and store the session (cookies/localStorage) "
+        "for this origin so later authenticated calls work. Use this whenever the user supplies "
+        "login credentials for a target site. The selector arguments are OPTIONAL: built-in "
+        "defaults for the common username/password/submit fields are used when they are omitted, "
+        "so providing only url, username and password is enough. Credentials are never stored "
+        "or returned.",
 )
 async def browser_login(
     url: str,
@@ -329,8 +329,12 @@ async def browser_navigate(url: str, use_session: bool = True) -> dict:
     name="browser_crawl",
     description="Bounded same-origin crawl used for attack-surface discovery. Follows links "
     "to a configured depth/page budget, is rate limited, and returns every page's forms, query "
-    "parameters and scripts so later checks have real endpoints instead of just the homepage.",
+    "parameters and scripts so later checks have real endpoints instead of just the homepage. "
+    "Use when the task is to enumerate endpoints across pages (forms, query parameters, "
+    "scripts) for later probing. It returns NO page body text: use browser_navigate "
+    "to read a page's content, and browser_screenshot when an image is required.",
     category="recon",
+        accepts="url",
     requires_provider=False,
 )
 async def browser_crawl(url: str, max_pages: int = 0, max_depth: int = 0, use_session: bool = True) -> dict:
@@ -430,6 +434,7 @@ async def browser_crawl(url: str, max_pages: int = 0, max_depth: int = 0, use_se
     "reported as a lead, not as a confirmed vulnerability. Returns request/response material "
     "so an evidence artifact can be stored.",
     category="exploit",
+        expects="findings_list",
     requires_provider=False,
 )
 async def browser_check_xss(url: str, param: str, use_session: bool = True) -> dict:

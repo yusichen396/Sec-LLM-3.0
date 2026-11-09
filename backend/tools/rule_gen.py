@@ -49,6 +49,7 @@ def lint_rule(text: str, rule_type: str) -> Dict[str, Any]:
     "description of the threat or detection requirement. The result is structurally "
     "linted and returned with the lint report.",
     category="report",
+        expects="content",
 )
 async def generate_rule(
     requirement: str,

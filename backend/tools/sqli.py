@@ -67,6 +67,8 @@ async def _send(url: str, param: str, value: str, method: str, form_fields: Opti
     "boolean-based signals, over GET or a form POST. Requires two agreeing signals; "
     "returns request/response material so a replayable artifact can be stored.",
     category="exploit",
+        accepts="url",
+        expects="findings_list",
     requires_provider=False,
 )
 async def sqli_probe(

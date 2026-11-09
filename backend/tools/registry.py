@@ -39,6 +39,8 @@ def register_tool(
     description: str,
     category: str = "general",
     requires_provider: bool = True,
+    expects: str = "any",
+    accepts: str = "any",
 ):
     """Decorator to register a function as an agent-callable tool.
 
@@ -56,6 +58,8 @@ def register_tool(
             "category": category,
             "func": func,
             "requires_provider": requires_provider,
+            "expects": expects,
+            "accepts": accepts,
         }
         return func
 

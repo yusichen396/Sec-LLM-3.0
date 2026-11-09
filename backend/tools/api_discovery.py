@@ -56,6 +56,7 @@ def _extract(spec: Dict[str, Any]) -> List[Dict[str, Any]]:
     description="Discover an API surface by reading its published OpenAPI/Swagger spec, "
     "returning endpoints, methods and parameter names for later authorization testing.",
     category="recon",
+        accepts="url",
     requires_provider=False,
 )
 async def api_discovery(url: str) -> dict:

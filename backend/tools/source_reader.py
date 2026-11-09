@@ -84,6 +84,8 @@ def _collect(path: Path, budget: int) -> tuple[list[dict], bool]:
     "AGENT_CODE_AUDIT_ROOT. Returns file contents (bounded) for the code_auditor tool. "
     "Call this first for task_type=code_audit, then pass the returned code to code_auditor.",
     category="recon",
+        accepts="code",
+        expects="content",
     requires_provider=False,
 )
 async def read_source(path: str = ".") -> dict:

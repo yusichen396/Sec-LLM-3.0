@@ -39,6 +39,8 @@ _PARSE_ERROR = {
     "JavaScript, Go, Java, and more. This is model judgement, not a static analyser: "
     "every finding is a lead until independently verified.",
     category="exploit",
+        accepts="code",
+        expects="findings_list",
 )
 async def audit_code(code: str, language: str = "python", provider: str = "local") -> dict:
     """Audit source code for security vulnerabilities."""

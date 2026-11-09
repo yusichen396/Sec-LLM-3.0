@@ -32,6 +32,7 @@ _EMPTY = {
     "suitable for management. Extracts critical findings, exposed ports, "
     "and prioritized action items.",
     category="report",
+        expects="content",
 )
 async def explain_report(content: str, provider: str = "local") -> dict:
     """Parse a scan report into a structured executive summary."""
