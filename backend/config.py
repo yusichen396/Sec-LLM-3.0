@@ -71,6 +71,19 @@ class Settings(BaseSettings):
     AGENT_SANDBOX_IMAGE: str = "sec-llm-sandbox:latest"
     AGENT_MAX_STEPS: int = 20
     AGENT_STEP_TIMEOUT_SECONDS: int = 300
+    # 规划校验失败时的重试次数（0 表示不重试）
+    AGENT_PLAN_RETRIES: int = 1
+    # 工具执行失败的重试次数（仅对超时/连接类临时错误生效）
+    AGENT_STEP_RETRIES: int = 1
+    AGENT_STEP_RETRY_BACKOFF_SECONDS: float = 0.5
+    # 连续多少步失败后提前终止（0 表示不熔断）
+    AGENT_MAX_CONSECUTIVE_FAILURES: int = 2
+    # 熔断阈值按计划长度放大：每 N 步容忍一次连续失败（0 表示只用固定下限）
+    AGENT_CIRCUIT_BREAKER_RATIO: float = 3.0
+    # 失败后允许的重新规划次数（0 表示不做自我修正）
+    AGENT_MAX_REPLANS: int = 1
+    # 目标类型与工具不匹配时，执行前拦截（需重规划）
+    AGENT_ENFORCE_TARGET_TOOL_MATCH: bool = True
     AGENT_TASK_TIMEOUT_SECONDS: int = 1800
     AGENT_MAX_CONCURRENT: int = 4
     AGENT_BROWSER_HEADLESS: bool = True

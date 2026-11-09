@@ -35,6 +35,10 @@ class AgentState(TypedDict):
     observations: List[Dict[str, Any]] # [{tool, args, result, duration_ms}]
     findings: List[Dict[str, Any]]     # [{title, severity, description, evidence, file, line}]
 
+    # Self-correction
+    replans: int                     # 已执行的重新规划次数
+    consecutive_failures: int        # 连续失败步数（用于熔断）
+
     # Control flow
     phase: str                         # planning | recon | exploit | verify | report | done | error
     status: str                        # running | completed | failed

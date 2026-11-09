@@ -1,4 +1,6 @@
 """Agent orchestrator — LangGraph StateGraph for autonomous security testing."""
+import math
+import re
 import asyncio
 import json
 import time
@@ -13,6 +15,7 @@ from langgraph.graph import END, StateGraph
 from agents.state import AgentState, AgentTask
 from agents.evidence_flow import attach_evidence
 from agents.reporting import annotate_finding
+from agents.planner import plan_with_retry, revise_failed_step
 from agents.policy import parse_plan, planning_messages, policy_for, report_messages
 from core.safety.scope import ScopeError, build_scope
 from dataclasses import asdict
@@ -265,13 +268,23 @@ async def planner_node(state: AgentState) -> AgentState:
     messages = planning_messages(state, tools, policy, settings.AGENT_MAX_STEPS)
 
     try:
-        raw = await single_shot_completion(
-            messages, provider=state.get("provider", "local"), temperature=0.1, json_mode=False
+        plan, meta = await plan_with_retry(
+            task=state,
+            tools=tools,
+            policy=policy,
+            max_steps=settings.AGENT_MAX_STEPS,
+            provider=state.get("provider", "local"),
+            retries=settings.AGENT_PLAN_RETRIES,
+            log=state["logs"].append,
+            complete=single_shot_completion,
         )
-        state["plan"] = parse_plan(raw, tools, settings.AGENT_MAX_STEPS)
+        state["plan"] = plan
         state["current_step"] = 0
+        state["plan_attempts"] = meta["attempts"]
         state["logs"].append(f"[POLICY] {policy.version}")
-        state["logs"].append(f"[PLAN] Generated {len(state['plan'])}-step plan")
+        state["logs"].append(f"[PLAN] Generated {len(plan)}-step plan")
+        if meta["recovered"]:
+            state["logs"].append(f"[PLAN] recovered from validation error after {meta['attempts']} attempts")
     except Exception as e:
         state["error"] = f"Planning failed: {e}"
         state["status"] = "failed"
@@ -279,8 +292,142 @@ async def planner_node(state: AgentState) -> AgentState:
     return state
 
 
+REF_PREFIX = "$"
+
+CONTENT_KEYS = ("text", "content", "rule", "rules", "report", "markdown", "stdout", "source", "code", "summary")
+
+
+class TargetToolMismatch(RuntimeError):
+    """目标类型与所选工具不匹配（很可能是选错了工具）。"""
+
+
+URL_TARGET_TOOLS = frozenset({
+    "sqli_probe", "lfi_probe", "ssrf_probe", "api_discovery",
+    "browser_crawl", "browser_navigate", "browser_screenshot",
+    "browser_login", "browser_check_xss", "browser_session_status",
+})
+CODE_TARGET_TOOLS = frozenset({"code_auditor", "read_source"})
+IOC_TARGET_TOOLS = frozenset({"threat_intel_enrich", "threat_intel_report"})
+
+IOC_PATTERN = re.compile(
+    r"^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64}"
+    r"|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$"
+)
+
+
+def target_kind(target: str) -> str:
+    """粗分目标类型：url / code_or_path / ioc / unknown。"""
+    value = (target or "").strip()
+    if not value:
+        return "unknown"
+    lowered = value.lower()
+    if lowered.startswith(("http://", "https://")):
+        return "url"
+    if value.startswith(("/", "./", "../")) or "\n" in value or len(value) > 200:
+        return "code_or_path"
+    if IOC_PATTERN.match(value):
+        return "ioc"
+    return "unknown"
+
+
+def check_target_tool_match(tool_info: dict | None, target: str) -> None:
+    """工具声明了 accepts 时，检查目标类型是否匹配。unknown 类型放行。"""
+    if not settings.AGENT_ENFORCE_TARGET_TOOL_MATCH:
+        return
+    accepts = (tool_info or {}).get("accepts", "any")
+    if accepts in (None, "any"):
+        return
+    kind = target_kind(target)
+    if kind == "unknown":
+        return
+
+    allowed = {
+        "url": {"url"},
+        "code": {"code_or_path"},
+        "ioc": {"ioc", "url"},
+    }.get(accepts, set())
+    if kind not in allowed:
+        raise TargetToolMismatch(
+            f"tool {tool_info.get('name', '?')} accepts {accepts} targets, got {kind}"
+        )
+
+
+class WeakResultError(RuntimeError):
+    """工具执行成功但产出不符合其契约（很可能是选错了工具）。"""
+
+
+def validate_tool_result(tool_info: dict, result: object) -> None:
+    """按工具的产出契约检查结果；不满足则抛 WeakResultError。"""
+    expects = (tool_info or {}).get("expects", "any")
+    if expects in (None, "any"):
+        return
+
+    if not isinstance(result, dict):
+        if expects == "content" and not str(result or "").strip():
+            raise WeakResultError("tool returned empty content")
+        return
+
+    if expects == "findings_list":
+        findings = result.get("findings")
+        if not isinstance(findings, list):
+            raise WeakResultError("tool result has no findings list; likely the wrong tool")
+        return
+
+    if expects == "content":
+        for key in CONTENT_KEYS:
+            value = result.get(key)
+            if isinstance(value, str) and value.strip():
+                return
+            if isinstance(value, list) and value:
+                return
+        raise WeakResultError("tool returned no usable content; likely the wrong tool")
+
+
+def resolve_step_refs(args: dict, observations: list) -> dict:
+    """把 $prev / $step:N 替换成前序步骤的真实结果。未匹配的引用原样保留。"""
+    if not args:
+        return args
+    resolved = dict(args)
+    for key, value in resolved.items():
+        if not (isinstance(value, str) and value.startswith(REF_PREFIX)):
+            continue
+        if value == "$prev":
+            if observations:
+                resolved[key] = observations[-1]["result"]
+        elif value.startswith("$step:"):
+            try:
+                index = int(value.split(":", 1)[1])
+            except (IndexError, ValueError):
+                continue
+            if 0 <= index < len(observations):
+                resolved[key] = observations[index]["result"]
+    return resolved
+
+
+RETRYABLE_HINTS = (
+    "timeout", "timed out", "connection", "connection reset", "temporarily",
+    "429", "rate limit", "502", "503", "504", "broken pipe",
+)
+
+
+def classify_step_error(exc: BaseException) -> str:
+    """把工具执行异常归类：timeout / transient（可重试）/ rejected / fatal。"""
+    if isinstance(exc, asyncio.TimeoutError):
+        return "timeout"
+    message = str(exc).lower()
+    if isinstance(exc, WeakResultError):
+        return "weak_result"
+    if isinstance(exc, TargetToolMismatch):
+        return "target_mismatch"
+    if "rejected" in message or "not allowed" in message or "unsupported tool" in message:
+        return "rejected"
+    if any(hint in message for hint in RETRYABLE_HINTS):
+        return "transient"
+    return "fatal"
+
+
 async def execute_node(state: AgentState) -> AgentState:
-    """Execute the current plan step's tool."""
+    """Execute the current plan step's tool, with retry and circuit breaking."""
     if state["current_step"] >= len(state["plan"]):
         state["phase"] = "done"
         return state
@@ -293,38 +440,49 @@ async def execute_node(state: AgentState) -> AgentState:
     if tool_info is None:
         state["logs"].append(f"[ERROR] Unknown tool: {tool_name}")
         step["status"] = "skipped"
+        step["error_class"] = "unknown_tool"
         state["current_step"] += 1
+        _track_circuit_breaker(state)
         return state
 
-    state["logs"].append(f"[EXEC] {tool_name}({json.dumps(tool_args, ensure_ascii=False)})")
-    step["status"] = "running"
+    attempts = 0
+    error_class = ""
+    for attempt in range(settings.AGENT_STEP_RETRIES + 1):
+        attempts = attempt + 1
+        state["logs"].append(f"[EXEC] {tool_name}({json.dumps(tool_args, ensure_ascii=False)})")
+        step["status"] = "running"
 
-    try:
-        if tool_info.get("requires_provider"):
-            tool_args["provider"] = state.get("provider", "local")
+        try:
+            if tool_info.get("requires_provider"):
+                tool_args["provider"] = state.get("provider", "local")
+            tool_args = resolve_step_refs(tool_args, state.get("observations", []))
+            check_target_tool_match(tool_info, state.get("target", ""))
 
-        loop = asyncio.get_event_loop()
-        start = loop.time()
-        result = await asyncio.wait_for(
-            invoke_tool(tool_name, **tool_args),
-            timeout=settings.AGENT_STEP_TIMEOUT_SECONDS,
-        )
-        elapsed = int((loop.time() - start) * 1000)
+            loop = asyncio.get_event_loop()
+            start = loop.time()
+            result = await asyncio.wait_for(
+                invoke_tool(tool_name, **tool_args),
+                timeout=settings.AGENT_STEP_TIMEOUT_SECONDS,
+            )
+            elapsed = int((loop.time() - start) * 1000)
 
-        state["observations"].append({
-            "tool": tool_name, "args": tool_args,
-            "result": result, "duration_ms": elapsed,
-        })
-        if isinstance(result, dict) and (
-            result.get("status") in ("error", "failed") or result.get("error")
-            or ("exit_code" in result and result["exit_code"] != 0)
-        ):
-            raise RuntimeError(f"Tool returned failure: {str(result)[:1000]}")
-        step["status"] = "done"
-        state["logs"].append(f"[DONE] {tool_name} completed in {elapsed}ms")
+            if isinstance(result, dict) and (
+                result.get("status") in ("error", "failed") or result.get("error")
+                or ("exit_code" in result and result["exit_code"] != 0)
+            ):
+                raise RuntimeError(f"Tool returned failure: {str(result)[:1000]}")
 
-        if isinstance(result, dict):
-            if "findings" in result and isinstance(result["findings"], list):
+            validate_tool_result(tool_info, result)
+
+            state["observations"].append({
+                "tool": tool_name, "args": tool_args,
+                "result": result, "duration_ms": elapsed,
+            })
+            step["status"] = "done"
+            step.pop("error_class", None)
+            state["logs"].append(f"[DONE] {tool_name} completed in {elapsed}ms")
+
+            if isinstance(result, dict) and isinstance(result.get("findings"), list):
                 for annotated in attach_evidence(
                     result["findings"], tool_name, result, state.get("session_id", "")
                 ):
@@ -333,26 +491,131 @@ async def execute_node(state: AgentState) -> AgentState:
                         f"[FINDING] {annotated.get('severity', '?')}: {annotated.get('title', 'Untitled')}"
                         f" ({annotated.get('verification_status')})"
                     )
+            error_class = ""
+            break
 
-    except asyncio.TimeoutError:
-        step["status"] = "timeout"
-        state["logs"].append(f"[TIMEOUT] {tool_name} exceeded {settings.AGENT_STEP_TIMEOUT_SECONDS}s")
-    except Exception as e:
-        step["status"] = "error"
-        state["logs"].append(f"[ERROR] {tool_name} failed: {e}")
+        except Exception as exc:  # noqa: BLE001
+            error_class = classify_step_error(exc)
+            step["error_class"] = error_class
+            step["attempts"] = attempts
+
+            if error_class in ("timeout", "transient") and attempt < settings.AGENT_STEP_RETRIES:
+                backoff = settings.AGENT_STEP_RETRY_BACKOFF_SECONDS * (attempt + 1)
+                state["logs"].append(
+                    f"[RETRY] {tool_name} {error_class} error ({exc}); "
+                    f"retry {attempt + 1}/{settings.AGENT_STEP_RETRIES} in {backoff:.1f}s"
+                )
+                await asyncio.sleep(backoff)
+                continue
+
+            step["status"] = "timeout" if error_class == "timeout" else "error"
+            state["logs"].append(
+                f"[{'TIMEOUT' if error_class == 'timeout' else 'ERROR'}] "
+                f"{tool_name} failed ({error_class}): {exc}"
+            )
+            break
 
     state["current_step"] += 1
+    _track_circuit_breaker(state)
     return state
 
 
+def _circuit_limit(plan_len: int) -> int:
+    """连续失败阈值：不低于固定下限，长计划按比例放大。"""
+    floor = settings.AGENT_MAX_CONSECUTIVE_FAILURES
+    ratio = settings.AGENT_CIRCUIT_BREAKER_RATIO
+    if floor <= 0:
+        return 0
+    if ratio <= 0:
+        return floor
+    return max(floor, math.ceil(plan_len / ratio))
+
+
+def _track_circuit_breaker(state: AgentState) -> None:
+    """连续失败达到阈值时提前终止，避免继续消耗预算。"""
+    limit = _circuit_limit(len(state["plan"]))
+    if limit <= 0:
+        return
+
+    last = state["plan"][state["current_step"] - 1] if state["current_step"] else {}
+    if last.get("status") == "done":
+        state["consecutive_failures"] = 0
+        return
+
+    state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
+    if state["consecutive_failures"] >= limit:
+        remaining = len(state["plan"]) - state["current_step"]
+        state["logs"].append(
+            f"[CIRCUIT] {state['consecutive_failures']}/{limit} consecutive step failures; "
+            f"aborting {remaining} remaining step(s)"
+        )
+        state["error"] = state.get("error") or (
+            f"aborted after {state['consecutive_failures']} consecutive step failures"
+        )
+        state["current_step"] = len(state["plan"])
+
+
 async def reflect_node(state: AgentState) -> AgentState:
-    """Evaluate progress and decide next action."""
+    """失败步骤回灌给模型，尝试换成可行的替代步骤。"""
     state["phase"] = "reflect"
+    state.setdefault("replans", 0)
+    state.setdefault("consecutive_failures", 0)
     if state.get("error"):
         state["status"] = "failed"
         return state
-    if state["current_step"] >= len(state["plan"]):
-        state["logs"].append("[REFLECT] All planned steps executed")
+
+    failed_index = next(
+        (i for i, step in enumerate(state["plan"]) if step.get("status") in ("error", "timeout")),
+        None,
+    )
+    if failed_index is None:
+        if state["current_step"] >= len(state["plan"]):
+            state["logs"].append("[REFLECT] All planned steps executed")
+        return state
+
+    if state.get("replans", 0) >= settings.AGENT_MAX_REPLANS:
+        state["logs"].append(
+            f"[REFLECT] replan budget exhausted ({state.get('replans', 0)}); keeping failure"
+        )
+        return state
+
+    failed_step = state["plan"][failed_index]
+    error_line = next(
+        (line for line in reversed(state["logs"])
+         if line.startswith("[ERROR]") or line.startswith("[TIMEOUT]")),
+        "",
+    )
+    context = "; ".join(
+        f"{obs['tool']} -> {str(obs.get('result'))[:80]}"
+        for obs in state.get("observations", [])[-3:]
+    )
+
+    try:
+        proposal = await revise_failed_step(
+            task=state,
+            tools=get_all_tools(),
+            failed_step=failed_step,
+            error=error_line or failed_step.get("error_class", "unknown"),
+            context=context,
+            provider=state.get("provider", "local"),
+            complete=single_shot_completion,
+        )
+    except Exception as exc:  # noqa: BLE001
+        state["logs"].append(f"[REPLAN] revision failed: {exc}")
+        return state
+
+    if proposal is None:
+        state["logs"].append("[REPLAN] no viable alternative; keeping failure")
+        return state
+
+    state["plan"][failed_index] = proposal
+    state["replans"] = state.get("replans", 0) + 1
+    state["current_step"] = failed_index
+    state["consecutive_failures"] = 0
+    state["logs"].append(
+        f"[REPLAN] step {failed_index + 1}: {failed_step.get('tool')} -> {proposal['tool']} "
+        f"(replan {state['replans']}/{settings.AGENT_MAX_REPLANS})"
+    )
     return state
 
 
@@ -443,16 +706,33 @@ async def executor_agent(state: AgentState) -> dict:
         "plan": result["plan"], "current_step": result["current_step"],
         "observations": result["observations"], "findings": result["findings"],
         "phase": result["phase"], "logs": result["logs"],
+        "consecutive_failures": result.get("consecutive_failures", 0),
     }
 
 
 async def reflector_agent(state: AgentState) -> dict:
     local = deepcopy(state)
-    local.update({key: deepcopy(state["executor_state"][key]) for key in ("plan", "current_step")})
+    execution = state["executor_state"]
+    local.update({key: deepcopy(execution[key]) for key in ("plan", "current_step") if key in execution})
+    local["consecutive_failures"] = execution.get("consecutive_failures", 0)
+    local["replans"] = state.get("replans", 0)
+
     result = await reflect_node(local)
     own = {key: deepcopy(result[key]) for key in ("phase", "status", "error")}
+    updated_execution = {
+        **deepcopy(execution),
+        "plan": deepcopy(result["plan"]),
+        "current_step": result["current_step"],
+        "consecutive_failures": result.get("consecutive_failures", 0),
+    }
     return {
-        "reflector_state": own, "phase": result["phase"], "status": result["status"],
+        "reflector_state": own,
+        "executor_state": updated_execution,
+        "plan": deepcopy(result["plan"]),
+        "current_step": result["current_step"],
+        "replans": result.get("replans", 0),
+        "consecutive_failures": result.get("consecutive_failures", 0),
+        "phase": result["phase"], "status": result["status"],
         "logs": result["logs"],
     }
 
