@@ -73,6 +73,18 @@ _cache: dict[str, tuple[float, BM25Index]] = {}
 _lock = threading.Lock()
 
 
+def _dedupe(ids: list[str]) -> list[str]:
+    """保留首次出现的顺序去重。"""
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in ids:
+        if item in seen:
+            continue
+        seen.add(item)
+        out.append(item)
+    return out
+
+
 def _corpus(store: Any, where: dict | None) -> tuple[list[str], list[str], dict[str, Document]]:
     """取集合内文档。统一用 metadata['id'] 作为身份，缺失时回退到 Chroma 内部 id。"""
     got = store.get(where=where, include=["documents", "metadatas"])
@@ -143,7 +155,13 @@ def hybrid_search(
     if not vec_ids and not bm25_ids:
         return []
 
-    # 3) RRF 融合
+    # 3) 按文档去重：切分后同一文档会有多个 chunk，若逐个累加 RRF 分数，
+    #    块多的长文档会被系统性抬高（长度偏置），短文档的正确结果被挤出。
+    #    每个分支只保留该文档的最好名次。
+    vec_ids = _dedupe(vec_ids)
+    bm25_ids = _dedupe(bm25_ids)
+
+    # 4) RRF 融合
     fused: dict[str, float] = {}
     for rank, doc_id in enumerate(vec_ids):
         fused[doc_id] = fused.get(doc_id, 0.0) + vector_weight / (rrf_k + rank + 1)

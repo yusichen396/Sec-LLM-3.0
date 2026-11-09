@@ -1,0 +1,1366 @@
+{
+  "name": "rag_retrieval_large_v2",
+  "description": "64 篇短文档 + 8 篇长文档；89 条原问题 + 20 条针对长文档段落的问题。用于验证 chunk 切分收益。",
+  "documents": [
+    {
+      "id": "sql_01",
+      "text": "SQL 注入是指把用户输入直接拼接进 SQL 语句，使攻击者可以改变查询语义。成因是字符串拼接、缺少参数化查询和输入校验。",
+      "topic": "sqli"
+    },
+    {
+      "id": "sql_02",
+      "text": "联合查询注入利用 UNION SELECT 追加结果集，需要列数与类型匹配，常用来读取数据库中的账号表。",
+      "topic": "sqli"
+    },
+    {
+      "id": "sql_03",
+      "text": "报错注入通过构造会触发数据库报错的条件，从错误信息里回显表名、列名或数据，适用于页面回显被过滤但错误可见的场景。",
+      "topic": "sqli"
+    },
+    {
+      "id": "sql_04",
+      "text": "盲注分为布尔盲注与时间盲注。布尔盲注依据页面真假状态推断数据，时间盲注用 SLEEP 之类的延迟函数判断条件是否成立。",
+      "topic": "sqli"
+    },
+    {
+      "id": "sql_05",
+      "text": "防御 SQL 注入的根本手段是参数化查询（预编译语句），其次是最小权限账户、输入白名单校验和统一的错误处理。",
+      "topic": "sqli"
+    },
+    {
+      "id": "sql_06",
+      "text": "堆叠注入可以一次执行多条语句，能否成功取决于数据库驱动是否允许多语句以及权限配置。",
+      "topic": "sqli"
+    },
+    {
+      "id": "sql_07",
+      "text": "二次注入是指恶意输入先被存入数据库，之后在另一处被取出并拼进 SQL 时才触发，常规入口检测难以发现。",
+      "topic": "sqli"
+    },
+    {
+      "id": "xss_01",
+      "text": "跨站脚本（XSS）是攻击者让页面渲染并执行其脚本，从而在其他用户浏览器上下文中读取 Cookie、发起请求或篡改页面。",
+      "topic": "xss"
+    },
+    {
+      "id": "xss_02",
+      "text": "反射型 XSS 的恶意脚本来自当前请求参数并被立即回显，通常通过构造链接诱导用户点击触发。",
+      "topic": "xss"
+    },
+    {
+      "id": "xss_03",
+      "text": "存储型 XSS 把脚本持久化在数据库或评论、昵称等字段中，所有浏览该页面的用户都会执行，危害高于反射型。",
+      "topic": "xss"
+    },
+    {
+      "id": "xss_04",
+      "text": "DOM 型 XSS 不经过服务端渲染，由前端 JavaScript 把可控数据写入 innerHTML、document.write 等危险的 sink 造成。",
+      "topic": "xss"
+    },
+    {
+      "id": "xss_05",
+      "text": "防御 XSS 的核心是输出编码：按 HTML、属性、JavaScript、URL 等上下文分别转义，配合内容安全策略 CSP 限制脚本来源。",
+      "topic": "xss"
+    },
+    {
+      "id": "xss_06",
+      "text": "HttpOnly Cookie 可以阻止脚本读取会话凭据，但无法阻止 XSS 以用户身份发起请求，因此不能替代输出编码。",
+      "topic": "xss"
+    },
+    {
+      "id": "ssrf_01",
+      "text": "服务端请求伪造（SSRF）是服务端根据用户提供的 URL 发起请求，攻击者借此访问内网服务或云元数据接口。",
+      "topic": "ssrf"
+    },
+    {
+      "id": "ssrf_02",
+      "text": "云环境中 169.254.169.254 是元数据服务地址，SSRF 若可达该地址往往能拿到临时凭证，是最高危的场景之一。",
+      "topic": "ssrf"
+    },
+    {
+      "id": "ssrf_03",
+      "text": "防御 SSRF 需要 URL 白名单、解析后的 IP 校验（禁止回环、私有、链路本地地址）、禁用重定向跟随，并限制协议只允许 http/https。",
+      "topic": "ssrf"
+    },
+    {
+      "id": "ssrf_04",
+      "text": "盲 SSRF 指响应不回显，只能通过延迟、DNS 外带、错误差异等侧信道判断请求是否真的发出。",
+      "topic": "ssrf"
+    },
+    {
+      "id": "ssrf_05",
+      "text": "重定向绕过是 SSRF 常见的绕过手法：首次请求指向白名单域名，再通过 302 跳转到内网地址，因此必须在最终落点校验。",
+      "topic": "ssrf"
+    },
+    {
+      "id": "lfi_01",
+      "text": "本地文件包含（LFI）是应用把用户可控的参数当作文件路径加载，攻击者可读取系统文件或结合日志文件实现代码执行。",
+      "topic": "lfi"
+    },
+    {
+      "id": "lfi_02",
+      "text": "常见路径穿越序列包括 ../ 及其编码形式 %2e%2e%2f，以及双写、超长截断等绕过手段。",
+      "topic": "lfi"
+    },
+    {
+      "id": "lfi_03",
+      "text": "防御文件包含需要把用户输入映射到固定白名单中的文件标识，绝不直接拼接路径，并对最终路径做规范化校验。",
+      "topic": "lfi"
+    },
+    {
+      "id": "up_01",
+      "text": "任意文件上传漏洞指服务端未校验文件类型与内容，攻击者可上传可执行的脚本文件并获得服务器权限。",
+      "topic": "upload"
+    },
+    {
+      "id": "up_02",
+      "text": "文件上传校验应结合扩展名白名单、MIME 类型检查、文件头魔数校验，并把上传目录设置为不可执行。",
+      "topic": "upload"
+    },
+    {
+      "id": "up_03",
+      "text": "解析漏洞是指某些中间件按分号、空格或双扩展名解析文件，导致看似图片的文件被当作脚本执行。",
+      "topic": "upload"
+    },
+    {
+      "id": "deser_01",
+      "text": "不安全的反序列化是指程序把不可信数据还原为对象，攻击者可构造恶意对象触发命令执行，常见于 Java、PHP、Python 生态。",
+      "topic": "deser"
+    },
+    {
+      "id": "deser_02",
+      "text": "防御反序列化漏洞应避免反序列化不可信输入，使用 JSON 等纯数据格式，必要时启用类白名单与签名校验。",
+      "topic": "deser"
+    },
+    {
+      "id": "auth_01",
+      "text": "JWT 由头部、载荷和签名三部分组成，服务端必须校验签名算法，禁止接受 none 算法，否则可伪造任意身份。",
+      "topic": "auth"
+    },
+    {
+      "id": "auth_02",
+      "text": "会话固定攻击是指攻击者预先设定会话标识并诱导受害者使用，防御方式是登录成功后强制重新生成会话 ID。",
+      "topic": "auth"
+    },
+    {
+      "id": "auth_03",
+      "text": "OAuth 2.0 授权码流程中必须校验 state 参数以防 CSRF，回调地址需要严格白名单匹配，避免授权码被劫持。",
+      "topic": "auth"
+    },
+    {
+      "id": "auth_04",
+      "text": "暴力破解防护依赖账号锁定、验证码、速率限制和多因素认证，仅靠密码复杂度不足以防护撞库。",
+      "topic": "auth"
+    },
+    {
+      "id": "auth_05",
+      "text": "越权分为水平越权和垂直越权：前者访问同级别他人的资源，后者访问更高权限的功能，根本原因都是服务端缺少归属校验。",
+      "topic": "auth"
+    },
+    {
+      "id": "cry_01",
+      "text": "MD5 与 SHA-1 已不适合用于口令存储与签名，应使用 bcrypt、scrypt 或 Argon2 等带盐的慢哈希算法。",
+      "topic": "crypto"
+    },
+    {
+      "id": "cry_02",
+      "text": "TLS 配置应禁用 SSLv3、TLS 1.0 和弱套件，启用前向保密（ECDHE），并使用 HSTS 防止降级攻击。",
+      "topic": "crypto"
+    },
+    {
+      "id": "cry_03",
+      "text": "对称加密推荐 AES-GCM 等带认证的模式，避免 ECB 模式，因为它会泄露明文结构且不提供完整性保护。",
+      "topic": "crypto"
+    },
+    {
+      "id": "cry_04",
+      "text": "硬编码密钥是最常见的凭据泄露来源，应通过密钥管理服务或环境变量注入，并定期轮换。",
+      "topic": "crypto"
+    },
+    {
+      "id": "net_01",
+      "text": "nmap 的 -sV 用于服务版本探测，-F 只扫描常用端口，-p 指定端口范围，-O 尝试识别操作系统。",
+      "topic": "net"
+    },
+    {
+      "id": "net_02",
+      "text": "端口扫描结果需要结合服务版本判断风险，例如暴露的 6379 Redis 未授权访问、27017 MongoDB 无认证。",
+      "topic": "net"
+    },
+    {
+      "id": "net_03",
+      "text": "TCP 三次握手扫描（connect 扫描）完成完整连接，隐蔽性低于半开扫描，但不需要原始套接字权限。",
+      "topic": "net"
+    },
+    {
+      "id": "net_04",
+      "text": "子域枚举可以通过证书透明度日志、DNS 字典爆破和搜索引擎语法完成，是资产发现的常见入口。",
+      "topic": "net"
+    },
+    {
+      "id": "ti_01",
+      "text": "威胁情报中的 IOC 包括 IP、域名、URL、文件哈希等可观测指标，用于快速匹配已知恶意活动。",
+      "topic": "intel"
+    },
+    {
+      "id": "ti_02",
+      "text": "MITRE ATT&CK 用战术与技术描述攻击者行为，适合把单点告警映射到攻击链阶段，指导检测覆盖评估。",
+      "topic": "intel"
+    },
+    {
+      "id": "ti_03",
+      "text": "情报富化是把 IOC 与多源情报（如 AbuseIPDB、OTX）关联，得到评分、标签与归属，辅助研判。",
+      "topic": "intel"
+    },
+    {
+      "id": "ti_04",
+      "text": "情报存在时效性，IP 的信誉会随时间变化，因此研判结论应带采集时间，避免引用过期数据。",
+      "topic": "intel"
+    },
+    {
+      "id": "log_01",
+      "text": "应急响应第一步是隔离受影响主机并保全证据，包括内存镜像、磁盘镜像和日志副本，避免证据被覆盖。",
+      "topic": "log"
+    },
+    {
+      "id": "log_02",
+      "text": "Web 日志分析关注异常状态码分布、超长 URL、可疑 User-Agent 和短时间高频访问，这些往往是扫描或注入的特征。",
+      "topic": "log"
+    },
+    {
+      "id": "log_03",
+      "text": "时间线分析把主机、网络、应用日志按时间排序，还原攻击者的操作序列，是溯源的核心方法。",
+      "topic": "log"
+    },
+    {
+      "id": "dk_01",
+      "text": "容器逃逸常见途径包括特权容器、挂载 docker.sock、危险 capability 和内核漏洞，应遵循最小权限原则。",
+      "topic": "docker"
+    },
+    {
+      "id": "dk_02",
+      "text": "容器镜像应使用最小基础镜像、非 root 用户运行、固定版本标签，并在构建后进行依赖漏洞扫描。",
+      "topic": "docker"
+    },
+    {
+      "id": "dk_03",
+      "text": "Docker 的 --network host 会让容器共享宿主网络，失去网络隔离，生产环境应避免使用。",
+      "topic": "docker"
+    },
+    {
+      "id": "sc_01",
+      "text": "软件供应链攻击通过污染依赖包、构建流程或更新渠道实施，典型案例如依赖包投毒和构建产物篡改。",
+      "topic": "supply"
+    },
+    {
+      "id": "sc_02",
+      "text": "防御供应链风险需要锁定依赖版本、校验哈希、启用私有镜像源，并对构建产物做签名验证。",
+      "topic": "supply"
+    },
+    {
+      "id": "ac_01",
+      "text": "RBAC 按角色分配权限，适合权限边界清晰的系统；ABAC 基于属性动态判断，适合细粒度与上下文相关的场景。",
+      "topic": "access"
+    },
+    {
+      "id": "ac_02",
+      "text": "最小权限原则要求主体只拥有完成任务所必需的权限，并定期复核，避免权限长期累积。",
+      "topic": "access"
+    },
+    {
+      "id": "ac_03",
+      "text": "数据权限控制常见做法是在查询层强制拼接租户或归属条件，而不是依赖前端传参过滤。",
+      "topic": "access"
+    },
+    {
+      "id": "ph_01",
+      "text": "钓鱼邮件常伪造发件人域名、使用相似字符域名（同形异义）并制造紧迫感诱导点击，检测需结合 SPF、DKIM、DMARC 验证结果。",
+      "topic": "phish"
+    },
+    {
+      "id": "ph_02",
+      "text": "邮件中的链接应展开真实跳转地址再判断，短链接和开放重定向常被用来隐藏恶意目标。",
+      "topic": "phish"
+    },
+    {
+      "id": "ph_03",
+      "text": "附件型钓鱼常用宏文档、压缩包内的可执行文件或 LNK 文件，邮件网关应做深度内容检测。",
+      "topic": "phish"
+    },
+    {
+      "id": "de_01",
+      "text": "YARA 规则基于字符串与条件表达式匹配恶意样本，适合文件级检测，规则需要版本管理并定期回归测试。",
+      "topic": "detect"
+    },
+    {
+      "id": "de_02",
+      "text": "Suricata 是开源的入侵检测引擎，规则基于五元组与载荷特征，可覆盖网络流量中的攻击特征。",
+      "topic": "detect"
+    },
+    {
+      "id": "de_03",
+      "text": "WAF 通过规则匹配拦截常见 Web 攻击，但容易被编码、分块传输、注释混淆等手法绕过，不能替代代码层修复。",
+      "topic": "detect"
+    },
+    {
+      "id": "de_04",
+      "text": "检测规则的质量用误报率与漏报率衡量，规则上线前应在真实流量样本上做回归，避免告警疲劳。",
+      "topic": "detect"
+    },
+    {
+      "id": "ba_01",
+      "text": "基线加固包括关闭无用服务、修改默认口令、限制管理端口访问来源、开启审计日志并集中收集。",
+      "topic": "base"
+    },
+    {
+      "id": "ba_02",
+      "text": "备份策略需要遵循 3-2-1 原则：三份副本、两种介质、一份异地，并定期演练恢复流程。",
+      "topic": "base"
+    },
+    {
+      "id": "ba_03",
+      "text": "补丁管理应建立资产清单与漏洞分级机制，优先修复可被远程利用且暴露在互联网的高危漏洞。",
+      "topic": "base"
+    },
+    {
+      "id": "doc_ssdlc",
+      "text": "安全开发规范（SSDLC）\n\n适用范围\n本规范适用于公司所有对外提供服务的系统，包括 Web 应用、移动端后端接口、开放平台 API 以及对外的小程序与 H5 页面。内部工具只要处理个人信息或者连接生产数据库，同样适用本规范。第三方交付的系统在验收阶段也需要按本规范进行安全评审，评审结论作为验收材料的一部分归档。\n\n需求阶段\n需求评审必须包含安全需求条目，至少覆盖认证方式、权限模型、敏感数据范围、日志留存要求与对外依赖清单。涉及个人信息的功能需要完成个人信息影响评估，说明采集目的、最小必要范围、存储期限与共享对象，评估报告在上线前归档到安全台账。如果需求涉及跨境传输，还需要法务与合规共同确认。\n\n设计阶段\n架构设计文档需要明确信任边界与数据流，在图上标注跨边界的数据流向以及每一条边界的鉴权方式。对外暴露的接口必须说明限流策略、鉴权方式与错误码规范，禁止把内部错误信息透传给调用方。涉及文件上传、URL 抓取、模板渲染、命令拼接的功能，需要在设计文档中单独列出风险说明与缓解措施，未说明的视为设计不完整。\n\n开发阶段\n所有 SQL 必须使用参数化查询，禁止把用户输入拼接进语句；输出到页面的用户数据必须按上下文编码，HTML、属性、JavaScript 与 URL 分别处理；口令存储统一使用 bcrypt，cost 不低于 12，禁止使用 MD5 或 SHA1。代码提交需要通过静态扫描，高危告警未清零不得合并，中危告警需给出处置说明。依赖引入需要核对许可证与已知漏洞，禁止直接引用未固定版本的包。\n\n测试阶段\n上线前必须完成安全测试，包括越权测试、注入测试、文件上传测试、认证与会话测试。测试报告需要记录用例、执行结果、发现的问题与修复状态，由安全团队复核签字。涉及资金、批量数据导出或者权限变更的功能，需要额外做一次人工渗透测试，测试范围与时间窗口需要提前书面确认。\n\n发布阶段\n发布包需要经过制品库统一签名，禁止直接从开发机发布到生产环境。发布后 24 小时内完成资产登记，标记系统责任人、数据分级、对外域名与依赖组件清单。新增对外域名需要同步到资产系统，未登记的域名会被监控系统视为影子资产并告警。\n\n运行阶段\n生产环境禁止开启调试模式，错误页面不得回显堆栈信息与数据库语句。日志需要进行脱敏，禁止记录完整身份证号、银行卡号、明文口令与完整会话令牌。管理后台必须限制访问来源，对外仅开放必要的运维入口，并开启双因素认证。\n\n下线阶段\n系统下线需要完成数据清理、权限回收与域名解析清理，保留审计记录不少于六个月。下线前需要确认没有其他系统仍在调用该服务，避免造成级联故障。",
+      "topic": "long_doc",
+      "sections": 8
+    },
+    {
+      "id": "doc_incident",
+      "text": "安全事件应急响应手册\n\n分级标准\n特别重大事件指核心业务中断超过两小时，或者发生大规模数据泄露、核心数据被加密勒索；重大事件指单业务线中断超过一小时，或者单租户数据泄露、重要系统被获取控制权限；一般事件指局部功能异常、单点主机失陷且未涉及数据外泄。分级由值班安全工程师初判，安全负责人确认，定级后不得随意降级。\n\n报告流程\n发现人应在 15 分钟内向值班安全工程师报告，说明现象、影响范围与已采取的动作。值班工程师 30 分钟内完成初步定性并按分级启动响应，重大及以上事件须在 1 小时内上报管理层、法务与公关。对外通报口径由公关统一拟定，技术人员不得自行对外发布信息。\n\n隔离措施\n确认主机失陷后优先通过网络策略隔离，而不是直接关机，避免内存中的证据随关机丢失。隔离前需要记录进程列表、网络连接、登录会话与计划任务。如果攻击者已经在内网横向移动，需要同时排查同网段主机的异常登录与横向访问记录，避免只处理单点。\n\n证据保全\n内存镜像应在隔离后两小时内完成，磁盘镜像需要计算哈希并由双人签字确认，日志副本需要注明采集时间、来源主机与采集人。所有证据存放于只读介质，访问需要登记。证据链不完整的分析结论不能作为对外通报依据。\n\n溯源分析\n以时间为轴汇总主机日志、网络流量与应用日志，识别初始入口、横向移动路径、持久化手段与数据外带通道。分析结论需要有日志、样本或者流量记录支撑，不得仅凭推测下结论。对于无法确认的环节，需要明确标注为未知，而不是填补推测。\n\n恢复上线\n清除持久化项、修补入口漏洞、重置受影响账号口令之后才可以恢复。恢复后 72 小时内加强监控，观察是否存在二次入侵或者残留后门。恢复顺序优先核心业务，非核心系统可以延后。\n\n复盘要求\n事件关闭后五个工作日内输出复盘报告，内容包含时间线、根因、影响范围、处置过程与改进项。每个改进项需要指定责任人与完成时间，安全团队按月跟踪闭环情况。同类事件重复发生的，需要追溯上一次改进项为何没有落地。",
+      "topic": "long_doc",
+      "sections": 7
+    },
+    {
+      "id": "doc_data_class",
+      "text": "数据分类分级与脱敏规范\n\n分级定义\n数据分为公开、内部、敏感、核心四级。公开数据可以对外发布，不设访问限制；内部数据限公司员工访问，离职即回收；敏感数据包含个人信息与业务机密，访问需要审批；核心数据指一旦泄露或者篡改将造成重大影响的数据资产，访问需要双人复核并全程留痕。\n\n个人信息\n身份证号、手机号、银行卡号、生物特征、行踪轨迹、健康信息属于敏感个人信息。采集需要单独同意，不得以默认勾选方式获取；存储需要加密，密钥与数据分离存放；展示需要脱敏，非必要不展示完整值。\n\n脱敏规则\n手机号保留前三后四，中间用星号替代；身份证保留前六后四；银行卡保留后四；姓名保留姓氏，其余用星号替代；地址保留到区县一级。脱敏后的数据仍然按原级别管理，不得因为脱敏而降低管控要求。\n\n传输要求\n敏感及以上数据跨网络传输必须使用 TLS 1.2 以上版本，禁止使用自签名证书承载生产流量。跨组织传输需要签署数据保护协议，记录传输清单，包含数据范围、用途、接收方与传输时间。\n\n访问控制\n敏感数据访问需要走审批流程，说明访问目的与使用期限，审批记录保留一年。批量导出超过一万条需要二次审批，导出文件需要加密并设置有效期。离职或者转岗人员的数据权限在当日回收。\n\n留存与销毁\n业务数据按业务需要设定留存期限，超过期限后 30 日内销毁。销毁需要生成记录，包含数据范围、销毁方式、执行人与见证人，记录保留三年。备份介质销毁需要做物理消磁或者粉碎处理。",
+      "topic": "long_doc",
+      "sections": 6
+    },
+    {
+      "id": "doc_pentest",
+      "text": "渗透测试实施规范\n\n授权要求\n所有渗透测试必须取得书面授权，授权书需要明确测试目标、时间窗口、允许的手法与禁止项，并由目标系统的责任人签字确认。没有授权不得对任何目标发起扫描、探测或者口令尝试。临时口头授权不成立，测试人员需要留存授权文件。\n\n范围界定\n测试范围以授权书列明的域名与 IP 为准，禁止对关联但未列明的资产进行测试，包括同厂商的其他业务、共享基础设施与第三方托管系统。如果测试过程中发现未列明的资产存在漏洞，只能记录并报告，不得进一步利用。\n\n手法限制\n禁止使用拒绝服务类手法，禁止大批量暴力破解，禁止上传 Webshell 后长期驻留。获取权限后仅做必要的验证与截图，验证完成立即退出。禁止读取与测试目标无关的敏感数据，禁止修改或者删除业务数据。\n\n数据处置\n测试过程中获取的任何业务数据不得带离测试环境，测试结束后 24 小时内删除并出具删除确认。截图中涉及个人信息的部分需要打码，报告中不得出现完整的敏感数据。\n\n报告内容\n报告需包含测试范围、时间窗口、使用工具、发现的问题及复现步骤、风险等级与修复建议。高危问题需要在报告发出后 4 小时内电话同步给系统责任人，避免只靠邮件流转延误处置。\n\n复测要求\n修复完成后由原测试人员复测，确认漏洞已闭环方可关闭。复测记录附在报告附录，包含复测时间、复测方法与结果。复测不通过的重新计入待修复清单。",
+      "topic": "long_doc",
+      "sections": 6
+    },
+    {
+      "id": "doc_logging",
+      "text": "日志管理与留存规范\n\n采集范围\n需要采集主机登录日志、应用访问日志、数据库审计日志、网络设备流量日志与云平台操作日志。应用访问日志必须由应用自身输出，不能只依赖网关日志，否则无法区分真实用户与代理流量。\n\n留存期限\n网络流量日志留存不少于六个月，主机与应用日志留存不少于六个月，涉及安全事件的日志单独归档并保留至事件关闭后两年。留存期限从日志产生时间起算，不得以压缩或者聚合方式变相缩短。\n\n字段要求\n访问日志至少包含时间戳、来源 IP、请求方法、URL、状态码、响应大小与 User-Agent。缺少来源 IP 的日志视为不合格，使用反向代理时需要正确透传真实来源地址。时间戳统一使用带时区的格式，避免排查时对不上时间线。\n\n脱敏要求\n日志中不得出现明文口令、完整身份证号、完整银行卡号与完整会话令牌。URL 中的敏感查询参数需要掩码，请求体默认不记录，确需记录时先脱敏。异常堆栈可以记录，但不能包含数据库连接串。\n\n集中存储\n日志需要集中存储于独立日志平台，业务服务器本地只保留短期缓存。日志平台需要开启写入保护与不可删除策略，业务账号只有读权限。日志平台的访问本身也要记录审计。\n\n访问控制\n日志平台仅安全与运维团队可以读取，查询行为需要留痕。对外提供日志用于排障时，需要走申请流程并限定时间范围，禁止全量导出。",
+      "topic": "long_doc",
+      "sections": 6
+    },
+    {
+      "id": "doc_vendor",
+      "text": "第三方供应商安全管理要求\n\n准入评估\n引入处理公司数据的供应商前需要完成安全评估，评估项包括企业资质、数据保护能力、历史安全事件、应急响应机制与人员背景审查情况。评估结论分为通过、有条件通过与不通过，有条件通过需要明确整改项与复评时间。\n\n合同条款\n合同需要包含数据保护条款、安全事件通知义务、审计权与数据删除义务。安全事件通知时限不超过 24 小时，审计权需要明确每年可执行的次数与提前通知期。\n\n权限管理\n供应商访问公司系统需要使用独立账号，按最小权限授予，访问有效期与合同期绑定，到期自动回收。禁止共享账号，禁止把账号转借给供应商的下游团队。\n\n数据处理\n供应商不得将公司数据用于约定目的之外的用途，不得转委托第三方处理。确需转委托的，需要提前书面申请并取得同意，转委托方同样需要通过安全评估。\n\n持续监督\n每年至少复评一次，发生过安全事件的供应商需要在事件后三个月内复评。复评内容包括整改项落地情况、新增系统与人员变动情况。\n\n退出机制\n合作终止时供应商需要在 30 日内删除全部数据并出具删除证明，公司需要回收全部访问权限与账号。退出后保留审计记录不少于两年。",
+      "topic": "long_doc",
+      "sections": 6
+    },
+    {
+      "id": "doc_cloud",
+      "text": "云上安全配置基线\n\n身份与访问\n根账号禁止日常使用，必须开启多因素认证，且只在创建账号或者账单异常时临时登录。所有子账号按职责授权，禁止使用全权策略，禁止把访问密钥写入代码仓库或者镜像。人员离职当日禁用账号并回收密钥。\n\n网络\n安全组默认拒绝所有入站，仅按需开放端口并限制来源网段。对象存储禁止公共读写，确需公网访问的必须经审批并开启访问日志。负载均衡与云主机不允许直接暴露管理端口到公网。\n\n存储\n云盘与对象存储默认加密，加密密钥使用云平台托管或者自建密钥管理服务。跨区域复制需要评估数据出境合规要求，涉及个人信息的需要先完成合规评估。快照与备份同样需要加密。\n\n审计\n必须开启云平台操作审计，日志投递至独立账号或者专用日志服务，保留不少于 180 天。审计日志需要覆盖控制台操作、API 调用与密钥使用记录。\n\n密钥\n禁止在代码、镜像与环境变量中硬编码访问密钥。长期密钥需要定期轮换，轮换周期不超过 90 天；优先使用临时凭证，有效期不超过 24 小时。发现泄露立即吊销并排查使用记录。",
+      "topic": "long_doc",
+      "sections": 5
+    },
+    {
+      "id": "doc_password",
+      "text": "口令与密钥管理规范\n\n口令强度\n用户口令长度不少于 12 位，需要包含大写字母、小写字母、数字与符号中的三类。禁止使用常见弱口令、公司名、生日与连续字符。修改口令时不得与前三次使用过的口令相同。\n\n存储方式\n口令必须使用 bcrypt、scrypt 或 Argon2 加盐哈希存储，禁止明文存储、可逆加密存储或者自研加密算法。哈希参数需要随硬件性能定期上调，避免被离线暴力破解。\n\n多因素\n管理员账号、远程接入、高危操作与资金相关操作必须启用多因素认证。多因素认证方式优先使用硬件令牌或者推送确认，短信验证码作为兜底方案。\n\n密钥管理\n应用密钥统一存放于密钥管理服务，通过临时凭证下发，有效期不超过 24 小时。不同环境的密钥必须隔离，禁止生产密钥用于测试环境。密钥的使用需要有调用记录，便于泄露时定位影响面。\n\n轮换与吊销\n发现密钥泄露后立即吊销并在 1 小时内完成轮换，同时排查泄露时间窗口内的调用记录。人员离职当日回收全部密钥与访问权限，包括代码仓库、云平台与内部系统的凭据。\n\n审计\n密钥的申请、使用、轮换与吊销都需要记录审计日志，保留一年。审计日志中包含申请人、使用方、时间与用途，便于事后追溯。",
+      "topic": "long_doc",
+      "sections": 6
+    }
+  ],
+  "queries": [
+    {
+      "id": "q001",
+      "text": "用户填的内容被直接拼到数据库语句里，怎么从写代码的层面修",
+      "style": "colloquial",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_05"
+      ]
+    },
+    {
+      "id": "q002",
+      "text": "页面报错把表名带出来了，这是什么攻击手法",
+      "style": "colloquial",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_03"
+      ]
+    },
+    {
+      "id": "q003",
+      "text": "怎么判断一个输入框能不能被塞进查询语句里",
+      "style": "colloquial",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_01"
+      ]
+    },
+    {
+      "id": "q004",
+      "text": "看不到回显，只能靠页面变没变来猜数据，这种叫什么",
+      "style": "colloquial",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_04"
+      ]
+    },
+    {
+      "id": "q005",
+      "text": "一次能执行好几条语句的注入方式叫什么",
+      "style": "colloquial",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_06"
+      ]
+    },
+    {
+      "id": "q006",
+      "text": "SQL 注入的成因与参数化查询防御",
+      "style": "formal",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_01",
+        "sql_05"
+      ]
+    },
+    {
+      "id": "q007",
+      "text": "报错注入的原理与适用场景",
+      "style": "formal",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_03"
+      ]
+    },
+    {
+      "id": "q008",
+      "text": "布尔盲注与时间盲注的判定方法",
+      "style": "formal",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_04"
+      ]
+    },
+    {
+      "id": "q009",
+      "text": "二次注入为什么常规检测发现不了",
+      "style": "formal",
+      "topic": "sqli",
+      "relevant_ids": [
+        "sql_07"
+      ]
+    },
+    {
+      "id": "q010",
+      "text": "别人往页面里塞的脚本怎么才能不生效，输出的时候要按位置处理",
+      "style": "colloquial",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_05"
+      ]
+    },
+    {
+      "id": "q011",
+      "text": "点一个链接页面就弹窗，这种是哪种脚本注入",
+      "style": "colloquial",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_02"
+      ]
+    },
+    {
+      "id": "q012",
+      "text": "评论里留下的脚本，别人一打开就执行，危害有多大",
+      "style": "colloquial",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_03"
+      ]
+    },
+    {
+      "id": "q013",
+      "text": "前端自己把用户输入写进页面导致的问题叫什么",
+      "style": "colloquial",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_04"
+      ]
+    },
+    {
+      "id": "q014",
+      "text": "给 Cookie 加上脚本读不到的属性有用吗",
+      "style": "colloquial",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_06"
+      ]
+    },
+    {
+      "id": "q015",
+      "text": "反射型与存储型 XSS 的区别与危害对比",
+      "style": "formal",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_02",
+        "xss_03"
+      ]
+    },
+    {
+      "id": "q016",
+      "text": "DOM 型 XSS 的危险 sink 有哪些",
+      "style": "formal",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_04"
+      ]
+    },
+    {
+      "id": "q017",
+      "text": "输出编码与 CSP 在防御 XSS 中的作用",
+      "style": "formal",
+      "topic": "xss",
+      "relevant_ids": [
+        "xss_05"
+      ]
+    },
+    {
+      "id": "q018",
+      "text": "让服务器替我去请求一个地址，可能被拿去打内网",
+      "style": "colloquial",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_01"
+      ]
+    },
+    {
+      "id": "q019",
+      "text": "云主机的元数据地址为什么危险",
+      "style": "colloquial",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_02"
+      ]
+    },
+    {
+      "id": "q020",
+      "text": "怎么防止别人拿我们的接口去访问内部服务",
+      "style": "colloquial",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_03"
+      ]
+    },
+    {
+      "id": "q021",
+      "text": "请求发出去了但页面没反应，怎么确认真的打通了",
+      "style": "colloquial",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_04"
+      ]
+    },
+    {
+      "id": "q022",
+      "text": "跳转一次就绕过限制的打法怎么防",
+      "style": "colloquial",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_05"
+      ]
+    },
+    {
+      "id": "q023",
+      "text": "SSRF 的成因、危害与防御要点",
+      "style": "formal",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_01",
+        "ssrf_03"
+      ]
+    },
+    {
+      "id": "q024",
+      "text": "云元数据接口 169.254.169.254 的风险",
+      "style": "formal",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_02"
+      ]
+    },
+    {
+      "id": "q025",
+      "text": "盲 SSRF 的侧信道判定方式",
+      "style": "formal",
+      "topic": "ssrf",
+      "relevant_ids": [
+        "ssrf_04"
+      ]
+    },
+    {
+      "id": "q026",
+      "text": "地址栏里的参数能读服务器上的文件，这种漏洞怎么修",
+      "style": "colloquial",
+      "topic": "lfi",
+      "relevant_ids": [
+        "lfi_03"
+      ]
+    },
+    {
+      "id": "q027",
+      "text": "用一堆点点斜杠往上层目录跑叫什么",
+      "style": "colloquial",
+      "topic": "lfi",
+      "relevant_ids": [
+        "lfi_02"
+      ]
+    },
+    {
+      "id": "q028",
+      "text": "上传的地方没做限制，传个脚本上去会怎样",
+      "style": "colloquial",
+      "topic": "upload",
+      "relevant_ids": [
+        "up_01"
+      ]
+    },
+    {
+      "id": "q029",
+      "text": "上传的文件要怎么校验才可靠",
+      "style": "colloquial",
+      "topic": "upload",
+      "relevant_ids": [
+        "up_02"
+      ]
+    },
+    {
+      "id": "q030",
+      "text": "图片文件被当成脚本执行是什么原因",
+      "style": "colloquial",
+      "topic": "upload",
+      "relevant_ids": [
+        "up_03"
+      ]
+    },
+    {
+      "id": "q031",
+      "text": "本地文件包含漏洞的形成条件与利用链",
+      "style": "formal",
+      "topic": "lfi",
+      "relevant_ids": [
+        "lfi_01",
+        "lfi_02"
+      ]
+    },
+    {
+      "id": "q032",
+      "text": "任意文件上传的校验层次与目录权限设置",
+      "style": "formal",
+      "topic": "upload",
+      "relevant_ids": [
+        "up_02"
+      ]
+    },
+    {
+      "id": "q033",
+      "text": "文件解析漏洞的常见形态",
+      "style": "formal",
+      "topic": "upload",
+      "relevant_ids": [
+        "up_03"
+      ]
+    },
+    {
+      "id": "q034",
+      "text": "把用户传来的数据还原成对象会不会有风险",
+      "style": "colloquial",
+      "topic": "deser",
+      "relevant_ids": [
+        "deser_01"
+      ]
+    },
+    {
+      "id": "q035",
+      "text": "反序列化漏洞怎么防，改用 JSON 有用吗",
+      "style": "colloquial",
+      "topic": "deser",
+      "relevant_ids": [
+        "deser_02"
+      ]
+    },
+    {
+      "id": "q036",
+      "text": "不安全反序列化的危害与缓解措施",
+      "style": "formal",
+      "topic": "deser",
+      "relevant_ids": [
+        "deser_01",
+        "deser_02"
+      ]
+    },
+    {
+      "id": "q037",
+      "text": "令牌能被改成任意用户身份是什么问题",
+      "style": "colloquial",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_01"
+      ]
+    },
+    {
+      "id": "q038",
+      "text": "登录前后会话号不变有风险吗",
+      "style": "colloquial",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_02"
+      ]
+    },
+    {
+      "id": "q039",
+      "text": "第三方授权登录要注意什么参数",
+      "style": "colloquial",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_03"
+      ]
+    },
+    {
+      "id": "q040",
+      "text": "别人拿密码库去撞库登录怎么挡",
+      "style": "colloquial",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_04"
+      ]
+    },
+    {
+      "id": "q041",
+      "text": "同一个系统里能看别人的订单，属于哪类越权",
+      "style": "colloquial",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_05"
+      ]
+    },
+    {
+      "id": "q042",
+      "text": "JWT 签名校验缺失导致的身份伪造",
+      "style": "formal",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_01"
+      ]
+    },
+    {
+      "id": "q043",
+      "text": "会话固定攻击的防御方式",
+      "style": "formal",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_02"
+      ]
+    },
+    {
+      "id": "q044",
+      "text": "OAuth 授权码流程中的 state 与回调校验",
+      "style": "formal",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_03"
+      ]
+    },
+    {
+      "id": "q045",
+      "text": "水平越权与垂直越权的区别",
+      "style": "formal",
+      "topic": "auth",
+      "relevant_ids": [
+        "auth_05"
+      ]
+    },
+    {
+      "id": "q046",
+      "text": "密码存数据库该用什么算法",
+      "style": "colloquial",
+      "topic": "crypto",
+      "relevant_ids": [
+        "cry_01"
+      ]
+    },
+    {
+      "id": "q047",
+      "text": "网站传输层怎么配置才算安全",
+      "style": "colloquial",
+      "topic": "crypto",
+      "relevant_ids": [
+        "cry_02"
+      ]
+    },
+    {
+      "id": "q048",
+      "text": "加密模式选错了会泄露什么",
+      "style": "colloquial",
+      "topic": "crypto",
+      "relevant_ids": [
+        "cry_03"
+      ]
+    },
+    {
+      "id": "q049",
+      "text": "密钥写死在代码里有什么问题",
+      "style": "colloquial",
+      "topic": "crypto",
+      "relevant_ids": [
+        "cry_04"
+      ]
+    },
+    {
+      "id": "q050",
+      "text": "口令存储为何不能用 MD5",
+      "style": "formal",
+      "topic": "crypto",
+      "relevant_ids": [
+        "cry_01"
+      ]
+    },
+    {
+      "id": "q051",
+      "text": "TLS 加固要点与弱套件禁用",
+      "style": "formal",
+      "topic": "crypto",
+      "relevant_ids": [
+        "cry_02"
+      ]
+    },
+    {
+      "id": "q052",
+      "text": "怎么快速看一台机器开了哪些服务",
+      "style": "colloquial",
+      "topic": "net",
+      "relevant_ids": [
+        "net_01"
+      ]
+    },
+    {
+      "id": "q053",
+      "text": "扫出来有些端口没认证，风险在哪",
+      "style": "colloquial",
+      "topic": "net",
+      "relevant_ids": [
+        "net_02"
+      ]
+    },
+    {
+      "id": "q054",
+      "text": "找子域名有哪些办法",
+      "style": "colloquial",
+      "topic": "net",
+      "relevant_ids": [
+        "net_04"
+      ]
+    },
+    {
+      "id": "q055",
+      "text": "nmap 的版本探测和端口范围参数怎么用",
+      "style": "formal",
+      "topic": "net",
+      "relevant_ids": [
+        "net_01"
+      ]
+    },
+    {
+      "id": "q056",
+      "text": "未授权访问类服务的典型端口与风险",
+      "style": "formal",
+      "topic": "net",
+      "relevant_ids": [
+        "net_02"
+      ]
+    },
+    {
+      "id": "q057",
+      "text": "子域枚举的常见数据来源",
+      "style": "formal",
+      "topic": "net",
+      "relevant_ids": [
+        "net_04"
+      ]
+    },
+    {
+      "id": "q058",
+      "text": "拿到一个可疑 IP 该怎么查它是不是恶意的",
+      "style": "colloquial",
+      "topic": "intel",
+      "relevant_ids": [
+        "ti_03"
+      ]
+    },
+    {
+      "id": "q059",
+      "text": "情报里的 IOC 一般包括哪些东西",
+      "style": "colloquial",
+      "topic": "intel",
+      "relevant_ids": [
+        "ti_01"
+      ]
+    },
+    {
+      "id": "q060",
+      "text": "查到的情报结论放了很久还能用吗",
+      "style": "colloquial",
+      "topic": "intel",
+      "relevant_ids": [
+        "ti_04"
+      ]
+    },
+    {
+      "id": "q061",
+      "text": "怎么把告警对应到攻击的哪个阶段",
+      "style": "colloquial",
+      "topic": "intel",
+      "relevant_ids": [
+        "ti_02"
+      ]
+    },
+    {
+      "id": "q062",
+      "text": "IOC 富化的数据来源与研判方法",
+      "style": "formal",
+      "topic": "intel",
+      "relevant_ids": [
+        "ti_03"
+      ]
+    },
+    {
+      "id": "q063",
+      "text": "ATT&CK 框架在检测评估中的用法",
+      "style": "formal",
+      "topic": "intel",
+      "relevant_ids": [
+        "ti_02"
+      ]
+    },
+    {
+      "id": "q064",
+      "text": "机器被入侵了第一步应该做什么",
+      "style": "colloquial",
+      "topic": "log",
+      "relevant_ids": [
+        "log_01"
+      ]
+    },
+    {
+      "id": "q065",
+      "text": "从访问日志里怎么看有没有人在扫我",
+      "style": "colloquial",
+      "topic": "log",
+      "relevant_ids": [
+        "log_02"
+      ]
+    },
+    {
+      "id": "q066",
+      "text": "怎么还原攻击者做了哪些操作",
+      "style": "colloquial",
+      "topic": "log",
+      "relevant_ids": [
+        "log_03"
+      ]
+    },
+    {
+      "id": "q067",
+      "text": "应急响应的证据保全要求",
+      "style": "formal",
+      "topic": "log",
+      "relevant_ids": [
+        "log_01"
+      ]
+    },
+    {
+      "id": "q068",
+      "text": "Web 日志异常特征与攻击识别",
+      "style": "formal",
+      "topic": "log",
+      "relevant_ids": [
+        "log_02"
+      ]
+    },
+    {
+      "id": "q069",
+      "text": "容器里跑的东西能不能跑到宿主机上",
+      "style": "colloquial",
+      "topic": "docker",
+      "relevant_ids": [
+        "dk_01"
+      ]
+    },
+    {
+      "id": "q070",
+      "text": "镜像怎么做得更安全一些",
+      "style": "colloquial",
+      "topic": "docker",
+      "relevant_ids": [
+        "dk_02"
+      ]
+    },
+    {
+      "id": "q071",
+      "text": "容器直接用宿主网络有什么问题",
+      "style": "colloquial",
+      "topic": "docker",
+      "relevant_ids": [
+        "dk_03"
+      ]
+    },
+    {
+      "id": "q072",
+      "text": "容器逃逸的常见路径与最小权限",
+      "style": "formal",
+      "topic": "docker",
+      "relevant_ids": [
+        "dk_01"
+      ]
+    },
+    {
+      "id": "q073",
+      "text": "镜像构建的安全基线",
+      "style": "formal",
+      "topic": "docker",
+      "relevant_ids": [
+        "dk_02"
+      ]
+    },
+    {
+      "id": "q074",
+      "text": "依赖包被人动了手脚怎么发现",
+      "style": "colloquial",
+      "topic": "supply",
+      "relevant_ids": [
+        "sc_01",
+        "sc_02"
+      ]
+    },
+    {
+      "id": "q075",
+      "text": "怎么保证只有该看的人能看到数据",
+      "style": "colloquial",
+      "topic": "access",
+      "relevant_ids": [
+        "ac_03"
+      ]
+    },
+    {
+      "id": "q076",
+      "text": "收到一封催着点链接的邮件怎么判断真假",
+      "style": "colloquial",
+      "topic": "phish",
+      "relevant_ids": [
+        "ph_01"
+      ]
+    },
+    {
+      "id": "q077",
+      "text": "告警太多看不过来怎么办",
+      "style": "colloquial",
+      "topic": "detect",
+      "relevant_ids": [
+        "de_04"
+      ]
+    },
+    {
+      "id": "q078",
+      "text": "新上线的机器要做哪些安全设置",
+      "style": "colloquial",
+      "topic": "base",
+      "relevant_ids": [
+        "ba_01"
+      ]
+    },
+    {
+      "id": "q079",
+      "text": "备份怎么做才算可靠",
+      "style": "colloquial",
+      "topic": "base",
+      "relevant_ids": [
+        "ba_02"
+      ]
+    },
+    {
+      "id": "q080",
+      "text": "补丁应该优先打哪些",
+      "style": "colloquial",
+      "topic": "base",
+      "relevant_ids": [
+        "ba_03"
+      ]
+    },
+    {
+      "id": "q081",
+      "text": "供应链攻击的典型手法与防护",
+      "style": "formal",
+      "topic": "supply",
+      "relevant_ids": [
+        "sc_01",
+        "sc_02"
+      ]
+    },
+    {
+      "id": "q082",
+      "text": "RBAC 与 ABAC 的适用场景差异",
+      "style": "formal",
+      "topic": "access",
+      "relevant_ids": [
+        "ac_01"
+      ]
+    },
+    {
+      "id": "q083",
+      "text": "最小权限原则的落地方式",
+      "style": "formal",
+      "topic": "access",
+      "relevant_ids": [
+        "ac_02"
+      ]
+    },
+    {
+      "id": "q084",
+      "text": "钓鱼邮件的技术识别特征",
+      "style": "formal",
+      "topic": "phish",
+      "relevant_ids": [
+        "ph_01",
+        "ph_03"
+      ]
+    },
+    {
+      "id": "q085",
+      "text": "YARA 与 Suricata 规则各自适用的场景",
+      "style": "formal",
+      "topic": "detect",
+      "relevant_ids": [
+        "de_01",
+        "de_02"
+      ]
+    },
+    {
+      "id": "q086",
+      "text": "WAF 绕过的常见手法与其局限",
+      "style": "formal",
+      "topic": "detect",
+      "relevant_ids": [
+        "de_03"
+      ]
+    },
+    {
+      "id": "q087",
+      "text": "检测规则的误报与漏报如何评估",
+      "style": "formal",
+      "topic": "detect",
+      "relevant_ids": [
+        "de_04"
+      ]
+    },
+    {
+      "id": "q088",
+      "text": "主机安全基线加固清单",
+      "style": "formal",
+      "topic": "base",
+      "relevant_ids": [
+        "ba_01"
+      ]
+    },
+    {
+      "id": "q089",
+      "text": "3-2-1 备份原则的含义",
+      "style": "formal",
+      "topic": "base",
+      "relevant_ids": [
+        "ba_02"
+      ]
+    },
+    {
+      "id": "L090",
+      "text": "代码提交前要过什么检查，高危告警没清零能合并吗",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "L091",
+      "text": "收到用户数据泄露的报告，多久内要上报管理层",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_incident"
+      ]
+    },
+    {
+      "id": "L092",
+      "text": "手机号在页面上展示时怎么处理",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "L093",
+      "text": "没拿到书面授权能先扫一下吗",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_pentest"
+      ]
+    },
+    {
+      "id": "L094",
+      "text": "访问日志要留多久",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_logging"
+      ]
+    },
+    {
+      "id": "L095",
+      "text": "给外包开的账号到期了怎么处理",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_vendor"
+      ]
+    },
+    {
+      "id": "L096",
+      "text": "云上的根账号能日常用吗",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_cloud"
+      ]
+    },
+    {
+      "id": "L097",
+      "text": "密码长度有什么要求",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_password"
+      ]
+    },
+    {
+      "id": "L098",
+      "text": "容器里能不能写死访问密钥",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_cloud"
+      ]
+    },
+    {
+      "id": "L099",
+      "text": "主机被入侵了是先关机还是先断网",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_incident"
+      ]
+    },
+    {
+      "id": "L100",
+      "text": "数据分类分级是哪几级",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "L101",
+      "text": "密钥泄露了要多久内换掉",
+      "style": "colloquial",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_password"
+      ]
+    },
+    {
+      "id": "L102",
+      "text": "SSDLC 在需求阶段要求做哪些安全活动",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "L103",
+      "text": "安全事件的分级标准",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_incident"
+      ]
+    },
+    {
+      "id": "L104",
+      "text": "个人信息脱敏的具体规则",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "L105",
+      "text": "渗透测试中的手法限制与数据处置要求",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_pentest"
+      ]
+    },
+    {
+      "id": "L106",
+      "text": "日志留存期限与字段要求",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_logging"
+      ]
+    },
+    {
+      "id": "L107",
+      "text": "供应商准入评估与合同安全条款",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_vendor"
+      ]
+    },
+    {
+      "id": "L108",
+      "text": "云平台身份与访问的基线要求",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_cloud"
+      ]
+    },
+    {
+      "id": "L109",
+      "text": "密钥轮换周期与吊销流程",
+      "style": "formal",
+      "topic": "long_doc",
+      "relevant_ids": [
+        "doc_password"
+      ]
+    }
+  ]
+}

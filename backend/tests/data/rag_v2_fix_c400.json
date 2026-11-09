@@ -1,0 +1,4344 @@
+{
+  "dataset": "rag_retrieval_large_v2.json",
+  "document_count": 72,
+  "query_count": 109,
+  "embedding_source": "models\\bge-large-zh-v1.5",
+  "query_prefix": "为这个句子生成表示以用于检索相关文章：",
+  "doc_prefix": "",
+  "chunk_size": 400,
+  "chunk_overlap": 80,
+  "hit_rate": {
+    "vector": {
+      "hit_at_1": 0.7798165137614679,
+      "hit_at_3": 0.9174311926605505,
+      "mrr_at_3": 0.8409785932721713
+    },
+    "bm25": {
+      "hit_at_1": 0.7706422018348624,
+      "hit_at_3": 0.8715596330275229,
+      "mrr_at_3": 0.8180428134556575
+    },
+    "hybrid": {
+      "hit_at_1": 0.8165137614678899,
+      "hit_at_3": 0.926605504587156,
+      "mrr_at_3": 0.8669724770642202
+    },
+    "hybrid_rerank": {
+      "hit_at_1": 0.8073394495412844,
+      "hit_at_3": 0.8715596330275229,
+      "mrr_at_3": 0.8333333333333333
+    }
+  },
+  "median_latency_ms": {
+    "vector": 98.9,
+    "bm25": 0.3,
+    "hybrid": 104.0,
+    "hybrid_rerank": 2609.7
+  },
+  "rows": [
+    {
+      "id": "q001",
+      "relevant_ids": [
+        "sql_05"
+      ],
+      "vector": [
+        "sql_01",
+        "sql_06",
+        "sql_03",
+        "ac_03",
+        "sql_07",
+        "deser_02",
+        "xss_04",
+        "deser_01"
+      ],
+      "bm25": [
+        "sql_01",
+        "lfi_03",
+        "sql_06",
+        "doc_ssdlc",
+        "xss_03",
+        "lfi_01",
+        "sql_03"
+      ],
+      "hybrid": [
+        "sql_01",
+        "sql_06",
+        "sql_03",
+        "sql_07",
+        "doc_ssdlc",
+        "sql_05",
+        "sql_02",
+        "ph_03"
+      ],
+      "hybrid_rerank": [
+        "sql_01",
+        "sql_07",
+        "sql_02"
+      ]
+    },
+    {
+      "id": "q002",
+      "relevant_ids": [
+        "sql_03"
+      ],
+      "vector": [
+        "sql_03",
+        "sql_01",
+        "ph_03",
+        "sql_07",
+        "ssrf_01",
+        "deser_01",
+        "log_03",
+        "ssrf_05"
+      ],
+      "bm25": [
+        "sql_03",
+        "de_03",
+        "xss_01",
+        "ssrf_05",
+        "xss_03",
+        "doc_pentest",
+        "sql_04",
+        "ti_02"
+      ],
+      "hybrid": [
+        "sql_03",
+        "ssrf_05",
+        "de_03",
+        "xss_01",
+        "ssrf_01",
+        "sql_01",
+        "log_03",
+        "deser_01"
+      ],
+      "hybrid_rerank": [
+        "sql_03",
+        "de_03",
+        "log_03"
+      ]
+    },
+    {
+      "id": "q003",
+      "relevant_ids": [
+        "sql_01"
+      ],
+      "vector": [
+        "sql_06",
+        "ph_03",
+        "sql_07",
+        "sql_01",
+        "lfi_03",
+        "sql_03",
+        "ac_03",
+        "sql_04"
+      ],
+      "bm25": [
+        "sql_01",
+        "sql_05",
+        "sql_06",
+        "doc_logging",
+        "ssrf_04",
+        "net_02",
+        "ph_02",
+        "xss_06"
+      ],
+      "hybrid": [
+        "sql_06",
+        "sql_01",
+        "sql_05",
+        "sql_07",
+        "doc_logging",
+        "ph_02",
+        "sql_04",
+        "lfi_03"
+      ],
+      "hybrid_rerank": [
+        "sql_01",
+        "sql_04",
+        "sql_07"
+      ]
+    },
+    {
+      "id": "q004",
+      "relevant_ids": [
+        "sql_04"
+      ],
+      "vector": [
+        "ssrf_04",
+        "sql_04",
+        "sql_03",
+        "xss_04",
+        "deser_01",
+        "ph_03",
+        "xss_02",
+        "ssrf_02"
+      ],
+      "bm25": [
+        "ssrf_04",
+        "sql_03",
+        "xss_03",
+        "sql_04",
+        "xss_01",
+        "xss_02",
+        "doc_ssdlc",
+        "doc_pentest"
+      ],
+      "hybrid": [
+        "ssrf_04",
+        "sql_03",
+        "sql_04",
+        "xss_02",
+        "xss_04",
+        "xss_03",
+        "doc_pentest",
+        "ssrf_02"
+      ],
+      "hybrid_rerank": [
+        "ssrf_04",
+        "sql_03",
+        "sql_04"
+      ]
+    },
+    {
+      "id": "q005",
+      "relevant_ids": [
+        "sql_06"
+      ],
+      "vector": [
+        "sql_06",
+        "sql_07",
+        "sql_02",
+        "sql_01",
+        "sql_03",
+        "sql_05",
+        "sql_04",
+        "log_02"
+      ],
+      "bm25": [
+        "sql_06",
+        "sql_05",
+        "sql_01",
+        "doc_ssdlc",
+        "auth_02",
+        "sql_02",
+        "cry_04"
+      ],
+      "hybrid": [
+        "sql_06",
+        "sql_01",
+        "sql_05",
+        "sql_02",
+        "sql_07",
+        "sql_03",
+        "log_02",
+        "cry_04"
+      ],
+      "hybrid_rerank": [
+        "sql_06",
+        "sql_05",
+        "sql_01"
+      ]
+    },
+    {
+      "id": "q006",
+      "relevant_ids": [
+        "sql_01",
+        "sql_05"
+      ],
+      "vector": [
+        "sql_05",
+        "sql_01",
+        "sql_07",
+        "sql_03",
+        "deser_02",
+        "sql_06",
+        "sql_02",
+        "log_02"
+      ],
+      "bm25": [
+        "sql_05",
+        "sql_01",
+        "doc_ssdlc",
+        "log_02",
+        "sql_07",
+        "sql_02",
+        "doc_logging",
+        "sc_02"
+      ],
+      "hybrid": [
+        "sql_05",
+        "sql_01",
+        "sql_07",
+        "log_02",
+        "doc_ssdlc",
+        "sql_02",
+        "deser_02",
+        "sql_03"
+      ],
+      "hybrid_rerank": [
+        "sql_01",
+        "sql_05",
+        "sql_07"
+      ]
+    },
+    {
+      "id": "q007",
+      "relevant_ids": [
+        "sql_03"
+      ],
+      "vector": [
+        "sql_03",
+        "sql_07",
+        "sql_01",
+        "sql_06",
+        "sql_05",
+        "sql_02",
+        "sql_04",
+        "de_04"
+      ],
+      "bm25": [
+        "sql_03",
+        "log_02",
+        "sql_05",
+        "ssrf_02",
+        "ac_01",
+        "doc_ssdlc",
+        "sql_02",
+        "cry_04"
+      ],
+      "hybrid": [
+        "sql_03",
+        "sql_05",
+        "log_02",
+        "sql_07",
+        "sql_06",
+        "sql_02",
+        "sql_01",
+        "cry_04"
+      ],
+      "hybrid_rerank": [
+        "sql_03",
+        "sql_05",
+        "log_02"
+      ]
+    },
+    {
+      "id": "q008",
+      "relevant_ids": [
+        "sql_04"
+      ],
+      "vector": [
+        "sql_04",
+        "ti_04",
+        "de_04",
+        "ssrf_04",
+        "log_02",
+        "sql_02",
+        "sql_06",
+        "ac_01"
+      ],
+      "bm25": [
+        "sql_04",
+        "log_03",
+        "doc_pentest",
+        "doc_logging",
+        "ti_04",
+        "doc_ssdlc",
+        "log_02",
+        "doc_password"
+      ],
+      "hybrid": [
+        "sql_04",
+        "ti_04",
+        "log_03",
+        "log_02",
+        "de_04",
+        "doc_pentest",
+        "ssrf_04",
+        "doc_logging"
+      ],
+      "hybrid_rerank": [
+        "sql_04",
+        "ssrf_04",
+        "log_03"
+      ]
+    },
+    {
+      "id": "q009",
+      "relevant_ids": [
+        "sql_07"
+      ],
+      "vector": [
+        "sql_07",
+        "sql_03",
+        "sql_06",
+        "sql_04",
+        "sql_01",
+        "sql_02",
+        "de_04",
+        "log_02"
+      ],
+      "bm25": [
+        "sql_07",
+        "ph_03",
+        "de_02",
+        "ti_02",
+        "de_04",
+        "de_01",
+        "ph_01",
+        "sql_02"
+      ],
+      "hybrid": [
+        "sql_07",
+        "de_04",
+        "sql_06",
+        "ph_03",
+        "sql_02",
+        "sql_03",
+        "sql_01",
+        "ph_01"
+      ],
+      "hybrid_rerank": [
+        "sql_07",
+        "sql_02",
+        "sql_01"
+      ]
+    },
+    {
+      "id": "q010",
+      "relevant_ids": [
+        "xss_05"
+      ],
+      "vector": [
+        "xss_05",
+        "up_02",
+        "deser_02",
+        "xss_06",
+        "ph_03",
+        "deser_01",
+        "xss_04",
+        "up_01"
+      ],
+      "bm25": [
+        "up_01",
+        "xss_01",
+        "xss_06",
+        "xss_05",
+        "xss_03",
+        "doc_ssdlc",
+        "sql_05"
+      ],
+      "hybrid": [
+        "xss_05",
+        "xss_06",
+        "up_01",
+        "xss_01",
+        "xss_03",
+        "sql_03",
+        "xss_02",
+        "doc_ssdlc"
+      ],
+      "hybrid_rerank": [
+        "xss_05",
+        "xss_03",
+        "xss_06"
+      ]
+    },
+    {
+      "id": "q011",
+      "relevant_ids": [
+        "xss_02"
+      ],
+      "vector": [
+        "sql_03",
+        "xss_02",
+        "sql_07",
+        "sql_01",
+        "xss_01",
+        "sql_06",
+        "ph_03",
+        "up_01"
+      ],
+      "bm25": [
+        "xss_01",
+        "xss_02",
+        "xss_03",
+        "ph_02",
+        "sql_03",
+        "xss_06",
+        "xss_05",
+        "up_03"
+      ],
+      "hybrid": [
+        "xss_02",
+        "sql_03",
+        "xss_01",
+        "xss_05",
+        "sql_07",
+        "up_01",
+        "sql_06",
+        "xss_03"
+      ],
+      "hybrid_rerank": [
+        "xss_02",
+        "sql_03",
+        "xss_01"
+      ]
+    },
+    {
+      "id": "q012",
+      "relevant_ids": [
+        "xss_03"
+      ],
+      "vector": [
+        "xss_03",
+        "deser_01",
+        "doc_pentest",
+        "xss_02",
+        "deser_02",
+        "xss_05",
+        "up_01"
+      ],
+      "bm25": [
+        "xss_03",
+        "up_01",
+        "xss_01",
+        "up_03",
+        "xss_06",
+        "xss_02",
+        "xss_05",
+        "ph_03"
+      ],
+      "hybrid": [
+        "xss_03",
+        "up_01",
+        "xss_02",
+        "xss_01",
+        "deser_01",
+        "xss_05",
+        "up_03",
+        "doc_ssdlc"
+      ],
+      "hybrid_rerank": [
+        "xss_03",
+        "up_01",
+        "up_03"
+      ]
+    },
+    {
+      "id": "q013",
+      "relevant_ids": [
+        "xss_04"
+      ],
+      "vector": [
+        "xss_04",
+        "sql_01",
+        "sql_03",
+        "sql_07",
+        "ssrf_01",
+        "xss_01",
+        "ssrf_04",
+        "deser_02"
+      ],
+      "bm25": [
+        "sql_01",
+        "lfi_03",
+        "doc_ssdlc",
+        "sql_05",
+        "xss_01",
+        "lfi_01",
+        "xss_03",
+        "up_03"
+      ],
+      "hybrid": [
+        "sql_01",
+        "xss_04",
+        "xss_01",
+        "doc_ssdlc",
+        "sql_07",
+        "sql_03",
+        "deser_02",
+        "xss_03"
+      ],
+      "hybrid_rerank": [
+        "xss_04",
+        "sql_01",
+        "deser_02"
+      ]
+    },
+    {
+      "id": "q014",
+      "relevant_ids": [
+        "xss_06"
+      ],
+      "vector": [
+        "xss_06",
+        "xss_01",
+        "ph_03",
+        "xss_03",
+        "xss_05",
+        "dk_03",
+        "up_02",
+        "ac_03"
+      ],
+      "bm25": [
+        "xss_06",
+        "xss_01",
+        "xss_05",
+        "ac_01",
+        "xss_02",
+        "up_03",
+        "xss_03",
+        "up_01"
+      ],
+      "hybrid": [
+        "xss_06",
+        "xss_01",
+        "xss_05",
+        "xss_03",
+        "up_01",
+        "ph_03",
+        "ac_01",
+        "xss_02"
+      ],
+      "hybrid_rerank": [
+        "xss_06",
+        "xss_01",
+        "xss_05"
+      ]
+    },
+    {
+      "id": "q015",
+      "relevant_ids": [
+        "xss_02",
+        "xss_03"
+      ],
+      "vector": [
+        "xss_03",
+        "xss_02",
+        "xss_04",
+        "xss_05",
+        "xss_01",
+        "deser_01",
+        "doc_data_class",
+        "ssrf_04"
+      ],
+      "bm25": [
+        "xss_03",
+        "xss_02",
+        "up_01",
+        "xss_04",
+        "xss_06",
+        "xss_05",
+        "xss_01",
+        "cry_01"
+      ],
+      "hybrid": [
+        "xss_03",
+        "xss_02",
+        "xss_04",
+        "xss_05",
+        "xss_01",
+        "xss_06",
+        "doc_data_class",
+        "doc_logging"
+      ],
+      "hybrid_rerank": [
+        "xss_03",
+        "xss_02",
+        "xss_04"
+      ]
+    },
+    {
+      "id": "q016",
+      "relevant_ids": [
+        "xss_04"
+      ],
+      "vector": [
+        "xss_04",
+        "xss_03",
+        "xss_01",
+        "xss_05",
+        "xss_02",
+        "ssrf_02",
+        "net_02",
+        "ssrf_03"
+      ],
+      "bm25": [
+        "xss_04",
+        "xss_02",
+        "dk_01",
+        "xss_06",
+        "xss_05",
+        "xss_03",
+        "xss_01"
+      ],
+      "hybrid": [
+        "xss_04",
+        "xss_02",
+        "xss_03",
+        "xss_05",
+        "xss_01",
+        "xss_06",
+        "dk_01",
+        "ssrf_02"
+      ],
+      "hybrid_rerank": [
+        "xss_04",
+        "xss_02",
+        "xss_05"
+      ]
+    },
+    {
+      "id": "q017",
+      "relevant_ids": [
+        "xss_05"
+      ],
+      "vector": [
+        "xss_05",
+        "xss_06",
+        "auth_03",
+        "xss_03",
+        "lfi_03",
+        "xss_02",
+        "cry_02",
+        "ssrf_03"
+      ],
+      "bm25": [
+        "xss_05",
+        "xss_06",
+        "lfi_03",
+        "xss_04",
+        "xss_02",
+        "xss_03",
+        "sc_02",
+        "xss_01"
+      ],
+      "hybrid": [
+        "xss_05",
+        "xss_06",
+        "lfi_03",
+        "xss_03",
+        "xss_02",
+        "sc_02",
+        "ssrf_03",
+        "xss_04"
+      ],
+      "hybrid_rerank": [
+        "xss_05",
+        "xss_06",
+        "lfi_03"
+      ]
+    },
+    {
+      "id": "q018",
+      "relevant_ids": [
+        "ssrf_01"
+      ],
+      "vector": [
+        "ssrf_01",
+        "ssrf_02",
+        "dk_03",
+        "ph_03",
+        "ssrf_05",
+        "xss_06",
+        "doc_incident",
+        "lfi_01"
+      ],
+      "bm25": [
+        "ssrf_01",
+        "ssrf_05",
+        "up_01",
+        "ssrf_02",
+        "doc_logging",
+        "ph_02",
+        "auth_03",
+        "ssrf_04"
+      ],
+      "hybrid": [
+        "ssrf_01",
+        "ssrf_02",
+        "ssrf_05",
+        "doc_logging",
+        "xss_06",
+        "up_01",
+        "ssrf_04",
+        "net_02"
+      ],
+      "hybrid_rerank": [
+        "ssrf_01",
+        "ssrf_05",
+        "ssrf_04"
+      ]
+    },
+    {
+      "id": "q019",
+      "relevant_ids": [
+        "ssrf_02"
+      ],
+      "vector": [
+        "ssrf_02",
+        "dk_03",
+        "doc_cloud",
+        "net_02",
+        "xss_04",
+        "deser_01",
+        "dk_01",
+        "doc_incident"
+      ],
+      "bm25": [
+        "ssrf_02",
+        "xss_04",
+        "ssrf_01",
+        "doc_incident",
+        "dk_01",
+        "doc_logging",
+        "log_03"
+      ],
+      "hybrid": [
+        "ssrf_02",
+        "xss_04",
+        "doc_cloud",
+        "doc_incident",
+        "dk_01",
+        "doc_logging",
+        "log_01",
+        "doc_data_class"
+      ],
+      "hybrid_rerank": [
+        "ssrf_02",
+        "xss_04",
+        "doc_logging"
+      ]
+    },
+    {
+      "id": "q020",
+      "relevant_ids": [
+        "ssrf_03"
+      ],
+      "vector": [
+        "doc_logging",
+        "xss_05",
+        "doc_ssdlc",
+        "doc_cloud",
+        "deser_02",
+        "xss_06",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "ssrf_01",
+        "doc_ssdlc",
+        "cry_02",
+        "auth_05",
+        "net_02",
+        "ba_01",
+        "doc_data_class"
+      ],
+      "hybrid": [
+        "doc_ssdlc",
+        "doc_logging",
+        "cry_02",
+        "doc_cloud",
+        "net_02",
+        "ssrf_01",
+        "doc_password",
+        "auth_05"
+      ],
+      "hybrid_rerank": [
+        "ssrf_01",
+        "cry_02",
+        "auth_05"
+      ]
+    },
+    {
+      "id": "q021",
+      "relevant_ids": [
+        "ssrf_04"
+      ],
+      "vector": [
+        "ssrf_04",
+        "doc_incident",
+        "doc_ssdlc",
+        "doc_pentest",
+        "up_02"
+      ],
+      "bm25": [
+        "ssrf_04",
+        "xss_01",
+        "doc_pentest",
+        "ssrf_01",
+        "xss_03",
+        "xss_06",
+        "xss_02",
+        "sql_04"
+      ],
+      "hybrid": [
+        "ssrf_04",
+        "doc_pentest",
+        "ssrf_01",
+        "doc_ssdlc",
+        "doc_incident",
+        "sql_04",
+        "doc_logging",
+        "sql_03"
+      ],
+      "hybrid_rerank": [
+        "ssrf_04",
+        "doc_incident",
+        "ssrf_01"
+      ]
+    },
+    {
+      "id": "q022",
+      "relevant_ids": [
+        "ssrf_05"
+      ],
+      "vector": [
+        "ssrf_05",
+        "xss_05",
+        "lfi_02",
+        "ac_03",
+        "sql_07",
+        "ssrf_03",
+        "auth_02",
+        "de_03"
+      ],
+      "bm25": [
+        "ssrf_05",
+        "ph_02",
+        "lfi_02",
+        "de_03",
+        "sql_06",
+        "ba_01",
+        "auth_04",
+        "xss_05"
+      ],
+      "hybrid": [
+        "ssrf_05",
+        "lfi_02",
+        "xss_05",
+        "de_03",
+        "ph_02",
+        "ssrf_03",
+        "auth_04",
+        "sql_06"
+      ],
+      "hybrid_rerank": [
+        "ssrf_05",
+        "ssrf_03",
+        "lfi_02"
+      ]
+    },
+    {
+      "id": "q023",
+      "relevant_ids": [
+        "ssrf_01",
+        "ssrf_03"
+      ],
+      "vector": [
+        "ssrf_03",
+        "ssrf_01",
+        "ssrf_04",
+        "ssrf_02",
+        "xss_05",
+        "ssrf_05",
+        "xss_04",
+        "xss_02"
+      ],
+      "bm25": [
+        "ssrf_03",
+        "xss_03",
+        "sql_01",
+        "ssrf_04",
+        "ssrf_02",
+        "ssrf_01",
+        "ssrf_05",
+        "sc_02"
+      ],
+      "hybrid": [
+        "ssrf_03",
+        "ssrf_04",
+        "ssrf_01",
+        "ssrf_02",
+        "xss_03",
+        "ssrf_05",
+        "xss_05",
+        "deser_02"
+      ],
+      "hybrid_rerank": [
+        "ssrf_03",
+        "ssrf_04",
+        "ssrf_01"
+      ]
+    },
+    {
+      "id": "q024",
+      "relevant_ids": [
+        "ssrf_02"
+      ],
+      "vector": [
+        "ssrf_02",
+        "net_02",
+        "doc_cloud",
+        "doc_ssdlc",
+        "doc_logging",
+        "doc_data_class",
+        "deser_02",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "ssrf_01",
+        "ssrf_02",
+        "net_02",
+        "sc_02",
+        "doc_ssdlc",
+        "doc_pentest",
+        "doc_data_class"
+      ],
+      "hybrid": [
+        "ssrf_02",
+        "net_02",
+        "doc_ssdlc",
+        "doc_data_class",
+        "doc_pentest",
+        "sc_02",
+        "xss_04",
+        "doc_vendor"
+      ],
+      "hybrid_rerank": [
+        "ssrf_02",
+        "net_02",
+        "doc_pentest"
+      ]
+    },
+    {
+      "id": "q025",
+      "relevant_ids": [
+        "ssrf_04"
+      ],
+      "vector": [
+        "ssrf_04",
+        "ssrf_05",
+        "sql_04",
+        "ssrf_03",
+        "ssrf_01",
+        "ssrf_02",
+        "de_04",
+        "net_03"
+      ],
+      "bm25": [
+        "ssrf_04",
+        "ssrf_02",
+        "ssrf_01",
+        "ssrf_03",
+        "ssrf_05",
+        "auth_02",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "ssrf_04",
+        "ssrf_05",
+        "ssrf_02",
+        "ssrf_01",
+        "ssrf_03",
+        "sql_04",
+        "auth_02",
+        "de_04"
+      ],
+      "hybrid_rerank": [
+        "ssrf_04",
+        "ssrf_03",
+        "sql_04"
+      ]
+    },
+    {
+      "id": "q026",
+      "relevant_ids": [
+        "lfi_03"
+      ],
+      "vector": [
+        "up_01",
+        "deser_02",
+        "ssrf_02",
+        "ph_03",
+        "de_03",
+        "up_02",
+        "up_03",
+        "xss_04"
+      ],
+      "bm25": [
+        "up_01",
+        "lfi_01",
+        "up_03",
+        "lfi_03",
+        "ssrf_02",
+        "auth_03",
+        "xss_01",
+        "doc_logging"
+      ],
+      "hybrid": [
+        "up_01",
+        "ssrf_02",
+        "up_03",
+        "lfi_01",
+        "ph_03",
+        "up_02",
+        "doc_logging",
+        "deser_02"
+      ],
+      "hybrid_rerank": [
+        "lfi_01",
+        "up_01",
+        "ph_03"
+      ]
+    },
+    {
+      "id": "q027",
+      "relevant_ids": [
+        "lfi_02"
+      ],
+      "vector": [
+        "ssrf_05",
+        "sql_06",
+        "lfi_02",
+        "ph_03",
+        "sql_04",
+        "xss_01",
+        "ac_03",
+        "up_01"
+      ],
+      "bm25": [
+        "up_02"
+      ],
+      "hybrid": [
+        "up_02",
+        "ssrf_05",
+        "sql_06",
+        "lfi_02",
+        "ph_03",
+        "sql_04",
+        "xss_01",
+        "ac_03"
+      ],
+      "hybrid_rerank": [
+        "lfi_02",
+        "sql_06",
+        "ph_03"
+      ]
+    },
+    {
+      "id": "q028",
+      "relevant_ids": [
+        "up_01"
+      ],
+      "vector": [
+        "up_01",
+        "up_02",
+        "xss_05",
+        "xss_01",
+        "xss_06",
+        "xss_03",
+        "ssrf_02",
+        "doc_logging"
+      ],
+      "bm25": [
+        "up_01",
+        "xss_05",
+        "de_04",
+        "up_02",
+        "xss_01",
+        "xss_06",
+        "xss_02",
+        "up_03"
+      ],
+      "hybrid": [
+        "up_01",
+        "xss_05",
+        "up_02",
+        "xss_01",
+        "xss_06",
+        "xss_03",
+        "doc_pentest",
+        "xss_02"
+      ],
+      "hybrid_rerank": [
+        "up_01",
+        "xss_05",
+        "xss_03"
+      ]
+    },
+    {
+      "id": "q029",
+      "relevant_ids": [
+        "up_02"
+      ],
+      "vector": [
+        "up_02",
+        "up_01",
+        "ph_03",
+        "lfi_03",
+        "deser_02",
+        "doc_ssdlc",
+        "doc_data_class",
+        "ph_02"
+      ],
+      "bm25": [
+        "up_02",
+        "up_01",
+        "lfi_03",
+        "up_03",
+        "lfi_01",
+        "doc_ssdlc",
+        "ph_03",
+        "sc_02"
+      ],
+      "hybrid": [
+        "up_02",
+        "up_01",
+        "lfi_03",
+        "ph_03",
+        "doc_ssdlc",
+        "deser_02",
+        "auth_03",
+        "doc_incident"
+      ],
+      "hybrid_rerank": [
+        "up_02",
+        "up_01",
+        "lfi_03"
+      ]
+    },
+    {
+      "id": "q030",
+      "relevant_ids": [
+        "up_03"
+      ],
+      "vector": [
+        "up_03",
+        "up_01",
+        "xss_01",
+        "xss_03",
+        "xss_02",
+        "lfi_01",
+        "xss_05",
+        "xss_04"
+      ],
+      "bm25": [
+        "up_03",
+        "up_01",
+        "xss_01",
+        "lfi_01",
+        "ph_03",
+        "up_02",
+        "xss_03",
+        "auth_05"
+      ],
+      "hybrid": [
+        "up_03",
+        "up_01",
+        "xss_01",
+        "lfi_01",
+        "xss_03",
+        "xss_02",
+        "up_02",
+        "ph_03"
+      ],
+      "hybrid_rerank": [
+        "up_03",
+        "up_01",
+        "up_02"
+      ]
+    },
+    {
+      "id": "q031",
+      "relevant_ids": [
+        "lfi_01",
+        "lfi_02"
+      ],
+      "vector": [
+        "lfi_01",
+        "ph_03",
+        "up_01",
+        "sc_01",
+        "up_03",
+        "ph_02",
+        "lfi_03",
+        "de_01"
+      ],
+      "bm25": [
+        "lfi_01",
+        "lfi_03",
+        "ba_03",
+        "up_01",
+        "de_01",
+        "up_03",
+        "sql_02",
+        "ssrf_03"
+      ],
+      "hybrid": [
+        "lfi_01",
+        "up_01",
+        "lfi_03",
+        "up_03",
+        "de_01",
+        "ph_03",
+        "doc_incident",
+        "deser_02"
+      ],
+      "hybrid_rerank": [
+        "lfi_01",
+        "lfi_03",
+        "up_01"
+      ]
+    },
+    {
+      "id": "q032",
+      "relevant_ids": [
+        "up_02"
+      ],
+      "vector": [
+        "up_02",
+        "up_01",
+        "ac_03",
+        "auth_03",
+        "doc_cloud",
+        "doc_data_class",
+        "auth_05",
+        "lfi_03"
+      ],
+      "bm25": [
+        "up_01",
+        "up_02",
+        "ssrf_03",
+        "auth_01",
+        "doc_ssdlc",
+        "lfi_03",
+        "sql_05",
+        "auth_05"
+      ],
+      "hybrid": [
+        "up_02",
+        "up_01",
+        "ssrf_03",
+        "lfi_03",
+        "doc_ssdlc",
+        "doc_data_class",
+        "auth_05",
+        "auth_03"
+      ],
+      "hybrid_rerank": [
+        "up_02",
+        "up_01",
+        "lfi_03"
+      ]
+    },
+    {
+      "id": "q033",
+      "relevant_ids": [
+        "up_03"
+      ],
+      "vector": [
+        "up_03",
+        "up_01",
+        "ph_03",
+        "sc_01",
+        "lfi_02",
+        "log_02",
+        "deser_02",
+        "cry_04"
+      ],
+      "bm25": [
+        "up_03",
+        "net_04",
+        "up_01",
+        "dk_01",
+        "ssrf_03",
+        "lfi_01",
+        "ba_03",
+        "ph_03"
+      ],
+      "hybrid": [
+        "up_03",
+        "up_01",
+        "ph_03",
+        "dk_01",
+        "lfi_02",
+        "lfi_01",
+        "net_04",
+        "cry_04"
+      ],
+      "hybrid_rerank": [
+        "up_03",
+        "up_01",
+        "ph_03"
+      ]
+    },
+    {
+      "id": "q034",
+      "relevant_ids": [
+        "deser_01"
+      ],
+      "vector": [
+        "deser_01",
+        "xss_03",
+        "net_02",
+        "up_02",
+        "doc_data_class",
+        "deser_02",
+        "ti_04"
+      ],
+      "bm25": [
+        "deser_01",
+        "doc_ssdlc",
+        "lfi_03",
+        "lfi_01",
+        "sql_01",
+        "log_03",
+        "doc_data_class",
+        "net_02"
+      ],
+      "hybrid": [
+        "deser_01",
+        "doc_ssdlc",
+        "net_02",
+        "doc_data_class",
+        "xss_03",
+        "lfi_03",
+        "sc_02",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "deser_01",
+        "net_02",
+        "doc_pentest"
+      ]
+    },
+    {
+      "id": "q035",
+      "relevant_ids": [
+        "deser_02"
+      ],
+      "vector": [
+        "deser_02",
+        "deser_01",
+        "xss_05",
+        "de_03",
+        "doc_pentest",
+        "ph_03",
+        "doc_ssdlc",
+        "net_02"
+      ],
+      "bm25": [
+        "deser_02",
+        "deser_01",
+        "lfi_02",
+        "log_03",
+        "ba_03",
+        "dk_01",
+        "dk_02",
+        "up_03"
+      ],
+      "hybrid": [
+        "deser_02",
+        "deser_01",
+        "log_03",
+        "doc_pentest",
+        "doc_ssdlc",
+        "doc_incident",
+        "xss_05",
+        "lfi_02"
+      ],
+      "hybrid_rerank": [
+        "deser_02",
+        "deser_01",
+        "xss_05"
+      ]
+    },
+    {
+      "id": "q036",
+      "relevant_ids": [
+        "deser_01",
+        "deser_02"
+      ],
+      "vector": [
+        "deser_01",
+        "deser_02",
+        "doc_incident",
+        "doc_pentest",
+        "up_02",
+        "auth_04"
+      ],
+      "bm25": [
+        "deser_01",
+        "deser_02",
+        "doc_ssdlc",
+        "xss_03",
+        "lfi_02",
+        "log_03",
+        "doc_incident",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "deser_01",
+        "deser_02",
+        "doc_incident",
+        "doc_ssdlc",
+        "xss_03",
+        "doc_logging",
+        "xss_05",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "deser_02",
+        "deser_01",
+        "doc_incident"
+      ]
+    },
+    {
+      "id": "q037",
+      "relevant_ids": [
+        "auth_01"
+      ],
+      "vector": [
+        "up_01",
+        "cry_01",
+        "auth_03",
+        "doc_ssdlc",
+        "auth_01",
+        "lfi_03",
+        "xss_06",
+        "doc_logging"
+      ],
+      "bm25": [
+        "xss_06",
+        "auth_01",
+        "ac_02",
+        "up_01",
+        "doc_ssdlc",
+        "doc_pentest",
+        "doc_logging"
+      ],
+      "hybrid": [
+        "up_01",
+        "auth_01",
+        "xss_06",
+        "doc_ssdlc",
+        "doc_logging",
+        "lfi_03",
+        "dk_02",
+        "doc_password"
+      ],
+      "hybrid_rerank": [
+        "auth_01",
+        "doc_logging",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q038",
+      "relevant_ids": [
+        "auth_02"
+      ],
+      "vector": [
+        "auth_02",
+        "net_02",
+        "doc_ssdlc",
+        "ti_04",
+        "doc_logging",
+        "ssrf_02",
+        "doc_incident",
+        "xss_03"
+      ],
+      "bm25": [
+        "auth_02",
+        "net_02",
+        "sc_02",
+        "doc_incident",
+        "xss_06",
+        "doc_ssdlc",
+        "doc_logging"
+      ],
+      "hybrid": [
+        "auth_02",
+        "net_02",
+        "doc_ssdlc",
+        "doc_incident",
+        "doc_logging",
+        "doc_cloud",
+        "xss_06",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "auth_02",
+        "net_02",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q039",
+      "relevant_ids": [
+        "auth_03"
+      ],
+      "vector": [
+        "auth_03",
+        "doc_vendor",
+        "doc_ssdlc",
+        "doc_logging",
+        "doc_cloud",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "auth_03",
+        "doc_pentest",
+        "doc_vendor",
+        "net_02",
+        "doc_incident",
+        "auth_02",
+        "xss_02",
+        "sql_05"
+      ],
+      "hybrid": [
+        "auth_03",
+        "doc_vendor",
+        "doc_pentest",
+        "doc_ssdlc",
+        "doc_logging",
+        "doc_cloud",
+        "net_02",
+        "sql_05"
+      ],
+      "hybrid_rerank": [
+        "auth_03",
+        "doc_logging",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q040",
+      "relevant_ids": [
+        "auth_04"
+      ],
+      "vector": [
+        "auth_04",
+        "doc_password",
+        "xss_05",
+        "doc_logging",
+        "doc_cloud",
+        "doc_incident",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "auth_04",
+        "auth_02",
+        "doc_incident",
+        "doc_logging",
+        "doc_cloud"
+      ],
+      "hybrid": [
+        "auth_04",
+        "doc_logging",
+        "doc_incident",
+        "doc_cloud",
+        "doc_password",
+        "auth_02",
+        "xss_05",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "auth_04",
+        "auth_02",
+        "xss_05"
+      ]
+    },
+    {
+      "id": "q041",
+      "relevant_ids": [
+        "auth_05"
+      ],
+      "vector": [
+        "auth_05",
+        "ac_03",
+        "doc_data_class",
+        "doc_ssdlc",
+        "ph_03",
+        "deser_01",
+        "sql_07"
+      ],
+      "bm25": [
+        "auth_05",
+        "doc_ssdlc",
+        "net_01",
+        "ac_01",
+        "lfi_01",
+        "doc_data_class"
+      ],
+      "hybrid": [
+        "auth_05",
+        "doc_ssdlc",
+        "doc_data_class",
+        "doc_vendor",
+        "ac_01",
+        "doc_pentest",
+        "doc_incident",
+        "ac_03"
+      ],
+      "hybrid_rerank": [
+        "auth_05",
+        "ac_01",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q042",
+      "relevant_ids": [
+        "auth_01"
+      ],
+      "vector": [
+        "auth_01",
+        "ssrf_01",
+        "ph_01",
+        "deser_02",
+        "up_02",
+        "auth_03",
+        "ssrf_04",
+        "ssrf_03"
+      ],
+      "bm25": [
+        "auth_01",
+        "deser_02",
+        "sc_02",
+        "up_03",
+        "ssrf_01",
+        "ph_01",
+        "cry_01",
+        "up_02"
+      ],
+      "hybrid": [
+        "auth_01",
+        "deser_02",
+        "ssrf_01",
+        "ph_01",
+        "up_02",
+        "sc_02",
+        "auth_03",
+        "cry_01"
+      ],
+      "hybrid_rerank": [
+        "auth_01",
+        "deser_02",
+        "up_02"
+      ]
+    },
+    {
+      "id": "q043",
+      "relevant_ids": [
+        "auth_02"
+      ],
+      "vector": [
+        "auth_02",
+        "lfi_03",
+        "xss_06",
+        "ssrf_03",
+        "auth_04",
+        "de_03",
+        "ti_02",
+        "sql_05"
+      ],
+      "bm25": [
+        "auth_02",
+        "lfi_03",
+        "doc_ssdlc",
+        "dk_02",
+        "sc_02",
+        "xss_05",
+        "deser_02",
+        "ssrf_03"
+      ],
+      "hybrid": [
+        "auth_02",
+        "lfi_03",
+        "ssrf_03",
+        "xss_06",
+        "xss_05",
+        "ti_02",
+        "sql_05",
+        "sc_02"
+      ],
+      "hybrid_rerank": [
+        "auth_02",
+        "lfi_03",
+        "ssrf_03"
+      ]
+    },
+    {
+      "id": "q044",
+      "relevant_ids": [
+        "auth_03"
+      ],
+      "vector": [
+        "auth_03",
+        "sc_02",
+        "up_02",
+        "cry_01",
+        "doc_ssdlc",
+        "doc_password",
+        "doc_vendor",
+        "doc_cloud"
+      ],
+      "bm25": [
+        "auth_03",
+        "doc_pentest",
+        "lfi_03",
+        "net_02",
+        "doc_data_class",
+        "ba_02",
+        "sc_01",
+        "up_02"
+      ],
+      "hybrid": [
+        "auth_03",
+        "up_02",
+        "sc_02",
+        "doc_logging",
+        "doc_pentest",
+        "doc_data_class",
+        "deser_02",
+        "auth_01"
+      ],
+      "hybrid_rerank": [
+        "auth_03",
+        "deser_02",
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "q045",
+      "relevant_ids": [
+        "auth_05"
+      ],
+      "vector": [
+        "auth_05",
+        "ac_01",
+        "ssrf_05",
+        "ac_03",
+        "lfi_02",
+        "sql_04",
+        "ti_02",
+        "dk_01"
+      ],
+      "bm25": [
+        "auth_05",
+        "doc_vendor",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "auth_05",
+        "doc_ssdlc",
+        "ac_01",
+        "doc_vendor",
+        "ssrf_05",
+        "ac_03",
+        "lfi_02",
+        "sql_04"
+      ],
+      "hybrid_rerank": [
+        "auth_05",
+        "doc_ssdlc",
+        "ac_01"
+      ]
+    },
+    {
+      "id": "q046",
+      "relevant_ids": [
+        "cry_01"
+      ],
+      "vector": [
+        "doc_password",
+        "cry_01",
+        "cry_04",
+        "auth_04",
+        "doc_cloud",
+        "sql_05",
+        "doc_logging"
+      ],
+      "bm25": [
+        "auth_01",
+        "auth_04",
+        "cry_01",
+        "sql_03",
+        "sql_02",
+        "sql_06",
+        "xss_03",
+        "sql_07"
+      ],
+      "hybrid": [
+        "cry_01",
+        "auth_04",
+        "xss_03",
+        "doc_password",
+        "doc_logging",
+        "doc_data_class",
+        "sql_06",
+        "sql_07"
+      ],
+      "hybrid_rerank": [
+        "cry_01",
+        "sql_07",
+        "xss_03"
+      ]
+    },
+    {
+      "id": "q047",
+      "relevant_ids": [
+        "cry_02"
+      ],
+      "vector": [
+        "doc_cloud",
+        "up_02",
+        "doc_incident",
+        "xss_05",
+        "doc_ssdlc",
+        "ph_03",
+        "de_03"
+      ],
+      "bm25": [
+        "cry_02",
+        "doc_data_class",
+        "sql_06",
+        "de_03",
+        "doc_ssdlc",
+        "doc_vendor",
+        "doc_cloud"
+      ],
+      "hybrid": [
+        "doc_cloud",
+        "doc_data_class",
+        "doc_ssdlc",
+        "de_03",
+        "xss_05",
+        "doc_incident",
+        "cry_02",
+        "doc_logging"
+      ],
+      "hybrid_rerank": [
+        "cry_02",
+        "de_03",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q048",
+      "relevant_ids": [
+        "cry_03"
+      ],
+      "vector": [
+        "cry_03",
+        "doc_password",
+        "cry_04",
+        "doc_pentest",
+        "doc_incident",
+        "doc_cloud",
+        "doc_data_class"
+      ],
+      "bm25": [
+        "cry_03",
+        "doc_password",
+        "cry_04",
+        "doc_incident",
+        "doc_cloud",
+        "doc_data_class"
+      ],
+      "hybrid": [
+        "cry_03",
+        "doc_password",
+        "cry_04",
+        "doc_incident",
+        "doc_cloud",
+        "doc_data_class",
+        "doc_ssdlc",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "cry_03",
+        "cry_04",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q049",
+      "relevant_ids": [
+        "cry_04"
+      ],
+      "vector": [
+        "doc_password",
+        "cry_04",
+        "xss_06",
+        "doc_cloud",
+        "auth_04",
+        "auth_03",
+        "lfi_03",
+        "cry_01"
+      ],
+      "bm25": [
+        "doc_cloud",
+        "doc_password",
+        "cry_04",
+        "doc_pentest",
+        "de_03",
+        "lfi_01"
+      ],
+      "hybrid": [
+        "doc_password",
+        "doc_cloud",
+        "cry_04",
+        "xss_06",
+        "doc_pentest",
+        "auth_04",
+        "de_03",
+        "auth_03"
+      ],
+      "hybrid_rerank": [
+        "cry_04",
+        "auth_04",
+        "doc_cloud"
+      ]
+    },
+    {
+      "id": "q050",
+      "relevant_ids": [
+        "cry_01"
+      ],
+      "vector": [
+        "cry_01",
+        "doc_logging",
+        "doc_password",
+        "doc_data_class",
+        "doc_cloud",
+        "up_02"
+      ],
+      "bm25": [
+        "cry_01",
+        "doc_password",
+        "doc_ssdlc",
+        "doc_logging",
+        "doc_incident",
+        "xss_06",
+        "de_03",
+        "xss_03"
+      ],
+      "hybrid": [
+        "cry_01",
+        "doc_password",
+        "doc_logging",
+        "doc_ssdlc",
+        "xss_06",
+        "doc_data_class",
+        "doc_cloud",
+        "doc_incident"
+      ],
+      "hybrid_rerank": [
+        "cry_01",
+        "doc_logging",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q051",
+      "relevant_ids": [
+        "cry_02"
+      ],
+      "vector": [
+        "cry_02",
+        "ba_01",
+        "auth_03",
+        "lfi_03",
+        "ssrf_03",
+        "ph_03",
+        "auth_04",
+        "doc_data_class"
+      ],
+      "bm25": [
+        "cry_02",
+        "ba_01",
+        "ssrf_03",
+        "doc_data_class",
+        "doc_cloud"
+      ],
+      "hybrid": [
+        "cry_02",
+        "ba_01",
+        "ssrf_03",
+        "doc_data_class",
+        "doc_cloud",
+        "auth_03",
+        "lfi_03",
+        "ph_03"
+      ],
+      "hybrid_rerank": [
+        "cry_02",
+        "ba_01",
+        "ssrf_03"
+      ]
+    },
+    {
+      "id": "q052",
+      "relevant_ids": [
+        "net_01"
+      ],
+      "vector": [
+        "net_02",
+        "net_01",
+        "doc_cloud",
+        "doc_incident",
+        "ssrf_02",
+        "doc_ssdlc",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "ti_01",
+        "ssrf_01",
+        "up_01",
+        "xss_04",
+        "net_02",
+        "net_01",
+        "cry_04",
+        "ssrf_02"
+      ],
+      "hybrid": [
+        "net_02",
+        "net_01",
+        "ti_01",
+        "ssrf_02",
+        "ssrf_01",
+        "doc_cloud",
+        "doc_ssdlc",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "net_01",
+        "ssrf_02",
+        "net_02"
+      ]
+    },
+    {
+      "id": "q053",
+      "relevant_ids": [
+        "net_02"
+      ],
+      "vector": [
+        "net_02",
+        "doc_pentest",
+        "deser_02",
+        "doc_ssdlc",
+        "ssrf_02",
+        "doc_logging",
+        "doc_cloud"
+      ],
+      "bm25": [
+        "net_02",
+        "net_01",
+        "sc_02",
+        "ba_01",
+        "doc_cloud",
+        "cry_03",
+        "auth_04",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "net_02",
+        "doc_pentest",
+        "doc_ssdlc",
+        "doc_cloud",
+        "doc_password",
+        "net_01",
+        "deser_02",
+        "sc_02"
+      ],
+      "hybrid_rerank": [
+        "net_02",
+        "net_01",
+        "sc_02"
+      ]
+    },
+    {
+      "id": "q054",
+      "relevant_ids": [
+        "net_04"
+      ],
+      "vector": [
+        "net_04",
+        "ssrf_05",
+        "ssrf_02",
+        "ph_01",
+        "ph_03",
+        "log_03",
+        "ph_02",
+        "ti_01"
+      ],
+      "bm25": [
+        "net_04",
+        "ph_01",
+        "ti_01",
+        "ssrf_05",
+        "doc_ssdlc",
+        "doc_pentest"
+      ],
+      "hybrid": [
+        "net_04",
+        "ssrf_05",
+        "ph_01",
+        "ti_01",
+        "doc_ssdlc",
+        "doc_pentest",
+        "ssrf_02",
+        "ph_03"
+      ],
+      "hybrid_rerank": [
+        "net_04",
+        "ph_03",
+        "ssrf_05"
+      ]
+    },
+    {
+      "id": "q055",
+      "relevant_ids": [
+        "net_01"
+      ],
+      "vector": [
+        "net_01",
+        "net_02",
+        "ssrf_02",
+        "doc_pentest",
+        "net_03",
+        "ti_01",
+        "de_01",
+        "doc_logging"
+      ],
+      "bm25": [
+        "net_01",
+        "net_02",
+        "ba_01",
+        "doc_data_class",
+        "doc_pentest",
+        "sc_02",
+        "dk_02",
+        "xss_02"
+      ],
+      "hybrid": [
+        "net_01",
+        "net_02",
+        "doc_pentest",
+        "de_01",
+        "ba_01",
+        "doc_logging",
+        "dk_02",
+        "auth_03"
+      ],
+      "hybrid_rerank": [
+        "net_01",
+        "net_02",
+        "de_01"
+      ]
+    },
+    {
+      "id": "q056",
+      "relevant_ids": [
+        "net_02"
+      ],
+      "vector": [
+        "net_02",
+        "up_01",
+        "auth_05",
+        "doc_ssdlc",
+        "ssrf_02",
+        "doc_logging",
+        "ssrf_01",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "net_02",
+        "ba_01",
+        "net_01",
+        "doc_cloud",
+        "sc_01",
+        "ssrf_01",
+        "auth_03",
+        "doc_pentest"
+      ],
+      "hybrid": [
+        "net_02",
+        "auth_05",
+        "up_01",
+        "ssrf_01",
+        "net_01",
+        "doc_cloud",
+        "doc_ssdlc",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "net_02",
+        "auth_05",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q057",
+      "relevant_ids": [
+        "net_04"
+      ],
+      "vector": [
+        "net_04",
+        "cry_04",
+        "lfi_02",
+        "de_02",
+        "ssrf_05",
+        "ti_04",
+        "ssrf_02",
+        "ph_03"
+      ],
+      "bm25": [
+        "net_04",
+        "cry_04",
+        "ac_03",
+        "deser_01",
+        "ba_01",
+        "xss_05",
+        "lfi_02",
+        "dk_01"
+      ],
+      "hybrid": [
+        "net_04",
+        "cry_04",
+        "lfi_02",
+        "ac_03",
+        "ssrf_05",
+        "dk_01",
+        "ti_04",
+        "ssrf_02"
+      ],
+      "hybrid_rerank": [
+        "net_04",
+        "ti_04",
+        "cry_04"
+      ]
+    },
+    {
+      "id": "q058",
+      "relevant_ids": [
+        "ti_03"
+      ],
+      "vector": [
+        "log_03",
+        "ti_01",
+        "ph_01",
+        "deser_01",
+        "net_02",
+        "doc_pentest",
+        "ph_02",
+        "ph_03"
+      ],
+      "bm25": [
+        "ti_01",
+        "ssrf_02",
+        "log_02",
+        "ac_03",
+        "ti_04",
+        "ssrf_03",
+        "ph_02",
+        "xss_02"
+      ],
+      "hybrid": [
+        "ti_01",
+        "ph_02",
+        "deser_01",
+        "log_02",
+        "ti_04",
+        "ssrf_02",
+        "sql_07",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "ph_02",
+        "ssrf_02",
+        "ti_01"
+      ]
+    },
+    {
+      "id": "q059",
+      "relevant_ids": [
+        "ti_01"
+      ],
+      "vector": [
+        "ti_01",
+        "ti_03",
+        "doc_data_class",
+        "ti_04",
+        "doc_password",
+        "ph_03",
+        "net_01",
+        "doc_incident"
+      ],
+      "bm25": [
+        "ti_01",
+        "ti_03",
+        "ti_04",
+        "lfi_02",
+        "dk_01",
+        "doc_ssdlc",
+        "ba_01",
+        "log_01"
+      ],
+      "hybrid": [
+        "ti_01",
+        "ti_03",
+        "ti_04",
+        "doc_ssdlc",
+        "doc_password",
+        "doc_incident",
+        "doc_vendor",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "ti_01",
+        "ti_03",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q060",
+      "relevant_ids": [
+        "ti_04"
+      ],
+      "vector": [
+        "ti_04",
+        "doc_cloud",
+        "doc_password",
+        "doc_incident",
+        "xss_03",
+        "doc_data_class",
+        "doc_pentest",
+        "ph_02"
+      ],
+      "bm25": [
+        "ti_04",
+        "ti_03",
+        "ti_01",
+        "doc_incident",
+        "doc_ssdlc",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "ti_04",
+        "doc_incident",
+        "doc_vendor",
+        "ti_03",
+        "doc_ssdlc",
+        "doc_cloud",
+        "doc_password",
+        "ti_01"
+      ],
+      "hybrid_rerank": [
+        "ti_04",
+        "doc_incident",
+        "doc_password"
+      ]
+    },
+    {
+      "id": "q061",
+      "relevant_ids": [
+        "ti_02"
+      ],
+      "vector": [
+        "ti_02",
+        "doc_incident",
+        "auth_02",
+        "log_03",
+        "sql_05",
+        "de_04",
+        "ti_01",
+        "log_01"
+      ],
+      "bm25": [
+        "ti_02",
+        "doc_ssdlc",
+        "de_04",
+        "auth_02",
+        "cry_02"
+      ],
+      "hybrid": [
+        "ti_02",
+        "auth_02",
+        "de_04",
+        "log_03",
+        "doc_incident",
+        "de_03",
+        "sc_01",
+        "doc_ssdlc"
+      ],
+      "hybrid_rerank": [
+        "ti_02",
+        "de_04",
+        "log_03"
+      ]
+    },
+    {
+      "id": "q062",
+      "relevant_ids": [
+        "ti_03"
+      ],
+      "vector": [
+        "ti_03",
+        "ti_01",
+        "ti_04",
+        "de_04",
+        "sql_04",
+        "log_03",
+        "doc_data_class",
+        "cry_04"
+      ],
+      "bm25": [
+        "ti_03",
+        "ti_04",
+        "ti_01",
+        "log_03",
+        "doc_logging",
+        "doc_data_class",
+        "doc_pentest"
+      ],
+      "hybrid": [
+        "ti_03",
+        "ti_01",
+        "ti_04",
+        "log_03",
+        "doc_data_class",
+        "cry_04",
+        "doc_pentest",
+        "ssrf_02"
+      ],
+      "hybrid_rerank": [
+        "ti_03",
+        "ti_04",
+        "ti_01"
+      ]
+    },
+    {
+      "id": "q063",
+      "relevant_ids": [
+        "ti_02"
+      ],
+      "vector": [
+        "ti_02",
+        "ac_01",
+        "ti_03",
+        "de_01",
+        "ti_01",
+        "de_04",
+        "doc_ssdlc"
+      ],
+      "bm25": [
+        "ti_02",
+        "de_02",
+        "doc_vendor",
+        "net_01",
+        "xss_03",
+        "ph_03",
+        "de_04",
+        "de_01"
+      ],
+      "hybrid": [
+        "ti_02",
+        "de_01",
+        "doc_vendor",
+        "net_01",
+        "de_04",
+        "de_02",
+        "ti_01",
+        "ph_03"
+      ],
+      "hybrid_rerank": [
+        "ti_02",
+        "de_04",
+        "doc_vendor"
+      ]
+    },
+    {
+      "id": "q064",
+      "relevant_ids": [
+        "log_01"
+      ],
+      "vector": [
+        "log_01",
+        "doc_incident",
+        "log_03",
+        "ba_03",
+        "doc_pentest",
+        "doc_ssdlc"
+      ],
+      "bm25": [
+        "log_01",
+        "de_02",
+        "doc_incident",
+        "doc_pentest"
+      ],
+      "hybrid": [
+        "log_01",
+        "doc_incident",
+        "doc_pentest",
+        "de_02",
+        "log_03",
+        "ba_03",
+        "doc_ssdlc",
+        "sql_05"
+      ],
+      "hybrid_rerank": [
+        "log_01",
+        "log_03",
+        "doc_incident"
+      ]
+    },
+    {
+      "id": "q065",
+      "relevant_ids": [
+        "log_02"
+      ],
+      "vector": [
+        "log_02",
+        "net_02",
+        "doc_logging",
+        "log_03",
+        "net_01",
+        "net_03",
+        "ph_01"
+      ],
+      "bm25": [
+        "doc_logging",
+        "doc_cloud",
+        "ba_01",
+        "log_02",
+        "doc_ssdlc",
+        "doc_password"
+      ],
+      "hybrid": [
+        "doc_logging",
+        "log_02",
+        "log_03",
+        "net_02",
+        "doc_incident",
+        "doc_cloud",
+        "net_04",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "log_02",
+        "log_03",
+        "doc_logging"
+      ]
+    },
+    {
+      "id": "q066",
+      "relevant_ids": [
+        "log_03"
+      ],
+      "vector": [
+        "log_03",
+        "xss_02",
+        "ti_02",
+        "auth_02",
+        "ph_02",
+        "sc_01",
+        "ssrf_01",
+        "deser_01"
+      ],
+      "bm25": [
+        "log_03",
+        "deser_01",
+        "ti_02",
+        "auth_02",
+        "ssrf_01",
+        "up_01",
+        "xss_01",
+        "lfi_01"
+      ],
+      "hybrid": [
+        "log_03",
+        "ti_02",
+        "auth_02",
+        "deser_01",
+        "ssrf_01",
+        "sc_01",
+        "xss_01",
+        "doc_incident"
+      ],
+      "hybrid_rerank": [
+        "log_03",
+        "deser_01",
+        "auth_02"
+      ]
+    },
+    {
+      "id": "q067",
+      "relevant_ids": [
+        "log_01"
+      ],
+      "vector": [
+        "log_01",
+        "doc_incident",
+        "doc_data_class",
+        "doc_vendor",
+        "ti_04",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "log_01",
+        "doc_incident",
+        "doc_vendor",
+        "ssrf_04",
+        "doc_data_class",
+        "ac_02"
+      ],
+      "hybrid": [
+        "log_01",
+        "doc_incident",
+        "doc_vendor",
+        "doc_data_class",
+        "doc_pentest",
+        "doc_logging",
+        "doc_ssdlc",
+        "doc_cloud"
+      ],
+      "hybrid_rerank": [
+        "log_01",
+        "doc_ssdlc",
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "q068",
+      "relevant_ids": [
+        "log_02"
+      ],
+      "vector": [
+        "log_02",
+        "doc_logging",
+        "log_03",
+        "de_03",
+        "ph_01",
+        "ssrf_01",
+        "ph_03"
+      ],
+      "bm25": [
+        "log_02",
+        "de_02",
+        "de_03",
+        "doc_incident",
+        "net_01",
+        "log_03",
+        "doc_logging"
+      ],
+      "hybrid": [
+        "log_02",
+        "de_03",
+        "doc_logging",
+        "log_03",
+        "doc_incident",
+        "de_02",
+        "ssrf_01",
+        "net_04"
+      ],
+      "hybrid_rerank": [
+        "log_02",
+        "doc_logging",
+        "log_03"
+      ]
+    },
+    {
+      "id": "q069",
+      "relevant_ids": [
+        "dk_01"
+      ],
+      "vector": [
+        "dk_01",
+        "dk_03",
+        "up_02",
+        "ph_03",
+        "up_01",
+        "log_01",
+        "dk_02",
+        "ssrf_02"
+      ],
+      "bm25": [
+        "dk_03",
+        "dk_01",
+        "dk_02",
+        "doc_logging",
+        "xss_06",
+        "doc_incident",
+        "de_03",
+        "log_03"
+      ],
+      "hybrid": [
+        "dk_01",
+        "dk_03",
+        "dk_02",
+        "log_01",
+        "doc_incident",
+        "doc_logging",
+        "xss_06",
+        "doc_cloud"
+      ],
+      "hybrid_rerank": [
+        "dk_03",
+        "dk_01",
+        "dk_02"
+      ]
+    },
+    {
+      "id": "q070",
+      "relevant_ids": [
+        "dk_02"
+      ],
+      "vector": [
+        "dk_02",
+        "sc_02",
+        "log_01",
+        "xss_05",
+        "up_02",
+        "deser_02",
+        "deser_01",
+        "doc_cloud"
+      ],
+      "bm25": [
+        "dk_02",
+        "log_01",
+        "sc_02",
+        "doc_cloud",
+        "doc_vendor",
+        "xss_05",
+        "deser_01"
+      ],
+      "hybrid": [
+        "dk_02",
+        "sc_02",
+        "log_01",
+        "xss_05",
+        "doc_cloud",
+        "deser_01",
+        "doc_ssdlc",
+        "doc_incident"
+      ],
+      "hybrid_rerank": [
+        "dk_02",
+        "doc_ssdlc",
+        "xss_05"
+      ]
+    },
+    {
+      "id": "q071",
+      "relevant_ids": [
+        "dk_03"
+      ],
+      "vector": [
+        "dk_03",
+        "dk_01",
+        "dk_02",
+        "ph_03",
+        "doc_cloud",
+        "up_02",
+        "cry_02",
+        "net_03"
+      ],
+      "bm25": [
+        "dk_03",
+        "dk_01",
+        "dk_02",
+        "doc_ssdlc",
+        "doc_pentest",
+        "lfi_03",
+        "sql_01",
+        "de_02"
+      ],
+      "hybrid": [
+        "dk_03",
+        "dk_01",
+        "dk_02",
+        "doc_cloud",
+        "lfi_03",
+        "doc_ssdlc",
+        "doc_logging",
+        "ph_03"
+      ],
+      "hybrid_rerank": [
+        "dk_03",
+        "dk_02",
+        "ph_03"
+      ]
+    },
+    {
+      "id": "q072",
+      "relevant_ids": [
+        "dk_01"
+      ],
+      "vector": [
+        "dk_01",
+        "dk_02",
+        "lfi_02",
+        "ssrf_05",
+        "ac_03",
+        "ac_02",
+        "auth_05",
+        "dk_03"
+      ],
+      "bm25": [
+        "dk_01",
+        "lfi_02",
+        "ac_02",
+        "sql_05",
+        "net_04",
+        "dk_02",
+        "ac_03",
+        "lfi_03"
+      ],
+      "hybrid": [
+        "dk_01",
+        "lfi_02",
+        "dk_02",
+        "ac_02",
+        "ac_03",
+        "dk_03",
+        "ssrf_05",
+        "sql_05"
+      ],
+      "hybrid_rerank": [
+        "dk_01",
+        "dk_02",
+        "lfi_02"
+      ]
+    },
+    {
+      "id": "q073",
+      "relevant_ids": [
+        "dk_02"
+      ],
+      "vector": [
+        "dk_02",
+        "sc_02",
+        "doc_cloud",
+        "doc_ssdlc",
+        "log_01",
+        "xss_05",
+        "lfi_03"
+      ],
+      "bm25": [
+        "dk_02",
+        "sc_02",
+        "sc_01",
+        "doc_cloud",
+        "ba_01",
+        "log_01",
+        "doc_vendor",
+        "xss_05"
+      ],
+      "hybrid": [
+        "dk_02",
+        "sc_02",
+        "doc_cloud",
+        "log_01",
+        "ba_01",
+        "doc_ssdlc",
+        "xss_05",
+        "sc_01"
+      ],
+      "hybrid_rerank": [
+        "dk_02",
+        "ba_01",
+        "sc_02"
+      ]
+    },
+    {
+      "id": "q074",
+      "relevant_ids": [
+        "sc_01",
+        "sc_02"
+      ],
+      "vector": [
+        "doc_pentest",
+        "sc_01",
+        "doc_ssdlc",
+        "ph_03",
+        "log_03",
+        "doc_incident"
+      ],
+      "bm25": [
+        "sc_01",
+        "sc_02",
+        "ac_03",
+        "dk_02",
+        "auth_04",
+        "net_04",
+        "sql_07",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "sc_01",
+        "doc_ssdlc",
+        "doc_pentest",
+        "dk_02",
+        "doc_incident",
+        "doc_logging",
+        "sql_07",
+        "doc_password"
+      ],
+      "hybrid_rerank": [
+        "sql_07",
+        "dk_02",
+        "doc_logging"
+      ]
+    },
+    {
+      "id": "q075",
+      "relevant_ids": [
+        "ac_03"
+      ],
+      "vector": [
+        "doc_data_class",
+        "doc_logging",
+        "cry_04",
+        "ac_03",
+        "ti_04",
+        "log_01",
+        "ac_02"
+      ],
+      "bm25": [
+        "doc_logging",
+        "doc_data_class",
+        "sql_03",
+        "xss_04",
+        "doc_pentest",
+        "doc_vendor",
+        "ti_04"
+      ],
+      "hybrid": [
+        "doc_data_class",
+        "doc_logging",
+        "ti_04",
+        "ac_03",
+        "ssrf_02",
+        "doc_pentest",
+        "doc_incident",
+        "deser_02"
+      ],
+      "hybrid_rerank": [
+        "ac_03",
+        "doc_logging",
+        "deser_02"
+      ]
+    },
+    {
+      "id": "q076",
+      "relevant_ids": [
+        "ph_01"
+      ],
+      "vector": [
+        "ph_01",
+        "ph_02",
+        "ph_03",
+        "ssrf_04",
+        "up_02",
+        "sql_04",
+        "deser_02",
+        "ssrf_01"
+      ],
+      "bm25": [
+        "ph_02",
+        "sql_04",
+        "xss_02",
+        "ph_03",
+        "ssrf_04",
+        "net_02",
+        "ph_01",
+        "ac_01"
+      ],
+      "hybrid": [
+        "ph_02",
+        "ph_03",
+        "ph_01",
+        "sql_04",
+        "ssrf_04",
+        "xss_02",
+        "net_02",
+        "doc_pentest"
+      ],
+      "hybrid_rerank": [
+        "ph_02",
+        "ssrf_04",
+        "ph_03"
+      ]
+    },
+    {
+      "id": "q077",
+      "relevant_ids": [
+        "de_04"
+      ],
+      "vector": [
+        "ti_02",
+        "de_04",
+        "doc_incident",
+        "doc_pentest",
+        "ssrf_02",
+        "deser_02",
+        "up_02",
+        "ph_03"
+      ],
+      "bm25": [
+        "ti_02",
+        "de_04",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "ti_02",
+        "de_04",
+        "doc_ssdlc",
+        "doc_incident",
+        "doc_pentest",
+        "ssrf_02",
+        "deser_02",
+        "up_02"
+      ],
+      "hybrid_rerank": [
+        "de_04",
+        "ti_02",
+        "up_02"
+      ]
+    },
+    {
+      "id": "q078",
+      "relevant_ids": [
+        "ba_01"
+      ],
+      "vector": [
+        "doc_cloud",
+        "doc_ssdlc",
+        "doc_incident",
+        "doc_password",
+        "cry_02",
+        "log_01"
+      ],
+      "bm25": [
+        "up_02",
+        "doc_data_class",
+        "de_04",
+        "doc_ssdlc",
+        "doc_vendor",
+        "xss_05",
+        "deser_01"
+      ],
+      "hybrid": [
+        "doc_ssdlc",
+        "up_02",
+        "doc_cloud",
+        "doc_data_class",
+        "doc_incident",
+        "de_04",
+        "xss_05",
+        "doc_logging"
+      ],
+      "hybrid_rerank": [
+        "doc_ssdlc",
+        "doc_logging",
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "q079",
+      "relevant_ids": [
+        "ba_02"
+      ],
+      "vector": [
+        "ba_02",
+        "doc_data_class",
+        "ti_04",
+        "up_02",
+        "doc_ssdlc",
+        "doc_password",
+        "doc_incident",
+        "doc_cloud"
+      ],
+      "bm25": [
+        "ba_02",
+        "doc_data_class",
+        "doc_cloud"
+      ],
+      "hybrid": [
+        "ba_02",
+        "doc_data_class",
+        "doc_cloud",
+        "ti_04",
+        "up_02",
+        "doc_ssdlc",
+        "doc_password",
+        "doc_incident"
+      ],
+      "hybrid_rerank": [
+        "ba_02",
+        "doc_data_class",
+        "ti_04"
+      ]
+    },
+    {
+      "id": "q080",
+      "relevant_ids": [
+        "ba_03"
+      ],
+      "vector": [
+        "ba_03",
+        "cry_02",
+        "doc_incident",
+        "sql_05",
+        "de_03",
+        "ba_01",
+        "log_01"
+      ],
+      "bm25": [
+        "ba_03",
+        "doc_cloud",
+        "doc_incident",
+        "doc_password"
+      ],
+      "hybrid": [
+        "ba_03",
+        "doc_incident",
+        "doc_cloud",
+        "cry_02",
+        "sql_05",
+        "doc_password",
+        "de_03",
+        "ba_01"
+      ],
+      "hybrid_rerank": [
+        "ba_03",
+        "doc_incident",
+        "ba_01"
+      ]
+    },
+    {
+      "id": "q081",
+      "relevant_ids": [
+        "sc_01",
+        "sc_02"
+      ],
+      "vector": [
+        "sc_01",
+        "log_03",
+        "sc_02",
+        "ti_02",
+        "doc_incident",
+        "deser_02",
+        "cry_02",
+        "de_03"
+      ],
+      "bm25": [
+        "sc_01",
+        "sc_02",
+        "auth_04",
+        "de_03",
+        "doc_pentest",
+        "ssrf_05",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "sc_01",
+        "sc_02",
+        "ti_02",
+        "de_03",
+        "log_03",
+        "auth_04",
+        "cry_02",
+        "auth_02"
+      ],
+      "hybrid_rerank": [
+        "sc_01",
+        "sc_02",
+        "ti_02"
+      ]
+    },
+    {
+      "id": "q082",
+      "relevant_ids": [
+        "ac_01"
+      ],
+      "vector": [
+        "ac_01",
+        "cry_03",
+        "doc_ssdlc",
+        "de_01",
+        "ti_03",
+        "cry_01",
+        "ti_02",
+        "doc_cloud"
+      ],
+      "bm25": [
+        "ac_01",
+        "sql_03",
+        "ssrf_04",
+        "ssrf_02",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "ac_01",
+        "doc_ssdlc",
+        "cry_03",
+        "sql_03",
+        "ssrf_04",
+        "de_01",
+        "ssrf_02",
+        "ti_03"
+      ],
+      "hybrid_rerank": [
+        "ac_01",
+        "doc_ssdlc",
+        "sql_03"
+      ]
+    },
+    {
+      "id": "q083",
+      "relevant_ids": [
+        "ac_02"
+      ],
+      "vector": [
+        "ac_02",
+        "dk_01",
+        "dk_02",
+        "ac_03",
+        "sql_05",
+        "ssrf_05",
+        "ac_01",
+        "auth_05"
+      ],
+      "bm25": [
+        "ac_02",
+        "dk_01",
+        "sql_05",
+        "de_04",
+        "ba_02",
+        "doc_ssdlc",
+        "doc_vendor",
+        "dk_02"
+      ],
+      "hybrid": [
+        "ac_02",
+        "dk_01",
+        "sql_05",
+        "dk_02",
+        "doc_ssdlc",
+        "ac_03",
+        "ac_01",
+        "ba_02"
+      ],
+      "hybrid_rerank": [
+        "ac_02",
+        "dk_01",
+        "sql_05"
+      ]
+    },
+    {
+      "id": "q084",
+      "relevant_ids": [
+        "ph_01",
+        "ph_03"
+      ],
+      "vector": [
+        "ph_01",
+        "ph_03",
+        "ph_02",
+        "log_02",
+        "ssrf_04",
+        "ssrf_01",
+        "ti_02",
+        "ssrf_05"
+      ],
+      "bm25": [
+        "ph_01",
+        "ph_03",
+        "de_02",
+        "net_01",
+        "ti_02",
+        "log_02",
+        "ph_02",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "ph_01",
+        "ph_03",
+        "ph_02",
+        "log_02",
+        "ti_02",
+        "de_02",
+        "doc_incident",
+        "net_01"
+      ],
+      "hybrid_rerank": [
+        "ph_01",
+        "ph_03",
+        "log_02"
+      ]
+    },
+    {
+      "id": "q085",
+      "relevant_ids": [
+        "de_01",
+        "de_02"
+      ],
+      "vector": [
+        "de_01",
+        "de_02",
+        "ac_01",
+        "cry_01",
+        "de_04",
+        "ti_02",
+        "cry_03",
+        "ba_02"
+      ],
+      "bm25": [
+        "sql_03",
+        "de_01",
+        "de_02",
+        "ssrf_02",
+        "ac_01",
+        "de_04",
+        "de_03",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "de_01",
+        "de_02",
+        "ac_01",
+        "de_04",
+        "de_03",
+        "ssrf_02",
+        "sql_03",
+        "cry_01"
+      ],
+      "hybrid_rerank": [
+        "de_01",
+        "de_02",
+        "ac_01"
+      ]
+    },
+    {
+      "id": "q086",
+      "relevant_ids": [
+        "de_03"
+      ],
+      "vector": [
+        "de_03",
+        "ssrf_05",
+        "lfi_02",
+        "ac_03",
+        "dk_01",
+        "ti_02",
+        "ph_02",
+        "net_03"
+      ],
+      "bm25": [
+        "de_03",
+        "ssrf_05",
+        "net_04",
+        "lfi_02",
+        "doc_pentest",
+        "dk_01",
+        "cry_04"
+      ],
+      "hybrid": [
+        "de_03",
+        "ssrf_05",
+        "lfi_02",
+        "dk_01",
+        "ac_03",
+        "net_04",
+        "doc_pentest",
+        "ti_02"
+      ],
+      "hybrid_rerank": [
+        "de_03",
+        "lfi_02",
+        "ssrf_05"
+      ]
+    },
+    {
+      "id": "q087",
+      "relevant_ids": [
+        "de_04"
+      ],
+      "vector": [
+        "de_04",
+        "doc_pentest",
+        "sql_04",
+        "ti_04",
+        "de_01",
+        "doc_ssdlc",
+        "sql_03",
+        "deser_02"
+      ],
+      "bm25": [
+        "de_04",
+        "de_01",
+        "de_02",
+        "ti_02",
+        "ti_03",
+        "ba_03",
+        "de_03",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "de_04",
+        "de_01",
+        "doc_vendor",
+        "doc_ssdlc",
+        "ti_03",
+        "sql_07",
+        "ba_03",
+        "ph_01"
+      ],
+      "hybrid_rerank": [
+        "de_04",
+        "doc_vendor",
+        "de_01"
+      ]
+    },
+    {
+      "id": "q088",
+      "relevant_ids": [
+        "ba_01"
+      ],
+      "vector": [
+        "ba_01",
+        "doc_incident",
+        "ba_03",
+        "doc_cloud",
+        "doc_ssdlc",
+        "log_01",
+        "doc_pentest"
+      ],
+      "bm25": [
+        "ba_01",
+        "doc_incident",
+        "doc_cloud",
+        "ba_03",
+        "log_03",
+        "doc_ssdlc",
+        "log_01",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "ba_01",
+        "doc_incident",
+        "ba_03",
+        "doc_cloud",
+        "doc_ssdlc",
+        "log_01",
+        "log_03",
+        "doc_logging"
+      ],
+      "hybrid_rerank": [
+        "ba_01",
+        "doc_logging",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "q089",
+      "relevant_ids": [
+        "ba_02"
+      ],
+      "vector": [
+        "ba_02",
+        "doc_data_class",
+        "ac_02",
+        "log_01",
+        "net_03",
+        "doc_password",
+        "ti_04",
+        "lfi_03"
+      ],
+      "bm25": [
+        "ba_02",
+        "de_04",
+        "dk_01",
+        "ac_02",
+        "doc_data_class",
+        "doc_cloud"
+      ],
+      "hybrid": [
+        "ba_02",
+        "doc_data_class",
+        "ac_02",
+        "de_04",
+        "dk_01",
+        "log_01",
+        "net_03",
+        "doc_password"
+      ],
+      "hybrid_rerank": [
+        "ba_02",
+        "ac_02",
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "L090",
+      "relevant_ids": [
+        "doc_ssdlc"
+      ],
+      "vector": [
+        "doc_pentest",
+        "up_02",
+        "doc_ssdlc",
+        "de_04",
+        "deser_01",
+        "deser_02",
+        "net_02"
+      ],
+      "bm25": [
+        "doc_ssdlc",
+        "up_02",
+        "ti_02",
+        "de_04",
+        "ssrf_02",
+        "ba_03",
+        "de_03",
+        "lfi_01"
+      ],
+      "hybrid": [
+        "doc_ssdlc",
+        "up_02",
+        "de_04",
+        "doc_pentest",
+        "ba_03",
+        "ssrf_02",
+        "doc_cloud",
+        "doc_password"
+      ],
+      "hybrid_rerank": [
+        "de_04",
+        "up_02",
+        "ba_03"
+      ]
+    },
+    {
+      "id": "L091",
+      "relevant_ids": [
+        "doc_incident"
+      ],
+      "vector": [
+        "doc_password",
+        "doc_cloud",
+        "doc_incident",
+        "doc_ssdlc",
+        "doc_pentest",
+        "doc_data_class",
+        "doc_vendor"
+      ],
+      "bm25": [
+        "doc_incident",
+        "cry_04",
+        "doc_ssdlc",
+        "doc_password",
+        "doc_pentest",
+        "net_02",
+        "ssrf_01",
+        "xss_03"
+      ],
+      "hybrid": [
+        "doc_incident",
+        "doc_password",
+        "doc_ssdlc",
+        "doc_pentest",
+        "cry_04",
+        "doc_data_class",
+        "doc_vendor",
+        "ba_03"
+      ],
+      "hybrid_rerank": [
+        "doc_pentest",
+        "doc_vendor",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "L092",
+      "relevant_ids": [
+        "doc_data_class"
+      ],
+      "vector": [
+        "ph_02",
+        "ti_04",
+        "doc_data_class",
+        "up_02",
+        "doc_ssdlc",
+        "ssrf_02",
+        "doc_logging",
+        "ph_01"
+      ],
+      "bm25": [
+        "doc_data_class",
+        "xss_01",
+        "sql_05",
+        "xss_03",
+        "sql_04",
+        "sql_03",
+        "doc_vendor",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "doc_data_class",
+        "doc_ssdlc",
+        "xss_03",
+        "sql_03",
+        "doc_incident",
+        "ph_02",
+        "ti_04",
+        "xss_01"
+      ],
+      "hybrid_rerank": [
+        "doc_data_class",
+        "doc_ssdlc",
+        "sql_03"
+      ]
+    },
+    {
+      "id": "L093",
+      "relevant_ids": [
+        "doc_pentest"
+      ],
+      "vector": [
+        "doc_pentest",
+        "net_03",
+        "net_02",
+        "auth_03",
+        "doc_data_class",
+        "doc_ssdlc",
+        "up_02"
+      ],
+      "bm25": [
+        "doc_pentest",
+        "ssrf_02",
+        "auth_03",
+        "net_02",
+        "doc_vendor",
+        "doc_ssdlc",
+        "doc_cloud"
+      ],
+      "hybrid": [
+        "doc_pentest",
+        "net_02",
+        "auth_03",
+        "doc_ssdlc",
+        "ssrf_02",
+        "doc_cloud",
+        "net_03",
+        "doc_data_class"
+      ],
+      "hybrid_rerank": [
+        "net_02",
+        "net_03",
+        "auth_03"
+      ]
+    },
+    {
+      "id": "L094",
+      "relevant_ids": [
+        "doc_logging"
+      ],
+      "vector": [
+        "doc_cloud",
+        "doc_logging",
+        "log_02",
+        "ti_04",
+        "doc_vendor",
+        "doc_ssdlc",
+        "doc_password"
+      ],
+      "bm25": [
+        "doc_logging",
+        "doc_cloud",
+        "ba_01",
+        "log_02",
+        "doc_password",
+        "doc_incident"
+      ],
+      "hybrid": [
+        "doc_cloud",
+        "doc_logging",
+        "log_02",
+        "doc_password",
+        "doc_incident",
+        "ba_01",
+        "log_03",
+        "net_04"
+      ],
+      "hybrid_rerank": [
+        "doc_cloud",
+        "doc_password",
+        "doc_logging"
+      ]
+    },
+    {
+      "id": "L095",
+      "relevant_ids": [
+        "doc_vendor"
+      ],
+      "vector": [
+        "doc_ssdlc",
+        "doc_vendor",
+        "doc_incident",
+        "doc_password"
+      ],
+      "bm25": [
+        "sql_02",
+        "doc_vendor",
+        "sql_05",
+        "auth_04",
+        "doc_cloud",
+        "doc_incident"
+      ],
+      "hybrid": [
+        "doc_vendor",
+        "doc_incident",
+        "doc_ssdlc",
+        "doc_cloud",
+        "doc_data_class",
+        "doc_password",
+        "doc_logging",
+        "sql_02"
+      ],
+      "hybrid_rerank": [
+        "doc_vendor",
+        "doc_incident",
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "L096",
+      "relevant_ids": [
+        "doc_cloud"
+      ],
+      "vector": [
+        "doc_cloud",
+        "doc_ssdlc",
+        "doc_logging",
+        "ssrf_02",
+        "doc_data_class",
+        "doc_password"
+      ],
+      "bm25": [
+        "doc_cloud",
+        "sql_02",
+        "sql_05",
+        "net_01",
+        "ph_03",
+        "auth_04",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "doc_cloud",
+        "doc_logging",
+        "doc_incident",
+        "doc_password",
+        "doc_vendor",
+        "doc_ssdlc",
+        "sql_02",
+        "sql_05"
+      ],
+      "hybrid_rerank": [
+        "doc_incident",
+        "sql_02",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "L097",
+      "relevant_ids": [
+        "doc_password"
+      ],
+      "vector": [
+        "doc_cloud",
+        "doc_password",
+        "auth_04",
+        "cry_04",
+        "cry_03",
+        "cry_01",
+        "doc_data_class"
+      ],
+      "bm25": [
+        "auth_04",
+        "ac_02",
+        "doc_data_class",
+        "doc_password",
+        "doc_logging",
+        "doc_incident",
+        "doc_pentest"
+      ],
+      "hybrid": [
+        "auth_04",
+        "doc_password",
+        "doc_cloud",
+        "doc_data_class",
+        "doc_pentest",
+        "doc_logging",
+        "ac_02",
+        "cry_04"
+      ],
+      "hybrid_rerank": [
+        "doc_cloud",
+        "ac_02",
+        "doc_data_class"
+      ]
+    },
+    {
+      "id": "L098",
+      "relevant_ids": [
+        "doc_cloud"
+      ],
+      "vector": [
+        "doc_password",
+        "cry_04",
+        "doc_cloud",
+        "xss_06",
+        "dk_02",
+        "dk_01",
+        "dk_03"
+      ],
+      "bm25": [
+        "doc_cloud",
+        "dk_01",
+        "doc_password",
+        "dk_03",
+        "cry_04",
+        "dk_02"
+      ],
+      "hybrid": [
+        "doc_password",
+        "doc_cloud",
+        "cry_04",
+        "dk_01",
+        "xss_06",
+        "dk_03",
+        "dk_02",
+        "doc_logging"
+      ],
+      "hybrid_rerank": [
+        "dk_03",
+        "doc_password",
+        "dk_02"
+      ]
+    },
+    {
+      "id": "L099",
+      "relevant_ids": [
+        "doc_incident"
+      ],
+      "vector": [
+        "doc_incident",
+        "log_01",
+        "log_03",
+        "doc_pentest",
+        "ph_03",
+        "ba_03"
+      ],
+      "bm25": [
+        "doc_incident",
+        "de_02",
+        "log_03",
+        "log_01",
+        "doc_logging",
+        "doc_cloud"
+      ],
+      "hybrid": [
+        "doc_incident",
+        "log_01",
+        "log_03",
+        "doc_cloud",
+        "doc_logging",
+        "de_02",
+        "doc_pentest",
+        "ph_03"
+      ],
+      "hybrid_rerank": [
+        "log_01",
+        "log_03",
+        "doc_incident"
+      ]
+    },
+    {
+      "id": "L100",
+      "relevant_ids": [
+        "doc_data_class"
+      ],
+      "vector": [
+        "doc_data_class",
+        "ac_01",
+        "doc_incident",
+        "doc_vendor",
+        "sql_04",
+        "doc_ssdlc"
+      ],
+      "bm25": [
+        "doc_data_class",
+        "doc_incident",
+        "doc_ssdlc",
+        "ba_03",
+        "sql_03",
+        "xss_04",
+        "doc_pentest"
+      ],
+      "hybrid": [
+        "doc_data_class",
+        "doc_incident",
+        "doc_ssdlc",
+        "doc_vendor",
+        "ssrf_02",
+        "doc_pentest",
+        "ba_03",
+        "sql_04"
+      ],
+      "hybrid_rerank": [
+        "doc_data_class",
+        "doc_ssdlc",
+        "sql_04"
+      ]
+    },
+    {
+      "id": "L101",
+      "relevant_ids": [
+        "doc_password"
+      ],
+      "vector": [
+        "doc_password",
+        "doc_cloud",
+        "cry_04",
+        "doc_incident",
+        "doc_vendor",
+        "doc_data_class"
+      ],
+      "bm25": [
+        "doc_password",
+        "cry_04",
+        "doc_cloud",
+        "cry_03",
+        "doc_data_class",
+        "doc_incident"
+      ],
+      "hybrid": [
+        "doc_password",
+        "doc_cloud",
+        "cry_04",
+        "doc_incident",
+        "doc_data_class",
+        "cry_03",
+        "doc_vendor",
+        "doc_ssdlc"
+      ],
+      "hybrid_rerank": [
+        "doc_cloud",
+        "doc_password",
+        "cry_04"
+      ]
+    },
+    {
+      "id": "L102",
+      "relevant_ids": [
+        "doc_ssdlc"
+      ],
+      "vector": [
+        "doc_ssdlc",
+        "log_01",
+        "doc_cloud",
+        "doc_vendor",
+        "sc_02",
+        "doc_logging"
+      ],
+      "bm25": [
+        "doc_ssdlc",
+        "ti_01",
+        "doc_logging",
+        "doc_vendor",
+        "ti_02",
+        "doc_incident"
+      ],
+      "hybrid": [
+        "doc_ssdlc",
+        "doc_vendor",
+        "doc_logging",
+        "doc_cloud",
+        "doc_incident",
+        "doc_data_class",
+        "doc_pentest",
+        "log_01"
+      ],
+      "hybrid_rerank": [
+        "doc_ssdlc",
+        "doc_incident",
+        "doc_pentest"
+      ]
+    },
+    {
+      "id": "L103",
+      "relevant_ids": [
+        "doc_incident"
+      ],
+      "vector": [
+        "doc_incident",
+        "ba_03",
+        "doc_data_class",
+        "doc_vendor",
+        "doc_ssdlc",
+        "ac_01"
+      ],
+      "bm25": [
+        "doc_incident",
+        "doc_vendor",
+        "doc_logging",
+        "ba_03",
+        "doc_ssdlc",
+        "xss_05"
+      ],
+      "hybrid": [
+        "doc_incident",
+        "ba_03",
+        "doc_vendor",
+        "doc_ssdlc",
+        "doc_data_class",
+        "deser_01",
+        "doc_cloud",
+        "doc_logging"
+      ],
+      "hybrid_rerank": [
+        "doc_vendor",
+        "doc_incident",
+        "ba_03"
+      ]
+    },
+    {
+      "id": "L104",
+      "relevant_ids": [
+        "doc_data_class"
+      ],
+      "vector": [
+        "doc_data_class",
+        "doc_logging",
+        "de_04",
+        "doc_pentest",
+        "doc_ssdlc"
+      ],
+      "bm25": [
+        "doc_data_class",
+        "doc_ssdlc",
+        "de_04",
+        "de_01",
+        "doc_pentest",
+        "de_02",
+        "de_03"
+      ],
+      "hybrid": [
+        "doc_data_class",
+        "de_04",
+        "doc_ssdlc",
+        "doc_pentest",
+        "doc_logging",
+        "doc_incident",
+        "doc_cloud",
+        "de_01"
+      ],
+      "hybrid_rerank": [
+        "doc_data_class",
+        "doc_logging",
+        "doc_pentest"
+      ]
+    },
+    {
+      "id": "L105",
+      "relevant_ids": [
+        "doc_pentest"
+      ],
+      "vector": [
+        "doc_pentest",
+        "doc_ssdlc",
+        "doc_data_class",
+        "ac_03",
+        "sql_05",
+        "doc_incident",
+        "auth_04"
+      ],
+      "bm25": [
+        "doc_pentest",
+        "doc_ssdlc",
+        "doc_vendor",
+        "doc_data_class",
+        "sql_02",
+        "de_03"
+      ],
+      "hybrid": [
+        "doc_pentest",
+        "doc_ssdlc",
+        "doc_data_class",
+        "doc_incident",
+        "auth_04",
+        "de_01",
+        "doc_logging",
+        "doc_vendor"
+      ],
+      "hybrid_rerank": [
+        "doc_pentest",
+        "doc_data_class",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "L106",
+      "relevant_ids": [
+        "doc_logging"
+      ],
+      "vector": [
+        "doc_logging",
+        "doc_cloud",
+        "doc_data_class",
+        "doc_ssdlc",
+        "ti_04",
+        "xss_03"
+      ],
+      "bm25": [
+        "doc_logging",
+        "doc_data_class",
+        "doc_ssdlc",
+        "xss_03",
+        "doc_cloud",
+        "ac_02",
+        "doc_vendor"
+      ],
+      "hybrid": [
+        "doc_logging",
+        "doc_data_class",
+        "doc_cloud",
+        "doc_ssdlc",
+        "xss_03",
+        "doc_vendor",
+        "log_02",
+        "net_04"
+      ],
+      "hybrid_rerank": [
+        "doc_cloud",
+        "doc_data_class",
+        "doc_logging"
+      ]
+    },
+    {
+      "id": "L107",
+      "relevant_ids": [
+        "doc_vendor"
+      ],
+      "vector": [
+        "doc_vendor",
+        "sc_02",
+        "doc_ssdlc",
+        "doc_data_class"
+      ],
+      "bm25": [
+        "doc_vendor",
+        "doc_ssdlc",
+        "sc_02",
+        "sc_01",
+        "ti_02",
+        "doc_cloud",
+        "xss_05"
+      ],
+      "hybrid": [
+        "doc_vendor",
+        "sc_02",
+        "doc_ssdlc",
+        "doc_cloud",
+        "doc_incident",
+        "sc_01",
+        "doc_logging",
+        "doc_data_class"
+      ],
+      "hybrid_rerank": [
+        "doc_vendor",
+        "doc_data_class",
+        "doc_ssdlc"
+      ]
+    },
+    {
+      "id": "L108",
+      "relevant_ids": [
+        "doc_cloud"
+      ],
+      "vector": [
+        "doc_cloud",
+        "doc_ssdlc",
+        "doc_logging",
+        "ssrf_02",
+        "doc_data_class"
+      ],
+      "bm25": [
+        "doc_cloud",
+        "doc_password",
+        "doc_logging",
+        "ba_01",
+        "doc_data_class",
+        "doc_ssdlc"
+      ],
+      "hybrid": [
+        "doc_cloud",
+        "doc_logging",
+        "doc_ssdlc",
+        "doc_password",
+        "doc_data_class",
+        "ba_01",
+        "net_02",
+        "doc_incident"
+      ],
+      "hybrid_rerank": [
+        "doc_ssdlc",
+        "ba_01",
+        "doc_password"
+      ]
+    },
+    {
+      "id": "L109",
+      "relevant_ids": [
+        "doc_password"
+      ],
+      "vector": [
+        "doc_password",
+        "doc_cloud",
+        "cry_04",
+        "doc_data_class",
+        "doc_incident",
+        "doc_ssdlc"
+      ],
+      "bm25": [
+        "doc_cloud",
+        "doc_password",
+        "cry_04",
+        "ba_02",
+        "auth_03",
+        "sc_01"
+      ],
+      "hybrid": [
+        "doc_password",
+        "doc_cloud",
+        "cry_04",
+        "auth_03",
+        "doc_data_class",
+        "ba_02",
+        "doc_incident",
+        "doc_vendor"
+      ],
+      "hybrid_rerank": [
+        "doc_password",
+        "doc_cloud",
+        "cry_04"
+      ]
+    }
+  ]
+}
