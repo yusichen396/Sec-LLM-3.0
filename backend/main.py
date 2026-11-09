@@ -34,7 +34,6 @@ from core.safety.semantic_intent import (
     preload_semantic_intent,
     sanitize_semantic_context,
 )
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 import httpx
 import json
 import re
@@ -2040,9 +2039,17 @@ async def upload_file(
             
             docs = loader.load()
             
-            # 切分文本 (Chunks)
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-            splits = text_splitter.split_documents(docs)
+            # 切分文本：优先结构切分（按标题/段落，表格不拆），失败回退字符切分
+            from core.rag.chunking import split_text as structure_split
+            from langchain_core.documents import Document
+
+            splits = []
+            for doc in docs:
+                pieces = structure_split(doc.page_content, size=500, overlap=50)
+                for piece in pieces:
+                    meta = dict(doc.metadata or {})
+                    meta["section"] = piece["section"]
+                    splits.append(Document(page_content=piece["text"], metadata=meta))
             # 文档级身份：同一文件的多个片段共享 doc_id，检索时才能归并到文档
             doc_id = f"{current_user['id']}:{safe_filename}"
             for index, split in enumerate(splits):

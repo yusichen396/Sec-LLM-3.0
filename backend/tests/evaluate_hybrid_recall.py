@@ -34,6 +34,7 @@ def main() -> int:
     ap.add_argument("--doc-prefix", default="", help="文档侧前缀（nomic 需要 search_document: ）")
     ap.add_argument("--chunk-size", type=int, default=0, help="按字符切分文档，0 表示不切分")
     ap.add_argument("--chunk-overlap", type=int, default=0)
+    ap.add_argument("--chunk-mode", choices=("char", "structure", "semantic"), default="char")
     args = ap.parse_args()
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -72,7 +73,18 @@ def main() -> int:
 
     def split_chunks(text: str) -> list[str]:
         size = args.chunk_size
-        if size <= 0 or len(text) <= size:
+        if size <= 0:
+            return [text]
+        if args.chunk_mode == "structure":
+            from core.rag.chunking import split_text as structure_split
+
+            return [piece["text"] for piece in structure_split(text, size=size, overlap=args.chunk_overlap)]
+        if args.chunk_mode == "semantic":
+            from core.rag.chunking import split_text_semantic
+
+            return [piece["text"] for piece in split_text_semantic(
+                text, embed_fn=embeddings.embed_documents, size=size, overlap=args.chunk_overlap)]
+        if len(text) <= size:
             return [text]
         step = max(1, size - args.chunk_overlap)
         return [text[i:i + size] for i in range(0, len(text), step)]
@@ -147,6 +159,7 @@ def main() -> int:
         "doc_prefix": args.doc_prefix,
         "chunk_size": args.chunk_size,
         "chunk_overlap": args.chunk_overlap,
+        "chunk_mode": args.chunk_mode,
         "hit_rate": {k: summarize(rows, k) for k in ("vector", "bm25", "hybrid", "hybrid_rerank")},
         "median_latency_ms": {k: round(statistics.median(v), 1) for k, v in lat.items()},
     }
