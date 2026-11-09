@@ -2043,12 +2043,21 @@ async def upload_file(
             # 切分文本 (Chunks)
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
             splits = text_splitter.split_documents(docs)
-            for split in splits:
+            # 文档级身份：同一文件的多个片段共享 doc_id，检索时才能归并到文档
+            doc_id = f"{current_user['id']}:{safe_filename}"
+            for index, split in enumerate(splits):
                 split.metadata = split.metadata or {}
                 split.metadata["user_id"] = str(current_user["id"])
+                split.metadata["id"] = doc_id
+                split.metadata["chunk"] = index
             
             # 存入向量数据库
             global vector_store
+            if vector_store is not None:
+                try:
+                    vector_store.delete(where={"id": doc_id})
+                except Exception as error:
+                    print(f"[WARN] 清理旧片段失败（可忽略）: {error}")
             if vector_store is None:
                 vector_store = Chroma.from_documents(
                     documents=splits,

@@ -95,6 +95,10 @@ def _corpus(store: Any, where: dict | None) -> tuple[list[str], list[str], dict[
     for i, raw in enumerate(raw_ids):
         meta = metas[i] or {}
         doc_id = str(meta.get("id") or raw)
+        if doc_id in docs:
+            # 同一文档的后续片段：只记录 id 参与检索，内容保留首块，结果稳定可复现
+            ids.append(doc_id)
+            continue
         meta = dict(meta) | {"id": doc_id}
         ids.append(doc_id)
         docs[doc_id] = Document(page_content=texts[i], metadata=meta)
