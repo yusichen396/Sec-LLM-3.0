@@ -1,0 +1,186 @@
+{
+  "name": "tool_selection_v1",
+  "notes": "工具选择评测：给自然语言任务，看规划器是否选对工具。expected_tools 为可接受答案（顺序无关，命中任一即算对）。",
+  "cases": [
+    {
+      "id": "ti_ip",
+      "task": "对 8.8.8.8 做威胁情报富化，判断这个 IP 是否有恶意记录",
+      "target": "8.8.8.8",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "ti_domain",
+      "task": "查一下域名 evil-login.example.com 的情报信息，看是不是钓鱼站",
+      "target": "evil-login.example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "ti_hash",
+      "task": "这个 MD5 文件的哈希值得不信任，帮我查一下它的情报",
+      "target": "44d88612fea8a8f36de82e1278abb02f",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "phish",
+      "task": "分析这封邮件的正文和发件人，判断是不是钓鱼邮件",
+      "target": "mail-raw-content",
+      "task_type": "recon",
+      "expected_tools": [
+        "phishing_analyzer"
+      ]
+    },
+    {
+      "id": "audit_py",
+      "task": "审计这段 Python 代码里有没有 SQL 注入和命令注入漏洞",
+      "target": "python-source",
+      "task_type": "exploit",
+      "expected_tools": [
+        "code_auditor"
+      ]
+    },
+    {
+      "id": "rule_yara",
+      "task": "根据这个木马样本的 IOC，生成一条 YARA 检测规则",
+      "target": "trojan-ioc-set",
+      "task_type": "report",
+      "expected_tools": [
+        "rule_generator"
+      ]
+    },
+    {
+      "id": "rule_suricata",
+      "task": "为这个 SQL 注入的请求特征生成一条 Suricata 规则",
+      "target": "sqli-payload-pattern",
+      "task_type": "report",
+      "expected_tools": [
+        "rule_generator"
+      ]
+    },
+    {
+      "id": "report_nmap",
+      "task": "把这份 Nmap 扫描报告解释成可读的安全摘要",
+      "target": "nmap-xml-output",
+      "task_type": "report",
+      "expected_tools": [
+        "report_explainer"
+      ]
+    },
+    {
+      "id": "report_nessus",
+      "task": "解释这份 Nessus 报告，列出风险最高的几条",
+      "target": "nessus-xml-output",
+      "task_type": "report",
+      "expected_tools": [
+        "report_explainer"
+      ]
+    },
+    {
+      "id": "crawl_page",
+      "task": "抓取 https://example.com 的页面内容并保存下来",
+      "target": "https://example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_crawl"
+      ]
+    },
+    {
+      "id": "crawl_links",
+      "task": "爬取站点首页，把所有外链提取出来",
+      "target": "https://example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_crawl"
+      ]
+    },
+    {
+      "id": "shot",
+      "task": "打开 https://example.com 并截一张图存证",
+      "target": "https://example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_screenshot"
+      ]
+    },
+    {
+      "id": "session",
+      "task": "看一下浏览器会话现在还连着没有",
+      "target": "browser-session",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_session_status"
+      ]
+    },
+    {
+      "id": "read_src",
+      "task": "审计工作区里的 /app/src/login.py，先把源码读出来看看有没有硬编码密钥",
+      "target": "/app/src/login.py",
+      "task_type": "exploit",
+      "expected_tools": [
+        "read_source"
+      ]
+    },
+    {
+      "id": "shell",
+      "task": "在目标主机上执行 whoami 确认当前权限",
+      "target": "target-host",
+      "task_type": "exploit",
+      "expected_tools": [
+        "shell_exec"
+      ]
+    },
+    {
+      "id": "sqli",
+      "task": "测试 http://test.local/item?id=1 是否存在 SQL 注入",
+      "target": "http://test.local/item?id=1",
+      "task_type": "exploit",
+      "expected_tools": [
+        "sqli_probe"
+      ]
+    },
+    {
+      "id": "lfi",
+      "task": "检测 http://test.local/download?file=../../etc/passwd 是否存在路径穿越",
+      "target": "http://test.local/download?file=../../etc/passwd",
+      "task_type": "exploit",
+      "expected_tools": [
+        "lfi_probe"
+      ]
+    },
+    {
+      "id": "ssrf",
+      "task": "测试 http://test.local/fetch?url= 能否访问内网 169.254.169.254，验证 SSRF",
+      "target": "http://test.local/fetch?url=http://169.254.169.254",
+      "task_type": "exploit",
+      "expected_tools": [
+        "ssrf_probe"
+      ]
+    },
+    {
+      "id": "api_enum",
+      "task": "枚举 http://test.local 上暴露的 API 接口",
+      "target": "http://test.local",
+      "task_type": "recon",
+      "expected_tools": [
+        "api_discovery"
+      ]
+    },
+    {
+      "id": "ioc_report",
+      "task": "针对 1.1.1.1 这个 IOC 生成一份情报报告",
+      "target": "1.1.1.1",
+      "task_type": "report",
+      "expected_tools": [
+        "threat_intel_report"
+      ]
+    }
+  ]
+}
