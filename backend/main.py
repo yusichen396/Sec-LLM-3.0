@@ -19,7 +19,6 @@ from pydantic import BaseModel, EmailStr
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
 from core.rag.rerank import rerank
 from core.safety.prompt_injection import (
     MAX_MODEL_OUTPUT_CHARS,
@@ -519,8 +518,9 @@ if not _mail_config_ready():
 
 # --- 全局变量：向量数据库 ---
 VECTOR_DB_DIR = "./data/chroma_db"
-# 初始化嵌入模型 (使用刚才下载的 nomic-embed-text)
-embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url=settings.OLLAMA_BASE_URL)
+# 嵌入模型：优先本地中文 bge（查询侧带指令前缀），缺失时回退 Ollama
+from core.rag.embeddings import get_embeddings
+embeddings = get_embeddings()
 
 # 尝试加载已有的数据库
 try:

@@ -30,6 +30,10 @@ def main() -> int:
     ap.add_argument("--dataset", type=Path, default=DATASET)
     ap.add_argument("--local-embedding-model", type=Path)
     ap.add_argument("--output", type=Path)
+    ap.add_argument("--query-prefix", default="", help="查询侧指令前缀（BGE 中文模型需要）")
+    ap.add_argument("--doc-prefix", default="", help="文档侧前缀（nomic 需要 search_document: ）")
+    ap.add_argument("--chunk-size", type=int, default=0, help="按字符切分文档，0 表示不切分")
+    ap.add_argument("--chunk-overlap", type=int, default=0)
     args = ap.parse_args()
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -50,11 +54,11 @@ def main() -> int:
                 self.m = SentenceTransformer(str(args.local_embedding_model), trust_remote_code=True)
 
             def embed_documents(self, texts):
-                return self.m.encode(["search_document: " + t for t in texts],
+                return self.m.encode([args.doc_prefix + t for t in texts],
                                      normalize_embeddings=True).tolist()
 
             def embed_query(self, text):
-                return self.m.encode("search_query: " + text,
+                return self.m.encode(args.query_prefix + text,
                                      normalize_embeddings=True).tolist()
 
         embeddings = LocalNomic()
@@ -65,16 +69,44 @@ def main() -> int:
         emb_src = "ollama:nomic-embed-text"
 
     _model()  # 提前加载重排模型，避免把加载时间算进延迟
+
+    def split_chunks(text: str) -> list[str]:
+        size = args.chunk_size
+        if size <= 0 or len(text) <= size:
+            return [text]
+        step = max(1, size - args.chunk_overlap)
+        return [text[i:i + size] for i in range(0, len(text), step)]
+
+    chunk_texts: list[str] = []
+    chunk_meta: list[dict] = []
+    chunk_ids: list[str] = []
+    chunk_to_doc: dict[str, str] = {}
+    for doc in documents:
+        for index, piece in enumerate(split_chunks(doc["text"])):
+            cid = f"{doc['id']}#{index}"
+            chunk_ids.append(cid)
+            chunk_texts.append(piece)
+            chunk_meta.append({"id": doc["id"], "chunk": index})
+            chunk_to_doc[cid] = doc["id"]
+
     store = Chroma.from_texts(
-        [d["text"] for d in documents],
+        chunk_texts,
         embedding=embeddings,
-        metadatas=[{"id": d["id"]} for d in documents],
+        metadatas=chunk_meta,
         collection_name=f"hybrid_eval_{uuid.uuid4().hex}",
     )
 
-    ids = [d["id"] for d in documents]
-    texts = [d["text"] for d in documents]
-    sparse = BM25Index(ids, texts)
+    sparse = BM25Index(chunk_ids, chunk_texts)
+
+    def unique_docs(hit_chunk_ids: list[str], limit: int = 8) -> list[str]:
+        seen: list[str] = []
+        for cid in hit_chunk_ids:
+            doc_id = chunk_to_doc.get(cid, cid)
+            if doc_id not in seen:
+                seen.append(doc_id)
+            if len(seen) >= limit:
+                break
+        return seen
 
     rows, lat = [], {"vector": [], "bm25": [], "hybrid": [], "hybrid_rerank": []}
     try:
@@ -98,10 +130,10 @@ def main() -> int:
             rows.append({
                 "id": q["id"],
                 "relevant_ids": q["relevant_ids"],
-                "vector": [(d.metadata or {}).get("id") for d in vec],
-                "bm25": bm,
-                "hybrid": [(d.metadata or {}).get("id") for d, _ in hy],
-                "hybrid_rerank": [(d.metadata or {}).get("id") for d in rer],
+                "vector": unique_docs([(d.metadata or {}).get("id", "") for d in vec]),
+                "bm25": unique_docs(bm),
+                "hybrid": unique_docs([(d.metadata or {}).get("id", "") for d, _ in hy]),
+                "hybrid_rerank": unique_docs([(d.metadata or {}).get("id", "") for d in rer]),
             })
     finally:
         store.delete_collection()
@@ -111,6 +143,10 @@ def main() -> int:
         "document_count": len(documents),
         "query_count": len(queries),
         "embedding_source": emb_src,
+        "query_prefix": args.query_prefix,
+        "doc_prefix": args.doc_prefix,
+        "chunk_size": args.chunk_size,
+        "chunk_overlap": args.chunk_overlap,
         "hit_rate": {k: summarize(rows, k) for k in ("vector", "bm25", "hybrid", "hybrid_rerank")},
         "median_latency_ms": {k: round(statistics.median(v), 1) for k, v in lat.items()},
     }

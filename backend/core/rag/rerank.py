@@ -2,7 +2,7 @@
 from functools import lru_cache
 
 
-MODEL_NAME = "BAAI/bge-reranker-base"
+MODEL_NAME = "BAAI/bge-reranker-large"
 
 
 @lru_cache(maxsize=1)

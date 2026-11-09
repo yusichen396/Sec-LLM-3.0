@@ -113,6 +113,7 @@ class Settings(BaseSettings):
     # Auto-fix PR helper stays disabled and is never exposed to the planner.
     AGENT_AUTOFIX_ENABLED: bool = False
     AGENT_POLICY_PATH: Optional[str] = None  # default: data/agent_optimization/active.json
+    EMBEDDING_MODEL_PATH: Optional[str] = None
     RERANKER_MODEL_PATH: Optional[str] = None
     PROMPT_INTENT_SEMANTIC_ENABLED: bool = True
     PROMPT_INTENT_MODEL_PATH: Optional[str] = None
