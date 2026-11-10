@@ -1,6 +1,56 @@
 """CVSS 3.1 calculator and OWASP classifier for agent findings."""
 import math
 
+
+def observed_result(result: dict, payload: str) -> dict | None:
+    """Find the tool-result entry that actually demonstrated this payload.
+
+    Works for every check that reports per-payload outcomes: browser execution
+    (``executed``/``dialog_triggered``) and HTTP-based checks (``conclusive``).
+    """
+    if not isinstance(result, dict) or not payload:
+        return None
+    for item in result.get("results") or []:
+        if not isinstance(item, dict) or item.get("payload") != payload:
+            continue
+        if item.get("executed") or item.get("dialog_triggered") or item.get("conclusive"):
+            return item
+    return None
+
+
+def annotate_finding(finding: dict, tool: str, result: dict, evidence: dict | None = None) -> dict:
+    """Only an observed, replayable demonstration counts as verified.
+
+    ``evidence`` is the reference returned by ``core.evidence.EvidenceRecorder``.
+    Without an artifact the finding stays a lead, even when the tool observed a
+    signal — a claim the customer cannot replay is not a verified vulnerability.
+    """
+    annotated = {
+        **finding,
+        "source_tool": tool,
+        "verification_status": "unverified",
+        "verification_reason": "No independently replayable artifact",
+    }
+    payload = finding.get("evidence")
+    match = observed_result(result, payload)
+    if match and evidence:
+        annotated["verification_status"] = "verified"
+        annotated["verification_reason"] = match.get("signal") or "Tool observed the payload and an artifact was stored"
+        annotated["evidence_id"] = evidence.get("evidence_id")
+        annotated["evidence_path"] = evidence.get("evidence_path")
+        annotated["evidence_sha256"] = evidence.get("evidence_sha256")
+        annotated["reproduction"] = {
+            "url": match.get("url", result.get("url") if isinstance(result, dict) else None),
+            "parameter": match.get("parameter") or (result.get("parameter") if isinstance(result, dict) else None),
+            "payload": payload,
+            "observed": match.get("signal") or ("browser_dialog_triggered" if match.get("dialog_triggered") else "tool_signal"),
+            "poc_path": evidence.get("poc_path"),
+        }
+    elif match:
+        annotated["verification_reason"] = "Signal observed but no evidence artifact was stored"
+    # CVSS/OWASP 之前只定义未接线，导致报告里没有评分与分类
+    return enhance_finding(annotated)
+
 # OWASP Top 10 (2021) mapping by keyword
 OWASP_CATEGORIES = {
     "sql injection": ("A03:2021 - Injection", "CWE-89"),

@@ -11,6 +11,20 @@ export interface AgentSession {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+export class AgentApiError extends Error {
+  status: number;
+  constructor(label: string, response: Response) {
+    super(`${label}: ${response.status} ${response.statusText}`);
+    this.name = "AgentApiError";
+    this.status = response.status;
+  }
+}
+
+function ensureOk(response: Response, label: string): Response {
+  if (!response.ok) throw new AgentApiError(label, response);
+  return response;
+}
+
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (typeof window !== "undefined") {
@@ -35,7 +49,7 @@ export async function runAgentTask(params: {
       provider: params.provider || "local",
     }),
   });
-  if (!resp.ok) throw new Error(`Agent task failed: ${resp.statusText}`);
+  if (!resp.ok) throw new AgentApiError("Agent task failed", resp);
   return resp.json();
 }
 
@@ -53,7 +67,7 @@ export async function getAgentStatus(sessionId: string): Promise<{
   const resp = await fetch(`${API_BASE}/api/agent/${sessionId}/status`, {
     headers: authHeaders(),
   });
-  if (!resp.ok) throw new Error(`Status check failed: ${resp.statusText}`);
+  if (!resp.ok) throw new AgentApiError("Status check failed", resp);
   return resp.json();
 }
 
@@ -67,7 +81,7 @@ export async function getAgentReport(sessionId: string): Promise<{
   const resp = await fetch(`${API_BASE}/api/agent/${sessionId}/report`, {
     headers: authHeaders(),
   });
-  if (!resp.ok) throw new Error(`Report fetch failed: ${resp.statusText}`);
+  if (!resp.ok) throw new AgentApiError("Report fetch failed", resp);
   return resp.json();
 }
 
@@ -83,7 +97,7 @@ export async function listAgentSessions(): Promise<{
   }>;
 }> {
   const resp = await fetch(`${API_BASE}/api/agent/sessions`, { headers: authHeaders() });
-  if (!resp.ok) throw new Error(`Session list failed: ${resp.statusText}`);
+  if (!resp.ok) throw new AgentApiError("Session list failed", resp);
   return resp.json();
 }
 
@@ -109,7 +123,7 @@ export function createAgentStream(
       let buffer = "";
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) throw new Error("Stream ended before task completion");
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
         buffer = lines.pop() || "";

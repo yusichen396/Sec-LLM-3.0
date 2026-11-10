@@ -32,7 +32,7 @@ import {
   Wrench,
   Activity,
 } from 'lucide-react';
-import { getDashboardStats, getLogRecords, type AnalysisResult, type LogRecord, type UserInfo } from '@/lib/api';
+import { getDashboardStats, getLogRecords, type AnalysisResult, type LogRecord, type SecurityScore, type UserInfo } from '@/lib/api';
 import LLMProviderToggle from '@/components/LLMProviderToggle';
 import {
   AreaChart,
@@ -45,10 +45,11 @@ import {
 } from 'recharts';
 
 interface DashboardStats {
-  totalThreats: { value: number; trend: number };
-  networkTraffic: { value: string; trend: number };
-  activeEndpoints: { value: number; trend: number };
-  securityScore: { value: number; trend: number };
+  // number 是后端真实值；string 用于"未接入"占位（如 '—'）
+  totalThreats: { value: number | string; trend: number | null };
+  networkTraffic: { value: number | string; trend: number | null };
+  activeEndpoints: { value: number | string; trend: number | null };
+  securityScore: { value: number | string; trend: number | null };
 }
 
 interface RecentActivity {
@@ -66,128 +67,59 @@ interface SystemStatus {
   network: { speed: string; ping: string; jitter: string };
 }
 
-// 生成随机统计数据
-const generateRandomStats = (): DashboardStats => {
-  // 随机生成威胁总数 (1500-3500)
-  const totalThreats = Math.floor(Math.random() * 2000) + 1500;
-  const threatsTrend = (Math.random() * 20 - 5).toFixed(1); // -5% 到 +15%
-  
-  // 随机生成网络流量 (30-60 TB)
-  const networkTrafficValue = (Math.random() * 30 + 30).toFixed(1);
-  const networkTrend = (Math.random() * 10 - 2).toFixed(1); // -2% 到 +8%
-  
-  // 随机生成活跃端点 (400-700)
-  const activeEndpoints = Math.floor(Math.random() * 300) + 400;
-  const endpointsTrend = (Math.random() * 5 - 3).toFixed(1); // -3% 到 +2%
-  
-  // 随机生成安全评分 (85-100)
-  const securityScore = Math.floor(Math.random() * 15) + 85;
-  const scoreTrend = (Math.random() * 2 - 0.5).toFixed(1); // -0.5% 到 +1.5%
-  
-  return {
-    totalThreats: { 
-      value: totalThreats, 
-      trend: parseFloat(threatsTrend) 
-    },
-    networkTraffic: { 
-      value: `${networkTrafficValue} TB`, 
-      trend: parseFloat(networkTrend) 
-    },
-    activeEndpoints: { 
-      value: activeEndpoints, 
-      trend: parseFloat(endpointsTrend) 
-    },
-    securityScore: { 
-      value: securityScore, 
-      trend: parseFloat(scoreTrend) 
-    },
-  };
+// 初始占位：全部显示"—"，等真实数据回来再替换；不再用随机数冒充安全指标
+const UNAVAILABLE = '—';
+
+const emptyDashboardStats = (): DashboardStats => ({
+  totalThreats: { value: UNAVAILABLE, trend: null },
+  networkTraffic: { value: UNAVAILABLE, trend: null },
+  activeEndpoints: { value: UNAVAILABLE, trend: null },
+  securityScore: { value: UNAVAILABLE, trend: null },
+});
+
+const formatMetric = (value: number | string) =>
+  typeof value === 'number' ? value.toLocaleString() : value;
+
+const formatPercent = (value: number | string) =>
+  typeof value === 'number' ? `${value}%` : value;
+
+const TrendBadge = ({ trend }: { trend: number | null }) => {
+  if (trend === null) {
+    return <span className="text-sm text-gray-500">—</span>;
+  }
+  return trend >= 0 ? (
+    <div className="flex items-center gap-1 text-green-400 text-sm">
+      <TrendingUp className="w-4 h-4" />
+      <span>+{trend.toFixed(1)}%</span>
+    </div>
+  ) : (
+    <div className="flex items-center gap-1 text-red-400 text-sm">
+      <TrendingDown className="w-4 h-4" />
+      <span>{trend.toFixed(1)}%</span>
+    </div>
+  );
 };
 
-const mockActivity: RecentActivity[] = [
-  {
-    id: 1,
-    type: 'alert',
-    message: 'SQL 注入攻击已阻止',
-    details: 'IP: 192.168.1.100 | 系统 | Endpoint-A1',
-    timestamp: '2 分钟前',
-  },
-  {
-    id: 2,
-    type: 'login',
-    message: '登录失败 (root)',
-    details: 'IP: 10.0.0.5 | 系统 | Backup Svc',
-    timestamp: '15 分钟前',
-  },
-  {
-    id: 3,
-    type: 'info',
-    message: '防火墙规则已更新',
-    details: '系统 | 管理员',
-    timestamp: '1 小时前',
-  },
-  {
-    id: 4,
-    type: 'quarantine',
-    message: '可疑文件已隔离',
-    details: 'Endpoint-B2 | 系统',
-    timestamp: '2 小时前',
-  },
-  {
-    id: 5,
-    type: 'success',
-    message: '每日备份已完成',
-    details: '系统 | Backup Svc',
-    timestamp: '3 小时前',
-  },
-];
-
-// 生成带随机浮动的系统状态数据（浮动控制在 10% 以内）
-const generateSystemStatus = (): SystemStatus => {
-  // 基准值
-  const baseCpuUsage = 45;
-  const baseMemoryUsed = 6.2;
-  const baseStorageUsed = 1.2;
-  const basePing = 12;
-  const baseJitter = 0.4;
-
-  // 随机浮动函数（-10% 到 +10%）
-  const randomFloat = (base: number) => {
-    const fluctuation = base * (Math.random() * 0.2 - 0.1); // -10% 到 +10%
-    return base + fluctuation;
-  };
-
-  return {
-    cpu: { 
-      usage: Math.round(randomFloat(baseCpuUsage)), 
-      cores: '12 核心运行中' 
-    },
-    memory: { 
-      used: `${randomFloat(baseMemoryUsed).toFixed(1)}GB`, 
-      total: '16GB', 
-      status: '健康' 
-    },
-    storage: { 
-      used: `${randomFloat(baseStorageUsed).toFixed(1)}TB`, 
-      total: '4TB', 
-      status: 'RAID 5 正常' 
-    },
-    network: { 
-      speed: '10Gbps 上行链路活跃', 
-      ping: `${Math.round(randomFloat(basePing))}ms`, 
-      jitter: `${randomFloat(baseJitter).toFixed(1)}ms` 
-    },
-  };
+// 系统资源指标后端未接入：明确显示"未接入"，不再伪造 CPU/内存/磁盘数值
+const UNAVAILABLE_SYSTEM_STATUS: SystemStatus = {
+  cpu: { usage: 0, cores: '未接入' },
+  memory: { used: '—', total: '—', status: '未接入' },
+  storage: { used: '—', total: '—', status: '未接入' },
+  network: { speed: '未接入', ping: '—', jitter: '—' },
 };
 
-// 生成随机威胁流量分析图表数据
-const generateThreatTrafficData = () => {
-  const times = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'];
-  return times.map(time => ({
-    time,
-    threats: Math.floor(Math.random() * 80) + 5, // 5-85 之间的随机值
-  }));
-};
+const buildSystemStatus = (cpuLoad: number | null): SystemStatus =>
+  cpuLoad === null
+    ? UNAVAILABLE_SYSTEM_STATUS
+    : {
+        ...UNAVAILABLE_SYSTEM_STATUS,
+        cpu: { usage: cpuLoad, cores: '实时 CPU 负载' },
+      };
+
+// 图表数据全部来自后端统计，没有数据就是空图
+const buildThreatTrafficData = (points: Array<{ time: string; value: number }>) =>
+  (points || []).map((point) => ({ time: point.time, threats: point.value }));
+
 
 const getActivityIcon = (type: RecentActivity['type']) => {
   switch (type) {
@@ -249,12 +181,13 @@ export default function Dashboard() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [auditCount, setAuditCount] = useState(0);
   const [aiInteractionCount, setAiInteractionCount] = useState(0);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats>(generateRandomStats());
-  const [threatTrafficData, setThreatTrafficData] = useState(generateThreatTrafficData());
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>(emptyDashboardStats());
+  const [systemLoad, setSystemLoad] = useState<number | null>(null);
+  const [securityScoreDetail, setSecurityScoreDetail] = useState<SecurityScore | null>(null);
+  const [threatTrafficData, setThreatTrafficData] = useState(buildThreatTrafficData([]));
   const [logRecords, setLogRecords] = useState<LogRecord[]>([]);
   const [logRecordsError, setLogRecordsError] = useState<string | null>(null);
   const [hasHighUnresolved, setHasHighUnresolved] = useState(false);
-  const [lastScanMinutes] = useState(() => Math.floor(Math.random() * 31));
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
@@ -291,10 +224,20 @@ export default function Dashboard() {
   const loadDashboardStats = async () => {
     try {
       const stats = await getDashboardStats();
-      setDashboardStats((prev) => ({
-        ...prev,
-        totalThreats: { value: stats.total_events || 0, trend: 0 },
-      }));
+      const score = stats.security_score;
+      setDashboardStats({
+        totalThreats: { value: stats.active_threats ?? 0, trend: null },
+        // 网络流量后端没有对应指标，保持"—"而不是编一个数
+        networkTraffic: { value: UNAVAILABLE, trend: null },
+        activeEndpoints: { value: stats.online_users ?? 0, trend: null },
+        securityScore: {
+          value: typeof score?.score === 'number' ? score.score : UNAVAILABLE,
+          trend: null,
+        },
+      });
+      setSecurityScoreDetail(score ?? null);
+      setThreatTrafficData(buildThreatTrafficData(stats.chart_data || []));
+      setSystemLoad(typeof stats.system_load === 'number' ? stats.system_load : null);
       if (typeof stats.total_events === 'number') {
         setAuditCount(stats.total_events);
       }
@@ -305,7 +248,11 @@ export default function Dashboard() {
         setHasHighUnresolved(stats.high_unresolved_count > 0);
       }
     } catch (error) {
-      // 保留现有随机展示作为回退
+      // 接口失败时回到占位态，而不是用随机数假装有数据
+      setDashboardStats(emptyDashboardStats());
+      setSecurityScoreDetail(null);
+      setThreatTrafficData(buildThreatTrafficData([]));
+      setSystemLoad(null);
     }
   };
 
@@ -329,9 +276,9 @@ export default function Dashboard() {
       }
     }
     
-    // 初始化展示（先本地占位，再拉真实数据）
-    setDashboardStats(generateRandomStats());
-    setThreatTrafficData(generateThreatTrafficData());
+    // 先显示占位，再拉真实数据（不再生成随机数）
+    setDashboardStats(emptyDashboardStats());
+    setThreatTrafficData(buildThreatTrafficData([]));
 
     // 从 localStorage 读取数据
     try {
@@ -372,39 +319,26 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // 生成系统状态数据并启动动画
+  // 系统状态：只动画后端真实返回的 CPU 负载；其余指标未接入，保持"—"
   useEffect(() => {
-    // 生成随机系统状态
-    const newStatus = generateSystemStatus();
+    const newStatus = buildSystemStatus(systemLoad);
     setSystemStatus(newStatus);
 
-    // 重置动画值
     setAnimatedCpu(0);
     setAnimatedMemory(0);
     setAnimatedStorage(0);
 
-    // 动画持续时间（毫秒）
     const animationDuration = 1500;
-    const steps = 60; // 动画帧数
+    const steps = 60;
     const stepDuration = animationDuration / steps;
-
     let currentStep = 0;
 
     const animationInterval = setInterval(() => {
       currentStep++;
       const progress = currentStep / steps;
-      // 使用 easeOutQuad 缓动函数
       const easedProgress = 1 - (1 - progress) * (1 - progress);
 
-      setAnimatedCpu(Math.round(newStatus.cpu.usage * easedProgress));
-      
-      const memoryUsed = parseFloat(newStatus.memory.used);
-      const memoryTotal = parseFloat(newStatus.memory.total);
-      setAnimatedMemory((memoryUsed / memoryTotal) * 100 * easedProgress);
-
-      const storageUsed = parseFloat(newStatus.storage.used);
-      const storageTotal = parseFloat(newStatus.storage.total);
-      setAnimatedStorage((storageUsed / storageTotal) * 100 * easedProgress);
+      setAnimatedCpu(Math.round((newStatus.cpu.usage || 0) * easedProgress));
 
       if (currentStep >= steps) {
         clearInterval(animationInterval);
@@ -412,7 +346,15 @@ export default function Dashboard() {
     }, stepDuration);
 
     return () => clearInterval(animationInterval);
-  }, []);
+  }, [systemLoad]);
+
+  // 上次扫描时间来自真实日志记录，没有记录就显示"—"
+  const lastScanLabel = (() => {
+    const newest = logRecords[0]?.upload_time;
+    if (!newest) return '—';
+    const minutes = Math.max(0, Math.round((Date.now() - new Date(newest).getTime()) / 60000));
+    return `${minutes} 分钟前`;
+  })();
 
   // 获取威胁等级
   const isUnderAttack = hasHighUnresolved;
@@ -822,7 +764,7 @@ export default function Dashboard() {
             <div className="w-2 h-2 bg-green-400 rounded-full"></div>
             <span className="text-sm text-gray-400">系统安全</span>
           </div>
-          <p className="text-xs text-gray-500">上次扫描: {lastScanMinutes} 分钟前</p>
+          <p className="text-xs text-gray-500">上次扫描: {lastScanLabel}</p>
         </div>
 
         {/* 登出按钮 */}
@@ -1039,20 +981,10 @@ export default function Dashboard() {
               <div className="bg-slate-900/50 backdrop-blur border border-white/5 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Shield className="w-8 h-8 text-cyan-400" />
-                  {dashboardStats.totalThreats.trend > 0 ? (
-                    <div className="flex items-center gap-1 text-green-400 text-sm">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+{dashboardStats.totalThreats.trend.toFixed(1)}%</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-red-400 text-sm">
-                      <TrendingDown className="w-4 h-4" />
-                      <span>{dashboardStats.totalThreats.trend.toFixed(1)}%</span>
-                    </div>
-                  )}
+                  <TrendBadge trend={dashboardStats.totalThreats.trend} />
                 </div>
                 <p className="text-3xl font-bold text-white mb-1">
-                  {dashboardStats.totalThreats.value.toLocaleString()}
+                  {formatMetric(dashboardStats.totalThreats.value)}
                 </p>
                 <p className="text-sm text-gray-400">已阻止威胁总数</p>
               </div>
@@ -1060,20 +992,10 @@ export default function Dashboard() {
               <div className="bg-slate-900/50 backdrop-blur border border-white/5 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Network className="w-8 h-8 text-cyan-400" />
-                  {dashboardStats.networkTraffic.trend > 0 ? (
-                    <div className="flex items-center gap-1 text-green-400 text-sm">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+{dashboardStats.networkTraffic.trend.toFixed(1)}%</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-red-400 text-sm">
-                      <TrendingDown className="w-4 h-4" />
-                      <span>{dashboardStats.networkTraffic.trend.toFixed(1)}%</span>
-                    </div>
-                  )}
+                  <TrendBadge trend={dashboardStats.networkTraffic.trend} />
                 </div>
                 <p className="text-3xl font-bold text-white mb-1">
-                  {dashboardStats.networkTraffic.value}
+                  {formatMetric(dashboardStats.networkTraffic.value)}
                 </p>
                 <p className="text-sm text-gray-400">网络流量</p>
               </div>
@@ -1081,43 +1003,47 @@ export default function Dashboard() {
               <div className="bg-slate-900/50 backdrop-blur border border-white/5 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Server className="w-8 h-8 text-cyan-400" />
-                  {dashboardStats.activeEndpoints.trend > 0 ? (
-                    <div className="flex items-center gap-1 text-green-400 text-sm">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+{dashboardStats.activeEndpoints.trend.toFixed(1)}%</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-red-400 text-sm">
-                      <TrendingDown className="w-4 h-4" />
-                      <span>{dashboardStats.activeEndpoints.trend.toFixed(1)}%</span>
-                    </div>
-                  )}
+                  <TrendBadge trend={dashboardStats.activeEndpoints.trend} />
                 </div>
                 <p className="text-3xl font-bold text-white mb-1">
-                  {dashboardStats.activeEndpoints.value}
+                  {formatMetric(dashboardStats.activeEndpoints.value)}
                 </p>
-                <p className="text-sm text-gray-400">活跃端点</p>
+                <p className="text-sm text-gray-400">在线用户</p>
               </div>
 
               <div className="bg-slate-900/50 backdrop-blur border border-white/5 rounded-lg p-6">
                 <div className="flex items-center justify-between mb-4">
                   <Lock className="w-8 h-8 text-cyan-400" />
-                  {dashboardStats.securityScore.trend > 0 ? (
-                    <div className="flex items-center gap-1 text-green-400 text-sm">
-                      <TrendingUp className="w-4 h-4" />
-                      <span>+{dashboardStats.securityScore.trend.toFixed(1)}%</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 text-red-400 text-sm">
-                      <TrendingDown className="w-4 h-4" />
-                      <span>{dashboardStats.securityScore.trend.toFixed(1)}%</span>
-                    </div>
-                  )}
+                  <span className="text-xs text-gray-400">
+                    {securityScoreDetail?.computed ? securityScoreDetail.grade : '—'}
+                  </span>
                 </div>
                 <p className="text-3xl font-bold text-white mb-1">
-                  {dashboardStats.securityScore.value}%
+                  {formatPercent(dashboardStats.securityScore.value)}
                 </p>
-                <p className="text-sm text-gray-400">安全评分</p>
+                <p className="text-sm text-gray-400 mb-2">安全评分</p>
+                {securityScoreDetail?.computed ? (
+                  <details className="text-xs text-gray-400">
+                    <summary className="cursor-pointer text-cyan-400 hover:text-cyan-300">计算依据</summary>
+                    <ul className="mt-2 space-y-1">
+                      {securityScoreDetail.penalties.length === 0 ? (
+                        <li>当前没有扣分项（满分 100）</li>
+                      ) : (
+                        securityScoreDetail.penalties.map((item) => (
+                          <li key={item.reason}>
+                            {item.reason} ×{item.count} → −{item.points} 分
+                          </li>
+                        ))
+                      )}
+                      <li className="text-gray-500 pt-1 border-t border-white/5 mt-1">
+                        {securityScoreDetail.formula}
+                      </li>
+                      <li className="text-gray-500">统计范围：{securityScoreDetail.window}</li>
+                    </ul>
+                  </details>
+                ) : (
+                  <p className="text-xs text-gray-500">{securityScoreDetail?.reason || '暂无数据'}</p>
+                )}
               </div>
             </div>
           </div>

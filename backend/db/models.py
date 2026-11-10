@@ -78,24 +78,9 @@ class AgentSession(Base):
     steps_total = Column(Integer, default=0)
     report = Column(Text, nullable=True)
     logs = Column(JSON, default=list)
+    findings = Column(JSON, default=list)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-
-
-class AgentFinding(Base):
-    __tablename__ = "agent_findings"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    session_id = Column(String(8), ForeignKey("agent_sessions.id"), nullable=False)
-    title = Column(String(500), nullable=False)
-    severity = Column(String(20), nullable=False)  # Low, Medium, High, Critical
-    description = Column(Text, nullable=True)
-    evidence = Column(JSON, nullable=True)
-    cve_id = Column(String(50), nullable=True)
-    cvss_score = Column(Integer, nullable=True)
-    file_path = Column(String(500), nullable=True)
-    line_number = Column(Integer, nullable=True)
-    fixed_code = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 # ---- Engine factory ----

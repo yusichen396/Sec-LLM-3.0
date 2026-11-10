@@ -1,0 +1,26 @@
+{
+  "name": "authored_retrieval_behavior_v2",
+  "description": "New hand-authored technical regression cases. Public fixtures, not independently labeled business holdouts; never release evidence.",
+  "documents": [
+    {"id": "lease", "text": "租约续期必须检查 fencing token 的单调递增值，过期持有者不能继续写入共享资源。"},
+    {"id": "retry", "text": "支付请求重试使用 Idempotency-Key 保存同一业务请求结果，避免网络超时造成重复扣款。"},
+    {"id": "kms", "text": "KMS 密钥轮换先建立新版本用于加密，旧版本保持解密能力，迁移数据后再停用旧版本。"},
+    {"id": "wal", "text": "WAL 日志必须先持久化再确认事务提交；只有落盘后确认才能在断电后恢复已提交数据。"},
+    {"id": "dlq", "text": "消息达到最大重试次数后进入 dead-letter queue，保留原消息及失败原因，人工复核后再重放。"},
+    {"id": "clock", "text": "使用 monotonic clock 计算超时和持续时间，避免 NTP 校时或系统时钟回拨导致等待时间异常。"}
+  ],
+  "queries": [
+    {"id": "lease_a", "text": "旧租约拥有者怎么防止继续写共享资源？", "relevant_ids": ["lease"], "group": "lease_fencing", "split": "dev"},
+    {"id": "lease_b", "text": "fencing token 应该校验什么变化？", "relevant_ids": ["lease"], "group": "lease_fencing", "split": "dev"},
+    {"id": "retry_a", "text": "支付超时重试怎么避免重复扣款？", "relevant_ids": ["retry"], "group": "payment_idempotency", "split": "dev"},
+    {"id": "retry_b", "text": "Idempotency-Key 如何处理同一请求？", "relevant_ids": ["retry"], "group": "payment_idempotency", "split": "dev"},
+    {"id": "kms_a", "text": "加密密钥轮换后历史密文怎么继续解密？", "relevant_ids": ["kms"], "group": "kms_rotation", "split": "validation"},
+    {"id": "kms_b", "text": "KMS 新旧版本什么时候停用？", "relevant_ids": ["kms"], "group": "kms_rotation", "split": "validation"},
+    {"id": "wal_a", "text": "事务在什么时候可以回复提交成功？", "relevant_ids": ["wal"], "group": "wal_durability", "split": "validation"},
+    {"id": "wal_b", "text": "WAL 与断电后的已提交数据恢复关系？", "relevant_ids": ["wal"], "group": "wal_durability", "split": "validation"},
+    {"id": "dlq_a", "text": "消息连续失败达到重试上限后去哪里？", "relevant_ids": ["dlq"], "group": "dead_letters", "split": "test"},
+    {"id": "dlq_b", "text": "dead-letter queue 在重放前保留哪些信息？", "relevant_ids": ["dlq"], "group": "dead_letters", "split": "test"},
+    {"id": "clock_a", "text": "NTP 把系统时间往回调后怎么正确计算超时？", "relevant_ids": ["clock"], "group": "monotonic_timing", "split": "test"},
+    {"id": "clock_b", "text": "持续时间应使用哪种 clock？", "relevant_ids": ["clock"], "group": "monotonic_timing", "split": "test"}
+  ]
+}

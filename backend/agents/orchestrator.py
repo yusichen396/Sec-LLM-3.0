@@ -1,18 +1,28 @@
 """Agent orchestrator — LangGraph StateGraph for autonomous security testing."""
+import math
+import re
 import asyncio
 import json
 import time
 import uuid
+from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlsplit
 
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from agents.state import AgentState, AgentTask
+from agents.evidence_flow import attach_evidence
+from agents.reporting import annotate_finding
+from agents.planner import plan_with_retry, revise_failed_step
+from agents.policy import parse_plan, planning_messages, policy_for, report_messages
+from core.safety.scope import ScopeError, build_scope
+from dataclasses import asdict
+from agents.supervisor import run_multi_agent
 from config import settings
 from core.llm.router import single_shot_completion
-from tools.registry import get_all_tools, get_tool
+from tools.registry import get_all_tools, get_tool, invoke_tool
 
 # Auto-import tool modules so TOOL_REGISTRY is always populated
 import tools.phishing      # noqa: E402
@@ -22,11 +32,29 @@ import tools.report        # noqa: E402
 import tools.threat_intel  # noqa: E402
 import tools.browser       # noqa: E402
 import tools.shell         # noqa: E402
+import tools.source_reader  # noqa: E402
+import tools.sqli           # noqa: E402
+import tools.lfi            # noqa: E402
+import tools.ssrf           # noqa: E402
+import tools.api_discovery  # noqa: E402
 
-# In-memory session store (replace with DB in production)
+# Live cache; MySQL keeps the recoverable session record.
 _sessions: Dict[str, Dict[str, Any]] = {}
 _sessions_lock = asyncio.Lock()
+_running_tasks: Dict[str, asyncio.Task] = {}
+_session_events: Dict[str, asyncio.Event] = {}
+_agent_slots = asyncio.Semaphore(settings.AGENT_MAX_CONCURRENT)
 _SESSION_TTL_SECONDS = 3600  # 1 hour auto-eviction
+
+
+def _finish_background_task(session_id: str, task: asyncio.Task) -> None:
+    _running_tasks.pop(session_id, None)
+    try:
+        task.result()
+    except asyncio.CancelledError:
+        pass
+    except Exception as error:
+        print(f"[Agent] Background task failed: {error}")
 
 
 def _cleanup_expired_sessions():
@@ -34,6 +62,8 @@ def _cleanup_expired_sessions():
     cutoff = time.time() - _SESSION_TTL_SECONDS
     expired = []
     for sid, s in list(_sessions.items()):
+        if s.get("status") == "running":
+            continue
         try:
             created = datetime.fromisoformat(s["created_at"]).timestamp()
             if created < cutoff:
@@ -42,73 +72,189 @@ def _cleanup_expired_sessions():
             expired.append(sid)
     for sid in expired:
         del _sessions[sid]
+        _session_events.pop(sid, None)
     if expired:
         print(f"[Sessions] Cleaned up {len(expired)} expired sessions")
 
 
-def _persist_session(session_id: str):
-    """Write session to MySQL agent_sessions table (best-effort, non-blocking)."""
-    conn = None
+def _db_connection():
+    import pymysql
+    from pymysql.constants import CLIENT
+    return pymysql.connect(
+        host=settings.MYSQL_HOST, user=settings.MYSQL_USER, password=settings.MYSQL_PASSWORD,
+        database=settings.MYSQL_DB, port=settings.MYSQL_PORT, charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor, autocommit=True, client_flag=CLIENT.FOUND_ROWS,
+    )
+
+
+def _persist_session(session_id: str) -> None:
+    """Durably upsert a live session; callers must handle DB failure."""
+    s = _sessions[session_id]
+    state = s.get("state") or {}
+    progress = state.get("steps_completed", state.get("current_step", 0))
+    total = state.get("steps_total", len(state.get("plan", [])))
+    logs = json.dumps(s.get("logs", []), ensure_ascii=False)
+    findings = json.dumps(s.get("findings", []), ensure_ascii=False)
+    created = datetime.fromisoformat(s["created_at"]).replace(tzinfo=None)
+    with _db_connection() as conn:
+        with conn.cursor() as cursor:
+            if s["state"] is None:
+                cursor.execute(
+                    """INSERT INTO agent_sessions (id, user_id, target, task_type, provider, status, phase,
+                   findings_count, steps_completed, steps_total, report, logs, findings, created_at)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (session_id, s.get("user_id"), s["task"].get("target", ""), s["task"].get("task_type", "web_scan"),
+                     s["task"].get("provider", "local"), s["status"], state.get("phase", ""),
+                     len(s.get("findings", [])), progress, total, s.get("report"), logs, findings, created),
+                )
+            else:
+                updated = cursor.execute(
+                    """UPDATE agent_sessions SET status=%s, phase=%s, findings_count=%s,
+                       steps_completed=%s, steps_total=%s, report=%s, logs=%s, findings=%s
+                       WHERE id=%s AND status='running'""",
+                    (s["status"], state.get("phase", ""), len(s.get("findings", [])), progress,
+                     total, s.get("report"), logs, findings, session_id),
+                )
+                if not updated and s["status"] == "running":
+                    raise asyncio.CancelledError
+
+
+def _audit_scan(session_id: str, final: bool = False) -> None:
+    """Record who scanned what, under which authorisation. Never breaks the task."""
+    session = _sessions.get(session_id)
+    if not session:
+        return
+    task = session.get("task") or {}
+    scope = task.get("scope") or {}
     try:
-        import pymysql
-        from config import settings
-        conn = pymysql.connect(
-            host=settings.MYSQL_HOST, user=settings.MYSQL_USER, password=settings.MYSQL_PASSWORD,
-            database=settings.MYSQL_DB, port=settings.MYSQL_PORT, charset="utf8mb4",
-            cursorclass=pymysql.cursors.DictCursor, autocommit=True,
-        )
-        s = _sessions.get(session_id)
-        if not s: return
-        state = s.get("state") or {}
-        with conn.cursor() as c:
-            c.execute(
-                """INSERT INTO agent_sessions (id, target, task_type, provider, status, phase,
-                   findings_count, steps_completed, steps_total, report, logs, created_at)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                   ON DUPLICATE KEY UPDATE status=%s, phase=%s, findings_count=%s,
-                   steps_completed=%s, steps_total=%s, report=%s, logs=%s""",
-                (session_id, s["task"].get("target",""), s["task"].get("task_type","web_scan"),
-                 s["task"].get("provider","local"), s["status"], state.get("phase",""),
-                 len(s.get("findings",[])), state.get("current_step",0),
-                 len(state.get("plan",[])), s.get("report"), json.dumps(s.get("logs",[])),
-                 s.get("created_at",""), s["status"], state.get("phase",""),
-                 len(s.get("findings",[])), state.get("current_step",0),
-                 len(state.get("plan",[])), s.get("report"), json.dumps(s.get("logs",[]))))
-    except Exception as e:
-        print(f"[DB Persist] Failed to save session {session_id}: {e}")
-    finally:
-        if conn:
-            try:
-                conn.close()
-            except Exception:
-                pass
+        with _db_connection() as conn:
+            with conn.cursor() as cursor:
+                if not final:
+                    cursor.execute(
+                        """INSERT INTO scan_audit
+                           (session_id, user_id, target, task_type, authorization_ref, scope_json, status)
+                           VALUES (%s,%s,%s,%s,%s,%s,%s)
+                           ON DUPLICATE KEY UPDATE status=VALUES(status)""",
+                        (session_id, session.get("user_id"), task.get("target", ""),
+                         task.get("task_type", "web_scan"), scope.get("authorization_ref") or None,
+                         json.dumps(scope, ensure_ascii=False), session.get("status", "running")),
+                    )
+                else:
+                    cursor.execute(
+                        """UPDATE scan_audit
+                           SET status=%s, findings_count=%s, finished_at=NOW()
+                           WHERE session_id=%s""",
+                        (session.get("status", "unknown"), len(session.get("findings") or []), session_id),
+                    )
+    except Exception as error:  # 审计失败不影响扫描本身，但必须留痕
+        print(f"[AUDIT] failed for {session_id}: {error}")
 
 
-async def create_session(task: AgentTask) -> str:
+def _session_from_row(row: dict) -> Dict[str, Any]:
+    """Reconstruct API-facing state without replaying any tool call."""
+    logs = row.get("logs") or []
+    findings = row.get("findings") or []
+    if isinstance(logs, str):
+        logs = json.loads(logs)
+    if isinstance(findings, str):
+        findings = json.loads(findings)
+    status = row["status"]
+    phase = row.get("phase") or "unknown"
+    created = row["created_at"]
+    return {
+        "id": row["id"], "user_id": row.get("user_id"),
+        "task": {"target": row["target"], "task_type": row["task_type"], "provider": row["provider"]},
+        "state": {"phase": phase, "steps_completed": row.get("steps_completed") or 0,
+                  "steps_total": row.get("steps_total") or 0},
+        "created_at": created.isoformat() if hasattr(created, "isoformat") else str(created),
+        "status": status, "logs": logs, "findings": findings, "report": row.get("report"),
+    }
+
+
+def _load_session(session_id: str) -> Optional[Dict[str, Any]]:
+    with _db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM agent_sessions WHERE id=%s", (session_id,))
+            row = cursor.fetchone()
+    return _session_from_row(row) if row else None
+
+
+def _list_session_rows(limit: int, user_id: int | None = None) -> List[Dict[str, Any]]:
+    with _db_connection() as conn:
+        with conn.cursor() as cursor:
+            if user_id is None:
+                cursor.execute("SELECT * FROM agent_sessions ORDER BY created_at DESC LIMIT %s", (limit,))
+            else:
+                cursor.execute("SELECT * FROM agent_sessions WHERE user_id=%s ORDER BY created_at DESC LIMIT %s",
+                               (user_id, limit))
+            rows = cursor.fetchall()
+    return [_session_from_row(row) for row in rows]
+
+
+async def create_session(task: AgentTask, user_id: int | None = None) -> str:
     session_id = str(uuid.uuid4())[:8]
     async with _sessions_lock:
         _cleanup_expired_sessions()
         _sessions[session_id] = {
             "id": session_id,
+            "user_id": user_id,
             "task": task,
             "state": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "running",
             "logs": [],
             "findings": [],
+            "_synced_at": time.monotonic(),
         }
+        _session_events[session_id] = asyncio.Event()
+    try:
+        await asyncio.to_thread(_persist_session, session_id)
+    except Exception:
+        async with _sessions_lock:
+            _sessions.pop(session_id, None)
+        raise
+    await asyncio.to_thread(_audit_scan, session_id, False)
     return session_id
 
 
 def get_session(session_id: str) -> Optional[Dict[str, Any]]:
-    return _sessions.get(session_id)
+    """Serve the live in-memory snapshot when it is fresh, else fall back to MySQL.
+
+    The previous order (DB first) opened a new MySQL connection on every SSE tick,
+    which was one connect+auth per second per watcher.
+    """
+    live = _sessions.get(session_id)
+    if live is not None and time.monotonic() - live.get("_synced_at", 0.0) < 5.0:
+        return live
+    return _load_session(session_id) or live
 
 
-def list_sessions(limit: int = 20) -> List[Dict[str, Any]]:
+def list_sessions(limit: int = 20, user_id: int | None = None) -> List[Dict[str, Any]]:
     """Public API for listing recent sessions."""
-    items = list(_sessions.values())
+    items = {session["id"]: session for session in _list_session_rows(limit, user_id)}
+    for sid, s in _sessions.items():
+        if user_id is None or s.get("user_id") == user_id:
+            items.setdefault(sid, s)
+    items = list(items.values())
     items.sort(key=lambda s: s.get("created_at", ""), reverse=True)
     return items[:limit]
+
+
+async def _store_progress(session_id: str, state: Dict[str, Any]) -> None:
+    async with _sessions_lock:
+        session = _sessions[session_id]
+        session["state"] = state
+        session["status"] = state.get("status", "running")
+        session["findings"] = state.get("findings", [])
+        session["logs"] = state.get("logs", [])
+        session["report"] = state.get("report")
+        session["_synced_at"] = time.monotonic()
+    await asyncio.to_thread(_persist_session, session_id)
+    _session_events.setdefault(session_id, asyncio.Event()).set()
+
+
+def get_session_event(session_id: str) -> asyncio.Event | None:
+    return _session_events.get(session_id)
 
 
 # ---- Graph Nodes ----
@@ -116,43 +262,29 @@ def list_sessions(limit: int = 20) -> List[Dict[str, Any]]:
 async def planner_node(state: AgentState) -> AgentState:
     """Analyze task and target, generate ordered tool execution plan."""
     state["phase"] = "planning"
-    tools_desc = ""
-    for name, info in sorted(get_all_tools().items()):
-        tools_desc += f"- {name}: {info['description']}\n"
-
-    prompt = (
-        f"You are a senior penetration testing lead. Generate a step-by-step plan as JSON array.\n\n"
-        f"Task: {state['task']}\nTarget: {state['target']}\nTask Type: {state['task_type']}\n\n"
-        f"Available tools:\n{tools_desc}\n"
-        f"Format: [{{\"tool\": \"name\", \"args\": {{...}}, \"reason\": \"why\"}}]\n"
-        f"Max {settings.AGENT_MAX_STEPS} steps. Output ONLY the JSON array, no markdown."
-    )
-
-    messages = [
-        {"role": "system", "content": "You are a security testing planner. Output ONLY valid JSON arrays."},
-        {"role": "user", "content": prompt},
-    ]
+    policy = policy_for(state)
+    state["policy"] = asdict(policy)
+    tools = get_all_tools()
+    messages = planning_messages(state, tools, policy, settings.AGENT_MAX_STEPS)
 
     try:
-        raw = await single_shot_completion(
-            messages, provider=state.get("provider", "local"), temperature=0.1, json_mode=False
+        plan, meta = await plan_with_retry(
+            task=state,
+            tools=tools,
+            policy=policy,
+            max_steps=settings.AGENT_MAX_STEPS,
+            provider=state.get("provider", "local"),
+            retries=settings.AGENT_PLAN_RETRIES,
+            log=state["logs"].append,
+            complete=single_shot_completion,
         )
-        start = raw.find("[")
-        end = raw.rfind("]") + 1
-        if start >= 0 and end > start:
-            plan = json.loads(raw[start:end])
-            if isinstance(plan, list) and len(plan) > 0:
-                for step in plan:
-                    step["status"] = "pending"
-                state["plan"] = plan[: settings.AGENT_MAX_STEPS]
-                state["current_step"] = 0
-                state["logs"].append(f"[PLAN] Generated {len(state['plan'])}-step plan")
-            else:
-                state["error"] = "Plan generation returned empty result"
-                state["status"] = "failed"
-        else:
-            state["error"] = f"Could not parse plan from LLM output"
-            state["status"] = "failed"
+        state["plan"] = plan
+        state["current_step"] = 0
+        state["plan_attempts"] = meta["attempts"]
+        state["logs"].append(f"[POLICY] {policy.version}")
+        state["logs"].append(f"[PLAN] Generated {len(plan)}-step plan")
+        if meta["recovered"]:
+            state["logs"].append(f"[PLAN] recovered from validation error after {meta['attempts']} attempts")
     except Exception as e:
         state["error"] = f"Planning failed: {e}"
         state["status"] = "failed"
@@ -160,8 +292,142 @@ async def planner_node(state: AgentState) -> AgentState:
     return state
 
 
+REF_PREFIX = "$"
+
+CONTENT_KEYS = ("text", "content", "rule", "rules", "report", "markdown", "stdout", "source", "code", "summary")
+
+
+class TargetToolMismatch(RuntimeError):
+    """目标类型与所选工具不匹配（很可能是选错了工具）。"""
+
+
+URL_TARGET_TOOLS = frozenset({
+    "sqli_probe", "lfi_probe", "ssrf_probe", "api_discovery",
+    "browser_crawl", "browser_navigate", "browser_screenshot",
+    "browser_login", "browser_check_xss", "browser_session_status",
+})
+CODE_TARGET_TOOLS = frozenset({"code_auditor", "read_source"})
+IOC_TARGET_TOOLS = frozenset({"threat_intel_enrich", "threat_intel_report"})
+
+IOC_PATTERN = re.compile(
+    r"^(?:\d{1,3}(?:\.\d{1,3}){3}|[0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64}"
+    r"|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$"
+)
+
+
+def target_kind(target: str) -> str:
+    """粗分目标类型：url / code_or_path / ioc / unknown。"""
+    value = (target or "").strip()
+    if not value:
+        return "unknown"
+    lowered = value.lower()
+    if lowered.startswith(("http://", "https://")):
+        return "url"
+    if value.startswith(("/", "./", "../")) or "\n" in value or len(value) > 200:
+        return "code_or_path"
+    if IOC_PATTERN.match(value):
+        return "ioc"
+    return "unknown"
+
+
+def check_target_tool_match(tool_info: dict | None, target: str) -> None:
+    """工具声明了 accepts 时，检查目标类型是否匹配。unknown 类型放行。"""
+    if not settings.AGENT_ENFORCE_TARGET_TOOL_MATCH:
+        return
+    accepts = (tool_info or {}).get("accepts", "any")
+    if accepts in (None, "any"):
+        return
+    kind = target_kind(target)
+    if kind == "unknown":
+        return
+
+    allowed = {
+        "url": {"url"},
+        "code": {"code_or_path"},
+        "ioc": {"ioc", "url"},
+    }.get(accepts, set())
+    if kind not in allowed:
+        raise TargetToolMismatch(
+            f"tool {tool_info.get('name', '?')} accepts {accepts} targets, got {kind}"
+        )
+
+
+class WeakResultError(RuntimeError):
+    """工具执行成功但产出不符合其契约（很可能是选错了工具）。"""
+
+
+def validate_tool_result(tool_info: dict, result: object) -> None:
+    """按工具的产出契约检查结果；不满足则抛 WeakResultError。"""
+    expects = (tool_info or {}).get("expects", "any")
+    if expects in (None, "any"):
+        return
+
+    if not isinstance(result, dict):
+        if expects == "content" and not str(result or "").strip():
+            raise WeakResultError("tool returned empty content")
+        return
+
+    if expects == "findings_list":
+        findings = result.get("findings")
+        if not isinstance(findings, list):
+            raise WeakResultError("tool result has no findings list; likely the wrong tool")
+        return
+
+    if expects == "content":
+        for key in CONTENT_KEYS:
+            value = result.get(key)
+            if isinstance(value, str) and value.strip():
+                return
+            if isinstance(value, list) and value:
+                return
+        raise WeakResultError("tool returned no usable content; likely the wrong tool")
+
+
+def resolve_step_refs(args: dict, observations: list) -> dict:
+    """把 $prev / $step:N 替换成前序步骤的真实结果。未匹配的引用原样保留。"""
+    if not args:
+        return args
+    resolved = dict(args)
+    for key, value in resolved.items():
+        if not (isinstance(value, str) and value.startswith(REF_PREFIX)):
+            continue
+        if value == "$prev":
+            if observations:
+                resolved[key] = observations[-1]["result"]
+        elif value.startswith("$step:"):
+            try:
+                index = int(value.split(":", 1)[1])
+            except (IndexError, ValueError):
+                continue
+            if 0 <= index < len(observations):
+                resolved[key] = observations[index]["result"]
+    return resolved
+
+
+RETRYABLE_HINTS = (
+    "timeout", "timed out", "connection", "connection reset", "temporarily",
+    "429", "rate limit", "502", "503", "504", "broken pipe",
+)
+
+
+def classify_step_error(exc: BaseException) -> str:
+    """把工具执行异常归类：timeout / transient（可重试）/ rejected / fatal。"""
+    if isinstance(exc, asyncio.TimeoutError):
+        return "timeout"
+    message = str(exc).lower()
+    if isinstance(exc, WeakResultError):
+        return "weak_result"
+    if isinstance(exc, TargetToolMismatch):
+        return "target_mismatch"
+    if "rejected" in message or "not allowed" in message or "unsupported tool" in message:
+        return "rejected"
+    if any(hint in message for hint in RETRYABLE_HINTS):
+        return "transient"
+    return "fatal"
+
+
 async def execute_node(state: AgentState) -> AgentState:
-    """Execute the current plan step's tool."""
+    """Execute the current plan step's tool, with retry and circuit breaking."""
     if state["current_step"] >= len(state["plan"]):
         state["phase"] = "done"
         return state
@@ -170,62 +436,186 @@ async def execute_node(state: AgentState) -> AgentState:
     tool_name = step["tool"]
     tool_args = dict(step.get("args", {}))
 
-    from tools.registry import get_tool
-
     tool_info = get_tool(tool_name)
     if tool_info is None:
         state["logs"].append(f"[ERROR] Unknown tool: {tool_name}")
         step["status"] = "skipped"
+        step["error_class"] = "unknown_tool"
         state["current_step"] += 1
+        _track_circuit_breaker(state)
         return state
 
-    state["logs"].append(f"[EXEC] {tool_name}({json.dumps(tool_args, ensure_ascii=False)})")
-    step["status"] = "running"
+    attempts = 0
+    error_class = ""
+    for attempt in range(settings.AGENT_STEP_RETRIES + 1):
+        attempts = attempt + 1
+        state["logs"].append(f"[EXEC] {tool_name}({json.dumps(tool_args, ensure_ascii=False)})")
+        step["status"] = "running"
 
-    try:
-        if tool_info.get("requires_provider"):
-            tool_args["provider"] = state.get("provider", "local")
+        try:
+            if tool_info.get("requires_provider"):
+                tool_args["provider"] = state.get("provider", "local")
+            tool_args = resolve_step_refs(tool_args, state.get("observations", []))
+            check_target_tool_match(tool_info, state.get("target", ""))
 
-        loop = asyncio.get_event_loop()
-        start = loop.time()
-        result = await asyncio.wait_for(
-            tool_info["func"](**tool_args),
-            timeout=settings.AGENT_STEP_TIMEOUT_SECONDS,
-        )
-        elapsed = int((loop.time() - start) * 1000)
+            loop = asyncio.get_event_loop()
+            start = loop.time()
+            result = await asyncio.wait_for(
+                invoke_tool(tool_name, **tool_args),
+                timeout=settings.AGENT_STEP_TIMEOUT_SECONDS,
+            )
+            elapsed = int((loop.time() - start) * 1000)
 
-        state["observations"].append({
-            "tool": tool_name, "args": tool_args,
-            "result": result, "duration_ms": elapsed,
-        })
-        step["status"] = "done"
-        state["logs"].append(f"[DONE] {tool_name} completed in {elapsed}ms")
+            if isinstance(result, dict) and (
+                result.get("status") in ("error", "failed") or result.get("error")
+                or ("exit_code" in result and result["exit_code"] != 0)
+            ):
+                raise RuntimeError(f"Tool returned failure: {str(result)[:1000]}")
 
-        if isinstance(result, dict):
-            if "findings" in result and isinstance(result["findings"], list):
-                for f in result["findings"]:
-                    state["findings"].append(f)
-                    state["logs"].append(f"[FINDING] {f.get('severity', '?')}: {f.get('title', 'Untitled')}")
+            validate_tool_result(tool_info, result)
 
-    except asyncio.TimeoutError:
-        step["status"] = "timeout"
-        state["logs"].append(f"[TIMEOUT] {tool_name} exceeded {settings.AGENT_STEP_TIMEOUT_SECONDS}s")
-    except Exception as e:
-        step["status"] = "error"
-        state["logs"].append(f"[ERROR] {tool_name} failed: {e}")
+            state["observations"].append({
+                "tool": tool_name, "args": tool_args,
+                "result": result, "duration_ms": elapsed,
+            })
+            step["status"] = "done"
+            step.pop("error_class", None)
+            state["logs"].append(f"[DONE] {tool_name} completed in {elapsed}ms")
+
+            if isinstance(result, dict) and isinstance(result.get("findings"), list):
+                for annotated in attach_evidence(
+                    result["findings"], tool_name, result, state.get("session_id", "")
+                ):
+                    state["findings"].append(annotated)
+                    state["logs"].append(
+                        f"[FINDING] {annotated.get('severity', '?')}: {annotated.get('title', 'Untitled')}"
+                        f" ({annotated.get('verification_status')})"
+                    )
+            error_class = ""
+            break
+
+        except Exception as exc:  # noqa: BLE001
+            error_class = classify_step_error(exc)
+            step["error_class"] = error_class
+            step["attempts"] = attempts
+
+            if error_class in ("timeout", "transient") and attempt < settings.AGENT_STEP_RETRIES:
+                backoff = settings.AGENT_STEP_RETRY_BACKOFF_SECONDS * (attempt + 1)
+                state["logs"].append(
+                    f"[RETRY] {tool_name} {error_class} error ({exc}); "
+                    f"retry {attempt + 1}/{settings.AGENT_STEP_RETRIES} in {backoff:.1f}s"
+                )
+                await asyncio.sleep(backoff)
+                continue
+
+            step["status"] = "timeout" if error_class == "timeout" else "error"
+            state["logs"].append(
+                f"[{'TIMEOUT' if error_class == 'timeout' else 'ERROR'}] "
+                f"{tool_name} failed ({error_class}): {exc}"
+            )
+            break
 
     state["current_step"] += 1
+    _track_circuit_breaker(state)
     return state
 
 
+def _circuit_limit(plan_len: int) -> int:
+    """连续失败阈值：不低于固定下限，长计划按比例放大。"""
+    floor = settings.AGENT_MAX_CONSECUTIVE_FAILURES
+    ratio = settings.AGENT_CIRCUIT_BREAKER_RATIO
+    if floor <= 0:
+        return 0
+    if ratio <= 0:
+        return floor
+    return max(floor, math.ceil(plan_len / ratio))
+
+
+def _track_circuit_breaker(state: AgentState) -> None:
+    """连续失败达到阈值时提前终止，避免继续消耗预算。"""
+    limit = _circuit_limit(len(state["plan"]))
+    if limit <= 0:
+        return
+
+    last = state["plan"][state["current_step"] - 1] if state["current_step"] else {}
+    if last.get("status") == "done":
+        state["consecutive_failures"] = 0
+        return
+
+    state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
+    if state["consecutive_failures"] >= limit:
+        remaining = len(state["plan"]) - state["current_step"]
+        state["logs"].append(
+            f"[CIRCUIT] {state['consecutive_failures']}/{limit} consecutive step failures; "
+            f"aborting {remaining} remaining step(s)"
+        )
+        state["error"] = state.get("error") or (
+            f"aborted after {state['consecutive_failures']} consecutive step failures"
+        )
+        state["current_step"] = len(state["plan"])
+
+
 async def reflect_node(state: AgentState) -> AgentState:
-    """Evaluate progress and decide next action."""
+    """失败步骤回灌给模型，尝试换成可行的替代步骤。"""
     state["phase"] = "reflect"
+    state.setdefault("replans", 0)
+    state.setdefault("consecutive_failures", 0)
     if state.get("error"):
         state["status"] = "failed"
         return state
-    if state["current_step"] >= len(state["plan"]):
-        state["logs"].append("[REFLECT] All planned steps executed")
+
+    failed_index = next(
+        (i for i, step in enumerate(state["plan"]) if step.get("status") in ("error", "timeout")),
+        None,
+    )
+    if failed_index is None:
+        if state["current_step"] >= len(state["plan"]):
+            state["logs"].append("[REFLECT] All planned steps executed")
+        return state
+
+    if state.get("replans", 0) >= settings.AGENT_MAX_REPLANS:
+        state["logs"].append(
+            f"[REFLECT] replan budget exhausted ({state.get('replans', 0)}); keeping failure"
+        )
+        return state
+
+    failed_step = state["plan"][failed_index]
+    error_line = next(
+        (line for line in reversed(state["logs"])
+         if line.startswith("[ERROR]") or line.startswith("[TIMEOUT]")),
+        "",
+    )
+    context = "; ".join(
+        f"{obs['tool']} -> {str(obs.get('result'))[:80]}"
+        for obs in state.get("observations", [])[-3:]
+    )
+
+    try:
+        proposal = await revise_failed_step(
+            task=state,
+            tools=get_all_tools(),
+            failed_step=failed_step,
+            error=error_line or failed_step.get("error_class", "unknown"),
+            context=context,
+            provider=state.get("provider", "local"),
+            complete=single_shot_completion,
+        )
+    except Exception as exc:  # noqa: BLE001
+        state["logs"].append(f"[REPLAN] revision failed: {exc}")
+        return state
+
+    if proposal is None:
+        state["logs"].append("[REPLAN] no viable alternative; keeping failure")
+        return state
+
+    state["plan"][failed_index] = proposal
+    state["replans"] = state.get("replans", 0) + 1
+    state["current_step"] = failed_index
+    state["consecutive_failures"] = 0
+    state["logs"].append(
+        f"[REPLAN] step {failed_index + 1}: {failed_step.get('tool')} -> {proposal['tool']} "
+        f"(replan {state['replans']}/{settings.AGENT_MAX_REPLANS})"
+    )
     return state
 
 
@@ -233,27 +623,37 @@ async def report_node(state: AgentState) -> AgentState:
     """Generate final security assessment report."""
     state["phase"] = "report"
 
-    findings_text = json.dumps(state.get("findings", []), ensure_ascii=False, indent=2)[:8000] if state.get("findings") else "(none)"
-    prompt = (
-        f"You are a senior security consultant. Write a comprehensive security assessment report in Chinese.\n\n"
-        f"Target: {state['target']}\nTask Type: {state['task_type']}\nSteps: {len(state['plan'])}\n"
-        f"Findings:\n{findings_text}\n\n"
-        f"Include: Executive Summary, Key Findings (sorted by severity), Attack Surface Analysis, "
-        f"Risk Ratings, Remediation Recommendations, Testing Limitations. Output in Markdown."
-    )
+    findings = state.get("findings", [])
+    policy = policy_for(state)
+    limitations = {"error": state.get("error"), "steps": state["plan"],
+                   "tool_errors": [line for line in state["logs"] if "[ERROR]" in line or "[TIMEOUT]" in line]}
 
     try:
+        from core.safety.prompt_injection import validate_model_output, wrap_untrusted_data
+        _, evidence_scan = wrap_untrusted_data(
+            "agent_report_input",
+            {"target": state["target"], "task_type": state["task_type"],
+             "findings": findings, "limitations": limitations},
+        )
         report = await single_shot_completion(
-            [{"role": "system", "content": "You are a security consultant. Write professional reports."},
-             {"role": "user", "content": prompt}],
+            report_messages(state["target"], state["task_type"], findings, limitations, policy),
             provider=state.get("provider", "local"), temperature=0.3
         )
+        verdict = validate_model_output(report, evidence_scan.requested_outputs)
+        if not verdict.allowed:
+            raise ValueError(f"Report output guard rejected response: {', '.join(verdict.reasons)}")
+        if policy.reporting != "baseline":
+            from agents.evaluation import score_report
+            if not score_report(report, findings)["success"]:
+                raise ValueError("Report failed the evidence citation contract")
         state["report"] = report
-        state["status"] = "completed"
+        failed_steps = any(step.get("status") != "done" for step in state["plan"])
+        state["status"] = "failed" if state.get("error") or failed_steps else "completed"
         state["logs"].append(f"[REPORT] Generated report ({len(report)} chars)")
     except Exception as e:
-        state["report"] = f"Report generation failed: {e}"
-        state["status"] = "completed"
+        state["report"] = None
+        state["error"] = f"Report generation failed: {e}"
+        state["status"] = "failed"
         state["logs"].append(f"[ERROR] Report generation: {e}")
 
     return state
@@ -262,19 +662,91 @@ async def report_node(state: AgentState) -> AgentState:
 # ---- Routing ----
 
 def route_after_plan(state: AgentState) -> str:
-    return "report" if state.get("error") else "execute"
+    return "report" if state["planner_state"]["error"] else "execute"
 
 
 def route_after_execute(state: AgentState) -> str:
     if state.get("error"):
         return "report"
-    if state["current_step"] < len(state["plan"]):
+    execution = state["executor_state"]
+    if execution["current_step"] < len(execution["plan"]):
         return "execute"
     return "reflect"
 
 
 def route_after_reflect(state: AgentState) -> str:
-    return "execute" if state["current_step"] < len(state["plan"]) else "report"
+    execution = state["executor_state"]
+    return "execute" if execution["current_step"] < len(execution["plan"]) else "report"
+
+
+async def planner_agent(state: AgentState) -> dict:
+    """Run the planner on a private copy and publish its output to the graph."""
+    result = await planner_node(deepcopy(state))
+    own = {key: deepcopy(result[key]) for key in ("plan", "error", "status")}
+    return {
+        "planner_state": own,
+        "policy": result["policy"],
+        "plan": result["plan"], "error": result["error"],
+        "status": result["status"], "phase": result["phase"], "logs": result["logs"],
+    }
+
+
+async def executor_agent(state: AgentState) -> dict:
+    """Own execution state; consume the planner's published plan."""
+    local = deepcopy(state)
+    own = state["executor_state"]
+    local["plan"] = deepcopy(own.get("plan", state["planner_state"]["plan"]))
+    for key in ("current_step", "observations", "findings"):
+        if key in own:
+            local[key] = deepcopy(own[key])
+    result = await execute_node(local)
+    own = {key: deepcopy(result[key]) for key in ("plan", "current_step", "observations", "findings")}
+    return {
+        "executor_state": own,
+        "plan": result["plan"], "current_step": result["current_step"],
+        "observations": result["observations"], "findings": result["findings"],
+        "phase": result["phase"], "logs": result["logs"],
+        "consecutive_failures": result.get("consecutive_failures", 0),
+    }
+
+
+async def reflector_agent(state: AgentState) -> dict:
+    local = deepcopy(state)
+    execution = state["executor_state"]
+    local.update({key: deepcopy(execution[key]) for key in ("plan", "current_step") if key in execution})
+    local["consecutive_failures"] = execution.get("consecutive_failures", 0)
+    local["replans"] = state.get("replans", 0)
+
+    result = await reflect_node(local)
+    own = {key: deepcopy(result[key]) for key in ("phase", "status", "error")}
+    updated_execution = {
+        **deepcopy(execution),
+        "plan": deepcopy(result["plan"]),
+        "current_step": result["current_step"],
+        "consecutive_failures": result.get("consecutive_failures", 0),
+    }
+    return {
+        "reflector_state": own,
+        "executor_state": updated_execution,
+        "plan": deepcopy(result["plan"]),
+        "current_step": result["current_step"],
+        "replans": result.get("replans", 0),
+        "consecutive_failures": result.get("consecutive_failures", 0),
+        "phase": result["phase"], "status": result["status"],
+        "logs": result["logs"],
+    }
+
+
+async def reporter_agent(state: AgentState) -> dict:
+    local = deepcopy(state)
+    local["plan"] = deepcopy(state["executor_state"].get("plan", state["planner_state"].get("plan", [])))
+    local["findings"] = deepcopy(state["executor_state"].get("findings", []))
+    result = await report_node(local)
+    own = {key: deepcopy(result[key]) for key in ("report", "status", "phase", "error")}
+    return {
+        "reporter_state": own, "report": result["report"], "status": result["status"],
+        "phase": result["phase"], "logs": result["logs"], "error": result["error"],
+    }
 
 
 # ---- Build Graph (module-level singleton) ----
@@ -285,35 +757,78 @@ def get_agent_graph():
     global _agent_graph
     if _agent_graph is None:
         workflow = StateGraph(AgentState)
-        workflow.add_node("plan", planner_node)
-        workflow.add_node("execute", execute_node)
-        workflow.add_node("reflect", reflect_node)
-        workflow.add_node("report", report_node)
+        workflow.add_node("plan", planner_agent)
+        workflow.add_node("execute", executor_agent)
+        workflow.add_node("reflect", reflector_agent)
+        workflow.add_node("report", reporter_agent)
         workflow.set_entry_point("plan")
         workflow.add_conditional_edges("plan", route_after_plan, {"execute": "execute", "report": "report"})
         workflow.add_conditional_edges("execute", route_after_execute, {"execute": "execute", "reflect": "reflect", "report": "report"})
         workflow.add_conditional_edges("reflect", route_after_reflect, {"execute": "execute", "report": "report"})
         workflow.add_edge("report", END)
-        _agent_graph = workflow.compile(checkpointer=MemorySaver())
+        _agent_graph = workflow.compile()
     return _agent_graph
 
 
 # ---- Run Agent ----
 
-async def run_agent(task: AgentTask) -> str:
-    """Run an agent task. Returns session_id for status polling."""
+def _validate_task(task: AgentTask) -> str:
     target = task.get("target", "")
     if not target:
         raise ValueError("Task must include a 'target' field")
+    task_type = task.get("task_type", "web_scan")
+    if task_type in {"web_scan", "comprehensive"}:
+        try:
+            parsed = urlsplit(target if "://" in target else f"//{target}")
+            hostname = (parsed.hostname or "").lower().rstrip(".")
+        except ValueError as error:
+            raise ValueError("Invalid scan target") from error
+        if not hostname or parsed.username or parsed.password:
+            raise ValueError("Scan target must be a hostname, IP, or URL without credentials")
+        try:
+            scope = build_scope(
+                target,
+                env_mode=settings.ENV_MODE,
+                allowed_targets=settings.AGENT_ALLOWED_TARGETS,
+                authorization_ref=task.get("authorization_ref", ""),
+                window_minutes=task.get("window_minutes", 0),
+            )
+        except ScopeError as error:
+            raise ValueError(str(error)) from error
+        task["scope"] = scope.as_dict()
+    elif task_type == "code_audit" and (settings.AGENT_CODE_AUDIT_ROOT or "").strip():
+        # 配置了审计根目录时，先在这里把越界路径挡掉
+        from pathlib import Path
 
-    session_id = await create_session(task)
-    graph = get_agent_graph()
+        root = Path(settings.AGENT_CODE_AUDIT_ROOT).expanduser().resolve()
+        candidate = Path(target).expanduser()
+        resolved = candidate.resolve() if candidate.is_absolute() else (root / candidate).resolve()
+        try:
+            resolved.relative_to(root)
+        except ValueError as error:
+            raise ValueError("code_audit target is outside AGENT_CODE_AUDIT_ROOT") from error
+    return target
 
+
+async def _execute_agent(session_id: str, task: AgentTask) -> None:
+    target = task["target"]
+    task_type = task.get("task_type", "web_scan")
+    if task_type == "code_audit":
+        # 明确要求先读源码再审计；read_source 只在 AGENT_CODE_AUDIT_ROOT 内可用
+        task_text = (
+            f"Audit the source code under '{target}'. "
+            "Step 1: call read_source(path=...). "
+            "Step 2: pass the returned code to code_auditor. "
+            "Never invent code that read_source did not return."
+        )
+    else:
+        task_text = task.get("task", f"Security assessment of {target}")
     initial_state: AgentState = {
-        "task": task.get("task", f"Security assessment of {target}"),
+        "task": task_text,
         "target": target,
-        "task_type": task.get("task_type", "web_scan"),
+        "task_type": task_type,
         "provider": task.get("provider", settings.LLM_PROVIDER),
+        "session_id": session_id,
         "messages": [],
         "plan": [],
         "current_step": 0,
@@ -324,24 +839,201 @@ async def run_agent(task: AgentTask) -> str:
         "error": None,
         "report": None,
         "logs": [f"[START] Agent task: {target} (type={task.get('task_type', 'web_scan')})"],
+        "planner_state": {},
+        "executor_state": {},
+        "reflector_state": {},
+        "reporter_state": {},
     }
 
     try:
-        final_state = await graph.ainvoke(
-            initial_state,
-            {"configurable": {"thread_id": session_id}},
-        )
-        async with _sessions_lock:
-            _sessions[session_id]["state"] = final_state
-            _sessions[session_id]["status"] = final_state.get("status", "completed")
-            _sessions[session_id]["findings"] = final_state.get("findings", [])
-            _sessions[session_id]["logs"] = final_state.get("logs", [])
-            _sessions[session_id]["report"] = final_state.get("report")
+        if task.get("task_type", "web_scan") == "web_scan":
+            result = await run_multi_agent(
+                target, "web_scan", initial_state["provider"],
+                on_progress=lambda state: _store_progress(session_id, {
+                    **state, "logs": initial_state["logs"] + state["logs"],
+                }),
+                session_id=session_id,
+            )
+            final_state = {
+                "phase": result["phase"], "status": result["status"],
+                "steps_completed": 3, "steps_total": 3,
+                "findings": result["findings"], "report": result["report"],
+                "logs": initial_state["logs"] + result["logs"],
+            }
+        else:
+            final_state = None
+            async for snapshot in get_agent_graph().astream(
+                initial_state,
+                {"configurable": {"thread_id": session_id}},
+                stream_mode="values",
+            ):
+                final_state = snapshot
+                await _store_progress(session_id, snapshot)
+        await _store_progress(session_id, final_state)
     except Exception as e:
-        async with _sessions_lock:
-            _sessions[session_id]["status"] = "failed"
-            _sessions[session_id]["logs"].append(f"[FATAL] {e}")
+        previous = _sessions[session_id].get("state") or {}
+        await _store_progress(session_id, {
+            **previous, "phase": "error", "status": "failed",
+            "logs": _sessions[session_id]["logs"] + [f"[FATAL] {e}"],
+        })
 
-    # Persist to DB asynchronously (best-effort, non-blocking)
-    asyncio.create_task(asyncio.to_thread(_persist_session, session_id))
+
+
+def _claim_session(session_id: str, recovered: bool = False) -> bool:
+    """Atomically claim a queued session before invoking any tool."""
+    with _db_connection() as conn:
+        with conn.cursor() as cursor:
+            return bool(cursor.execute(
+                """UPDATE agent_sessions SET phase='claimed'
+                   WHERE id=%s AND status='running' AND (phase IS NULL OR phase='')
+                   AND (%s=0 OR TIMESTAMPDIFF(SECOND, updated_at, NOW()) > %s)""",
+                (session_id, int(bool(recovered)), settings.AGENT_TASK_TIMEOUT_SECONDS + 30),
+            ))
+
+
+async def _heartbeat_session(session_id: str, owner: asyncio.Task) -> None:
+    """Keep the database lease fresh even while a tool or LLM call is running."""
+    while True:
+        await asyncio.sleep(30)
+        def touch() -> bool:
+            with _db_connection() as conn:
+                with conn.cursor() as cursor:
+                    return bool(cursor.execute(
+                        "UPDATE agent_sessions SET updated_at=NOW() WHERE id=%s AND status='running'",
+                        (session_id,),
+                    ))
+        try:
+            active = await asyncio.to_thread(touch)
+        except Exception as error:
+            print(f"[Agent] Heartbeat failed for {session_id}: {error}")
+            owner.cancel()
+            return
+        if not active:
+            owner.cancel()
+            return
+
+
+async def _run_limited(session_id: str, task: AgentTask, recovered: bool = False) -> None:
+    heartbeat = None
+    try:
+        async with _agent_slots:
+            if not await asyncio.to_thread(_claim_session, session_id, recovered):
+                _sessions.pop(session_id, None)
+                _session_events.pop(session_id, None)
+                return
+            heartbeat = asyncio.create_task(_heartbeat_session(session_id, asyncio.current_task()))
+            current = _sessions[session_id]
+            await _store_progress(session_id, {
+                **(current.get("state") or {}), "phase": "starting", "status": "running",
+                "logs": current["logs"], "findings": current["findings"],
+                "report": current.get("report"),
+            })
+            await asyncio.wait_for(_execute_agent(session_id, task), settings.AGENT_TASK_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        previous = _sessions[session_id].get("state") or {}
+        await _store_progress(session_id, {
+            **previous, "phase": "timeout", "status": "failed",
+            "logs": _sessions[session_id]["logs"] +
+                    [f"[TIMEOUT] Task exceeded {settings.AGENT_TASK_TIMEOUT_SECONDS}s"],
+        })
+    except asyncio.CancelledError:
+        previous = _sessions[session_id].get("state") or {}
+        await _store_progress(session_id, {
+            **previous, "phase": "cancelled", "status": "cancelled",
+            "logs": _sessions[session_id]["logs"] + ["[CANCELLED] Task cancelled by user"],
+        })
+        raise
+    finally:
+        if heartbeat is not None:
+            heartbeat.cancel()
+            try:
+                await heartbeat
+            except asyncio.CancelledError:
+                pass
+        await asyncio.to_thread(_audit_scan, session_id, True)
+
+
+async def run_agent(task: AgentTask, user_id: int | None = None) -> str:
+    """Run an agent to completion and return its session id."""
+    _validate_task(task)
+    session_id = await create_session(task, user_id)
+    await _run_limited(session_id, task)
     return session_id
+
+
+async def start_agent(task: AgentTask, user_id: int | None = None) -> str:
+    """Persist and start an agent without blocking the request."""
+    _validate_task(task)
+    session_id = await create_session(task, user_id)
+    background = asyncio.create_task(_run_limited(session_id, task))
+    _running_tasks[session_id] = background
+    background.add_done_callback(lambda completed: _finish_background_task(session_id, completed))
+    return session_id
+
+
+async def cancel_agent(session_id: str) -> bool:
+    """Cancel locally, or leave a cooperative cancellation marker for its worker."""
+    task = _running_tasks.get(session_id)
+    if task is not None and not task.done():
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        if _sessions[session_id]["status"] == "running":
+            await _store_progress(session_id, {
+                **(_sessions[session_id].get("state") or {}),
+                "phase": "cancelled", "status": "cancelled",
+                "logs": _sessions[session_id]["logs"] + ["[CANCELLED] Task cancelled by user"],
+            })
+        return True
+
+    def mark_cancelled() -> bool:
+        with _db_connection() as conn:
+            with conn.cursor() as cursor:
+                return bool(cursor.execute(
+                    "UPDATE agent_sessions SET status='cancelled', phase='cancelled' "
+                    "WHERE id=%s AND status='running'", (session_id,),
+                ))
+
+    return await asyncio.to_thread(mark_cancelled)
+
+
+async def recover_agent_sessions() -> int:
+    """Resume never-started sessions and fail interrupted executions without replaying tools."""
+    def reconcile() -> tuple[list[dict], int]:
+        with _db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM agent_sessions WHERE status='running' "
+                    "AND TIMESTAMPDIFF(SECOND, updated_at, NOW()) > %s",
+                    (settings.AGENT_TASK_TIMEOUT_SECONDS + 30,),
+                )
+                rows = cursor.fetchall()
+                pending = [row for row in rows if not row.get("phase")]
+                interrupted = [row["id"] for row in rows if row.get("phase")]
+                failed_count = 0
+                if interrupted:
+                    failed_count = cursor.execute(
+                        "UPDATE agent_sessions SET status='failed', phase='interrupted' "
+                        "WHERE id IN %s AND status='running' "
+                        "AND phase IS NOT NULL AND phase<>'' "
+                        "AND TIMESTAMPDIFF(SECOND, updated_at, NOW()) > %s",
+                        (tuple(interrupted), settings.AGENT_TASK_TIMEOUT_SECONDS + 30),
+                    )
+                return pending, failed_count
+
+    pending, interrupted_count = await asyncio.to_thread(reconcile)
+    for row in pending:
+        if row["id"] in _running_tasks:
+            continue
+        session = _session_from_row(row)
+        async with _sessions_lock:
+            _sessions[session["id"]] = session
+            _session_events[session["id"]] = asyncio.Event()
+        task = asyncio.create_task(_run_limited(session["id"], session["task"], recovered=True))
+        _running_tasks[session["id"]] = task
+        task.add_done_callback(lambda completed, sid=session["id"]: _finish_background_task(sid, completed))
+    if interrupted_count:
+        print(f"[Agent] Marked {interrupted_count} interrupted sessions as failed")
+    return len(pending)

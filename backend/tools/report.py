@@ -17,6 +17,14 @@ REPORT_SYSTEM_PROMPT = """
 不要输出 markdown 或额外说明。
 """
 
+_EMPTY = {
+    "executive_summary": "",
+    "critical_findings": [],
+    "exposed_ports": [],
+    "priority_actions": [],
+    "plain_language_brief": "",
+}
+
 
 @register_tool(
     name="report_explainer",
@@ -24,18 +32,25 @@ REPORT_SYSTEM_PROMPT = """
     "suitable for management. Extracts critical findings, exposed ports, "
     "and prioritized action items.",
     category="report",
+        expects="content",
 )
 async def explain_report(content: str, provider: str = "local") -> dict:
     """Parse a scan report into a structured executive summary."""
     from tools.registry import _extract_json
+
+    if not content.strip():
+        return {"status": "error", "error": "报告内容为空", **_EMPTY}
 
     messages = [
         {"role": "system", "content": REPORT_SYSTEM_PROMPT},
         {"role": "user", "content": f"请解析这份扫描报告：\n\n{content[:40000]}"},
     ]
     raw = await single_shot_completion(messages, provider=provider, temperature=0.2, json_mode=True)
-    parsed = _extract_json(raw) or {}
+    parsed = _extract_json(raw)
+    if not isinstance(parsed, dict) or "executive_summary" not in parsed:
+        return {"status": "error", "error": "模型输出无法解析为预期 JSON，本次解析结果不可用", **_EMPTY}
     return {
+        "status": "success",
         "executive_summary": parsed.get("executive_summary", ""),
         "critical_findings": parsed.get("critical_findings", []),
         "exposed_ports": parsed.get("exposed_ports", []),

@@ -1,0 +1,8 @@
+.git
+artifacts
+frontend
+backend/.venv
+backend/models
+backend/data
+**/__pycache__
+**/.env*

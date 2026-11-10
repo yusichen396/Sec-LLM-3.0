@@ -1,0 +1,728 @@
+{
+  "dataset": "handwritten_security_smoke_test",
+  "embedding_source": "D:\\Sec-LLM-3.0-main\\backend\\models\\nomic-embed-text-v1.5",
+  "query_count": 26,
+  "document_count": 26,
+  "candidate_k": 8,
+  "output_k": 3,
+  "vector": {
+    "hit_at_1": 0.8076923076923077,
+    "hit_at_3": 0.8846153846153846,
+    "mrr_at_3": 0.8461538461538461
+  },
+  "rerank": {
+    "hit_at_1": 0.9230769230769231,
+    "hit_at_3": 0.9230769230769231,
+    "mrr_at_3": 0.9230769230769231
+  },
+  "delta": {
+    "hit_at_1": 0.1154,
+    "hit_at_3": 0.0385,
+    "mrr_at_3": 0.0769
+  },
+  "median_rerank_ms": 218.29,
+  "rows": [
+    {
+      "id": "q01",
+      "relevant_ids": [
+        "sql_parameterization"
+      ],
+      "candidate_ids": [
+        "sql_parameterization",
+        "sql_detection",
+        "xss_output",
+        "container_privilege",
+        "ssrf_egress",
+        "session_cookie",
+        "container_network",
+        "redirect_validation"
+      ],
+      "vector_top3": [
+        "sql_parameterization",
+        "sql_detection",
+        "xss_output"
+      ],
+      "rerank_top3": [
+        "sql_parameterization",
+        "sql_detection",
+        "container_privilege"
+      ],
+      "rerank_ms": 1138.04
+    },
+    {
+      "id": "q02",
+      "relevant_ids": [
+        "sql_detection"
+      ],
+      "candidate_ids": [
+        "sql_detection",
+        "sql_parameterization",
+        "patch_management",
+        "rate_limit",
+        "container_privilege",
+        "xss_output",
+        "ssrf_egress",
+        "container_network"
+      ],
+      "vector_top3": [
+        "sql_detection",
+        "sql_parameterization",
+        "patch_management"
+      ],
+      "rerank_top3": [
+        "sql_detection",
+        "container_network",
+        "sql_parameterization"
+      ],
+      "rerank_ms": 203.91
+    },
+    {
+      "id": "q03",
+      "relevant_ids": [
+        "xss_output"
+      ],
+      "candidate_ids": [
+        "browser_evidence",
+        "xss_output",
+        "xss_csp",
+        "ssrf_egress",
+        "container_network",
+        "rate_limit",
+        "container_privilege",
+        "session_cookie"
+      ],
+      "vector_top3": [
+        "browser_evidence",
+        "xss_output",
+        "xss_csp"
+      ],
+      "rerank_top3": [
+        "xss_output",
+        "xss_csp",
+        "browser_evidence"
+      ],
+      "rerank_ms": 218.76
+    },
+    {
+      "id": "q04",
+      "relevant_ids": [
+        "xss_csp"
+      ],
+      "candidate_ids": [
+        "xss_csp",
+        "browser_evidence",
+        "xss_output",
+        "csrf_token",
+        "ssrf_egress",
+        "rate_limit",
+        "session_cookie",
+        "container_privilege"
+      ],
+      "vector_top3": [
+        "xss_csp",
+        "browser_evidence",
+        "xss_output"
+      ],
+      "rerank_top3": [
+        "xss_csp",
+        "xss_output",
+        "browser_evidence"
+      ],
+      "rerank_ms": 223.54
+    },
+    {
+      "id": "q05",
+      "relevant_ids": [
+        "csrf_token"
+      ],
+      "candidate_ids": [
+        "csrf_token",
+        "ssrf_egress",
+        "xss_csp",
+        "cors_policy",
+        "attack_tactics",
+        "jwt_validation",
+        "captcha",
+        "vulnerability_scan"
+      ],
+      "vector_top3": [
+        "csrf_token",
+        "ssrf_egress",
+        "xss_csp"
+      ],
+      "rerank_top3": [
+        "csrf_token",
+        "ssrf_egress",
+        "captcha"
+      ],
+      "rerank_ms": 203.31
+    },
+    {
+      "id": "q06",
+      "relevant_ids": [
+        "cors_policy"
+      ],
+      "candidate_ids": [
+        "cors_policy",
+        "csrf_token",
+        "xss_csp",
+        "attack_tactics",
+        "browser_evidence",
+        "xss_output",
+        "container_privilege",
+        "vulnerability_scan"
+      ],
+      "vector_top3": [
+        "cors_policy",
+        "csrf_token",
+        "xss_csp"
+      ],
+      "rerank_top3": [
+        "cors_policy",
+        "browser_evidence",
+        "csrf_token"
+      ],
+      "rerank_ms": 218.24
+    },
+    {
+      "id": "q07",
+      "relevant_ids": [
+        "ssrf_egress"
+      ],
+      "candidate_ids": [
+        "ssrf_egress",
+        "xss_output",
+        "csrf_token",
+        "sql_parameterization",
+        "container_privilege",
+        "prompt_injection",
+        "xss_csp",
+        "browser_evidence"
+      ],
+      "vector_top3": [
+        "ssrf_egress",
+        "xss_output",
+        "csrf_token"
+      ],
+      "rerank_top3": [
+        "ssrf_egress",
+        "container_privilege",
+        "csrf_token"
+      ],
+      "rerank_ms": 209.22
+    },
+    {
+      "id": "q08",
+      "relevant_ids": [
+        "redirect_validation"
+      ],
+      "candidate_ids": [
+        "redirect_validation",
+        "xss_output",
+        "session_cookie",
+        "captcha",
+        "vulnerability_scan",
+        "prompt_injection",
+        "alert_monitoring",
+        "jwt_validation"
+      ],
+      "vector_top3": [
+        "redirect_validation",
+        "xss_output",
+        "session_cookie"
+      ],
+      "rerank_top3": [
+        "redirect_validation",
+        "xss_output",
+        "prompt_injection"
+      ],
+      "rerank_ms": 218.86
+    },
+    {
+      "id": "q09",
+      "relevant_ids": [
+        "jwt_validation"
+      ],
+      "candidate_ids": [
+        "jwt_validation",
+        "redirect_validation",
+        "xss_output",
+        "xss_csp",
+        "ioc_indicator",
+        "rate_limit",
+        "prompt_injection",
+        "ssrf_egress"
+      ],
+      "vector_top3": [
+        "jwt_validation",
+        "redirect_validation",
+        "xss_output"
+      ],
+      "rerank_top3": [
+        "jwt_validation",
+        "redirect_validation",
+        "ioc_indicator"
+      ],
+      "rerank_ms": 207.17
+    },
+    {
+      "id": "q10",
+      "relevant_ids": [
+        "session_cookie"
+      ],
+      "candidate_ids": [
+        "session_cookie",
+        "xss_output",
+        "csrf_token",
+        "redirect_validation",
+        "prompt_injection",
+        "xss_csp",
+        "ssrf_egress",
+        "container_privilege"
+      ],
+      "vector_top3": [
+        "session_cookie",
+        "xss_output",
+        "csrf_token"
+      ],
+      "rerank_top3": [
+        "session_cookie",
+        "csrf_token",
+        "redirect_validation"
+      ],
+      "rerank_ms": 226.79
+    },
+    {
+      "id": "q11",
+      "relevant_ids": [
+        "rate_limit"
+      ],
+      "candidate_ids": [
+        "ioc_indicator",
+        "rate_limit",
+        "ssrf_egress",
+        "session_cookie",
+        "xss_csp",
+        "xss_output",
+        "redirect_validation",
+        "container_privilege"
+      ],
+      "vector_top3": [
+        "ioc_indicator",
+        "rate_limit",
+        "ssrf_egress"
+      ],
+      "rerank_top3": [
+        "rate_limit",
+        "ioc_indicator",
+        "container_privilege"
+      ],
+      "rerank_ms": 223.31
+    },
+    {
+      "id": "q12",
+      "relevant_ids": [
+        "captcha"
+      ],
+      "candidate_ids": [
+        "rate_limit",
+        "patch_management",
+        "secret_scanning",
+        "xss_csp",
+        "container_privilege",
+        "browser_evidence",
+        "ssrf_egress",
+        "container_network"
+      ],
+      "vector_top3": [
+        "rate_limit",
+        "patch_management",
+        "secret_scanning"
+      ],
+      "rerank_top3": [
+        "rate_limit",
+        "xss_csp",
+        "browser_evidence"
+      ],
+      "rerank_ms": 219.89
+    },
+    {
+      "id": "q13",
+      "relevant_ids": [
+        "audit_log"
+      ],
+      "candidate_ids": [
+        "audit_log",
+        "container_privilege",
+        "redirect_validation",
+        "prompt_injection",
+        "xss_output",
+        "session_cookie",
+        "alert_monitoring",
+        "ssrf_egress"
+      ],
+      "vector_top3": [
+        "audit_log",
+        "container_privilege",
+        "redirect_validation"
+      ],
+      "rerank_top3": [
+        "audit_log",
+        "alert_monitoring",
+        "prompt_injection"
+      ],
+      "rerank_ms": 201.03
+    },
+    {
+      "id": "q14",
+      "relevant_ids": [
+        "alert_monitoring"
+      ],
+      "candidate_ids": [
+        "alert_monitoring",
+        "patch_management",
+        "audit_log",
+        "xss_csp",
+        "data_encryption",
+        "rag_poisoning",
+        "captcha",
+        "redirect_validation"
+      ],
+      "vector_top3": [
+        "alert_monitoring",
+        "patch_management",
+        "audit_log"
+      ],
+      "rerank_top3": [
+        "alert_monitoring",
+        "patch_management",
+        "audit_log"
+      ],
+      "rerank_ms": 209.57
+    },
+    {
+      "id": "q15",
+      "relevant_ids": [
+        "secret_scanning"
+      ],
+      "candidate_ids": [
+        "secret_scanning",
+        "xss_csp",
+        "browser_evidence",
+        "captcha",
+        "prompt_injection",
+        "audit_log",
+        "alert_monitoring",
+        "tool_arguments"
+      ],
+      "vector_top3": [
+        "secret_scanning",
+        "xss_csp",
+        "browser_evidence"
+      ],
+      "rerank_top3": [
+        "secret_scanning",
+        "prompt_injection",
+        "captcha"
+      ],
+      "rerank_ms": 250.83
+    },
+    {
+      "id": "q16",
+      "relevant_ids": [
+        "data_encryption"
+      ],
+      "candidate_ids": [
+        "data_encryption",
+        "browser_evidence",
+        "audit_log",
+        "captcha",
+        "rag_poisoning",
+        "alert_monitoring",
+        "redirect_validation",
+        "tool_arguments"
+      ],
+      "vector_top3": [
+        "data_encryption",
+        "browser_evidence",
+        "audit_log"
+      ],
+      "rerank_top3": [
+        "data_encryption",
+        "captcha",
+        "redirect_validation"
+      ],
+      "rerank_ms": 240.84
+    },
+    {
+      "id": "q17",
+      "relevant_ids": [
+        "container_privilege"
+      ],
+      "candidate_ids": [
+        "container_privilege",
+        "xss_output",
+        "redirect_validation",
+        "browser_evidence",
+        "rate_limit",
+        "jwt_validation",
+        "tool_arguments",
+        "vulnerability_scan"
+      ],
+      "vector_top3": [
+        "container_privilege",
+        "xss_output",
+        "redirect_validation"
+      ],
+      "rerank_top3": [
+        "container_privilege",
+        "rate_limit",
+        "xss_output"
+      ],
+      "rerank_ms": 216.68
+    },
+    {
+      "id": "q18",
+      "relevant_ids": [
+        "container_network"
+      ],
+      "candidate_ids": [
+        "container_network",
+        "ssrf_egress",
+        "container_privilege",
+        "secret_scanning",
+        "patch_management",
+        "xss_csp",
+        "data_encryption",
+        "alert_monitoring"
+      ],
+      "vector_top3": [
+        "container_network",
+        "ssrf_egress",
+        "container_privilege"
+      ],
+      "rerank_top3": [
+        "container_network",
+        "container_privilege",
+        "secret_scanning"
+      ],
+      "rerank_ms": 215.95
+    },
+    {
+      "id": "q19",
+      "relevant_ids": [
+        "prompt_injection"
+      ],
+      "candidate_ids": [
+        "prompt_injection",
+        "xss_output",
+        "redirect_validation",
+        "ssrf_egress",
+        "session_cookie",
+        "secret_scanning",
+        "container_network",
+        "audit_log"
+      ],
+      "vector_top3": [
+        "prompt_injection",
+        "xss_output",
+        "redirect_validation"
+      ],
+      "rerank_top3": [
+        "prompt_injection",
+        "container_network",
+        "redirect_validation"
+      ],
+      "rerank_ms": 218.34
+    },
+    {
+      "id": "q20",
+      "relevant_ids": [
+        "rag_poisoning"
+      ],
+      "candidate_ids": [
+        "sql_parameterization",
+        "xss_output",
+        "container_privilege",
+        "ssrf_egress",
+        "data_encryption",
+        "prompt_injection",
+        "container_network",
+        "rate_limit"
+      ],
+      "vector_top3": [
+        "sql_parameterization",
+        "xss_output",
+        "container_privilege"
+      ],
+      "rerank_top3": [
+        "xss_output",
+        "prompt_injection",
+        "container_privilege"
+      ],
+      "rerank_ms": 235.11
+    },
+    {
+      "id": "q21",
+      "relevant_ids": [
+        "tool_arguments"
+      ],
+      "candidate_ids": [
+        "tool_arguments",
+        "container_privilege",
+        "xss_csp",
+        "alert_monitoring",
+        "xss_output",
+        "patch_management",
+        "browser_evidence",
+        "ssrf_egress"
+      ],
+      "vector_top3": [
+        "tool_arguments",
+        "container_privilege",
+        "xss_csp"
+      ],
+      "rerank_top3": [
+        "tool_arguments",
+        "container_privilege",
+        "alert_monitoring"
+      ],
+      "rerank_ms": 201.87
+    },
+    {
+      "id": "q22",
+      "relevant_ids": [
+        "browser_evidence"
+      ],
+      "candidate_ids": [
+        "browser_evidence",
+        "xss_output",
+        "xss_csp",
+        "alert_monitoring",
+        "vulnerability_scan",
+        "container_privilege",
+        "jwt_validation",
+        "session_cookie"
+      ],
+      "vector_top3": [
+        "browser_evidence",
+        "xss_output",
+        "xss_csp"
+      ],
+      "rerank_top3": [
+        "browser_evidence",
+        "xss_output",
+        "alert_monitoring"
+      ],
+      "rerank_ms": 205.65
+    },
+    {
+      "id": "q23",
+      "relevant_ids": [
+        "ioc_indicator"
+      ],
+      "candidate_ids": [
+        "ioc_indicator",
+        "attack_tactics",
+        "rate_limit",
+        "session_cookie",
+        "ssrf_egress",
+        "patch_management",
+        "jwt_validation",
+        "xss_csp"
+      ],
+      "vector_top3": [
+        "ioc_indicator",
+        "attack_tactics",
+        "rate_limit"
+      ],
+      "rerank_top3": [
+        "ioc_indicator",
+        "attack_tactics",
+        "patch_management"
+      ],
+      "rerank_ms": 220.23
+    },
+    {
+      "id": "q24",
+      "relevant_ids": [
+        "attack_tactics"
+      ],
+      "candidate_ids": [
+        "attack_tactics",
+        "ioc_indicator",
+        "rate_limit",
+        "ssrf_egress",
+        "patch_management",
+        "session_cookie",
+        "jwt_validation",
+        "redirect_validation"
+      ],
+      "vector_top3": [
+        "attack_tactics",
+        "ioc_indicator",
+        "rate_limit"
+      ],
+      "rerank_top3": [
+        "attack_tactics",
+        "ioc_indicator",
+        "ssrf_egress"
+      ],
+      "rerank_ms": 244.42
+    },
+    {
+      "id": "q25",
+      "relevant_ids": [
+        "patch_management"
+      ],
+      "candidate_ids": [
+        "container_privilege",
+        "xss_csp",
+        "tool_arguments",
+        "captcha",
+        "xss_output",
+        "ssrf_egress",
+        "browser_evidence",
+        "patch_management"
+      ],
+      "vector_top3": [
+        "container_privilege",
+        "xss_csp",
+        "tool_arguments"
+      ],
+      "rerank_top3": [
+        "patch_management",
+        "captcha",
+        "browser_evidence"
+      ],
+      "rerank_ms": 198.48
+    },
+    {
+      "id": "q26",
+      "relevant_ids": [
+        "vulnerability_scan"
+      ],
+      "candidate_ids": [
+        "vulnerability_scan",
+        "container_network",
+        "captcha",
+        "secret_scanning",
+        "container_privilege",
+        "tool_arguments",
+        "redirect_validation",
+        "browser_evidence"
+      ],
+      "vector_top3": [
+        "vulnerability_scan",
+        "container_network",
+        "captcha"
+      ],
+      "rerank_top3": [
+        "vulnerability_scan",
+        "browser_evidence",
+        "captcha"
+      ],
+      "rerank_ms": 207.43
+    }
+  ]
+}

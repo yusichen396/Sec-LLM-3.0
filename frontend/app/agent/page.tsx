@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Shield, Activity } from "lucide-react";
 import AgentTaskPanel from "@/components/AgentTaskPanel";
 import AgentLogStream from "@/components/AgentLogStream";
-import { getAgentReport, listAgentSessions } from "@/lib/agent-api";
+import { createAgentStream, getAgentReport, getAgentStatus, listAgentSessions } from "@/lib/agent-api";
 
 export default function AgentPage() {
   const router = useRouter();
@@ -24,8 +24,86 @@ export default function AgentPage() {
       return;
     }
     setIsAuth(true);
-    refreshSessions();
+    listAgentSessions().then((data) => {
+      const recent = data.sessions || [];
+      setSessions(recent);
+      const saved = sessionStorage.getItem("agent_session_id");
+      const selected = recent.find((session) => session.id === saved) || recent.find((session) => session.status === "running");
+      if (selected) setSessionId(selected.id);
+    }).catch(() => {});
   }, [router]);
+
+  useEffect(() => {
+    if (!isAuth || !sessionId) return;
+    sessionStorage.setItem("agent_session_id", sessionId);
+    let active = true;
+    let stream: AbortController | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let reconnects = 0;
+    setLogs([]);
+    setReport(null);
+    const showReport = async () => {
+      try {
+        const result = await getAgentReport(sessionId);
+        if (active) setReport(result.report);
+      } catch { /* status and logs remain available if report loading fails */ }
+    };
+    const recover = (error: string) => {
+      if (!active) return;
+      stream?.abort();
+      // token 过期就回登录页，不要每 3 秒重试一次
+      if (error.includes("401")) {
+        localStorage.removeItem("token");
+        router.push("/login");
+        return;
+      }
+      setStatus("reconnecting");
+      setLogs((previous) => previous[previous.length - 1] === `[STREAM] ${error}`
+        ? previous : [...previous, `[STREAM] ${error}`]);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { void syncStatus(); }, 3000);
+    };
+    const syncStatus = async () => {
+      try {
+        const data = await getAgentStatus(sessionId);
+        if (!active) return;
+        setStatus(data.status);
+        setFindingsCount(data.findings_count);
+        setLogs(data.logs || []);
+        if (data.status !== "running") {
+          void refreshSessions();
+          await showReport();
+          return;
+        }
+        if (reconnects >= 5) {
+          // 之前这里是无上限重试：达到上限后明确停下，由用户手动刷新
+          setStatus("disconnected");
+          setLogs((previous) => [...previous, "[STREAM] 重连次数已达上限，请刷新页面"]);
+          return;
+        }
+        reconnects += 1;
+        setStatus("reconnecting");
+        // The server replays logs from the start for every new stream.
+        setLogs([]);
+        stream = createAgentStream(
+          sessionId,
+          (message) => { if (active) setLogs((previous) => [...previous, message]); },
+          async (finalStatus, count) => {
+            if (!active) return;
+            setStatus(finalStatus);
+            setFindingsCount(count);
+            refreshSessions();
+            await showReport();
+          },
+          recover,
+        );
+      } catch (error: any) {
+        recover(error.message || "Status connection lost");
+      }
+    };
+    void syncStatus();
+    return () => { active = false; stream?.abort(); if (timer) clearTimeout(timer); };
+  }, [isAuth, sessionId]);
 
   const refreshSessions = async () => {
     try {
@@ -42,26 +120,9 @@ export default function AgentPage() {
     setStatus("running");
     setFindingsCount(0);
     setReport(null);
-  };
-
-  const handleLog = (msg: string) => {
-    setLogs((prev) => [...prev, msg]);
-  };
-
-  const handleDone = async (finalStatus: string, count: number) => {
-    setStatus(finalStatus);
-    setFindingsCount(count);
     refreshSessions();
-
-    if (sessionId && finalStatus === "completed") {
-      try {
-        const data = await getAgentReport(sessionId);
-        setReport(data.report);
-      } catch {
-        // ignore
-      }
-    }
   };
+
 
   if (!isAuth) return null;
 
@@ -80,7 +141,7 @@ export default function AgentPage() {
           &larr; Dashboard
         </button>
 
-        <AgentTaskPanel onTaskStart={handleTaskStart} onLog={handleLog} onDone={handleDone} />
+        <AgentTaskPanel onTaskStart={handleTaskStart} running={status === "running" || status === "reconnecting"} />
 
         {/* Recent sessions */}
         {sessions.length > 0 && (
@@ -92,10 +153,6 @@ export default function AgentPage() {
                   key={s.id}
                   onClick={() => {
                     setSessionId(s.id);
-                    setLogs([]);
-                    setStatus(s.status);
-                    setFindingsCount(s.findings_count);
-                    setReport(null);
                   }}
                   className={`w-full text-left text-xs px-2 py-1 rounded ${
                     sessionId === s.id

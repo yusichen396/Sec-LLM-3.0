@@ -109,14 +109,17 @@ export interface ChatRequest {
   message: string;
 }
 
-export interface ChatResponse {
-  reply: string;
-  sources?: string[];
-}
-
-export const chat = async (request: ChatRequest): Promise<ChatResponse> => {
-  const response = await api.post<ChatResponse>('/api/chat', request);
-  return response.data;
+/**
+ * POST /api/chat returns a text/plain stream (not JSON). Callers that need
+ * incremental rendering use fetch + ReadableStream; this helper buffers the whole
+ * answer for one-shot use.
+ */
+export const chat = async (request: ChatRequest): Promise<string> => {
+  const response = await api.post('/api/chat', request, {
+    responseType: 'text',
+    transformResponse: [(data) => data],
+  });
+  return typeof response.data === 'string' ? response.data : String(response.data ?? '');
 };
 
 export interface UploadResponse {
@@ -170,13 +173,33 @@ export interface LogRecordsResponse {
   records: LogRecord[];
 }
 
+export interface SecurityScorePenalty {
+  reason: string;
+  count: number;
+  points: number;
+}
+
+export interface SecurityScore {
+  score: number | null;
+  grade: string;
+  computed: boolean;
+  inputs: Record<string, number>;
+  penalties: SecurityScorePenalty[];
+  formula: string;
+  window: string;
+  reason: string | null;
+}
+
 export interface DashboardStatsResponse {
   total_events: number;
   active_threats: number;
   online_users: number;
-  system_load: number;
+  /** null 表示后端未接入负载采集（不是 0%） */
+  system_load: number | null;
   ai_interactions: number;
   high_unresolved_count: number;
+  /** 可解释的安全评分；score 为 null 表示没有足够数据 */
+  security_score?: SecurityScore;
   chart_data: Array<{ time: string; value: number }>;
 }
 

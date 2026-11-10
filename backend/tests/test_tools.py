@@ -93,6 +93,137 @@ class TestShellExec:
         # Either succeeds (Docker available) or returns error about Docker
         assert "exit_code" in result
 
+    def test_shell_metacharacters_are_rejected(self, monkeypatch):
+        import asyncio
+        from tools.shell import shell_exec
+
+        calls = []
+
+        class Process:
+            returncode = 0
+
+            def __init__(self):
+                from unittest.mock import AsyncMock
+                from types import SimpleNamespace
+                self.stdout = SimpleNamespace(read=AsyncMock(return_value=b""))
+                self.stderr = SimpleNamespace(read=AsyncMock(return_value=b""))
+
+            async def wait(self):
+                return 0
+
+        async def fake_exec(*args, **kwargs):
+            calls.append(args)
+            return Process()
+
+        monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_exec)
+        result = asyncio.run(shell_exec("nmap -sV 127.0.0.1; echo injected"))
+        assert result["exit_code"] == -1
+        assert not calls
+
+        result = asyncio.run(shell_exec("nmap -sV 127.0.0.1"))
+        assert result["exit_code"] == 0
+        assert len(calls) == 1
+        assert calls[0][-3:] == ("nmap", "-sV", "127.0.0.1")
+        assert "sh" not in calls[0]
+        assert "--privileged" not in calls[0]
+        assert calls[0][calls[0].index("--network") + 1] == "bridge"
+
+        calls.clear()
+        result = asyncio.run(shell_exec("bandit -r /tmp"))
+        assert result["exit_code"] == 0
+        assert calls[0][calls[0].index("--network") + 1] == "none"
+
+    def test_timeout_removes_own_container(self, monkeypatch):
+        import asyncio
+        from tools.shell import shell_exec
+
+        calls = []
+
+        class RunProcess:
+            returncode = None
+            killed = False
+
+            def __init__(self):
+                from unittest.mock import AsyncMock
+                from types import SimpleNamespace
+                self.stdout = SimpleNamespace(read=AsyncMock(side_effect=asyncio.TimeoutError))
+                self.stderr = SimpleNamespace(read=AsyncMock(return_value=b""))
+
+            def kill(self):
+                self.killed = True
+                self.returncode = -9
+
+            async def wait(self):
+                return self.returncode
+
+        class CleanupProcess:
+            async def wait(self):
+                return 0
+
+        run_process = RunProcess()
+
+        async def fake_exec(*args, **kwargs):
+            calls.append(args)
+            return run_process if args[1] == "run" else CleanupProcess()
+
+        monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_exec)
+        result = asyncio.run(shell_exec("nmap -sV 127.0.0.1", timeout=1))
+        name = calls[0][calls[0].index("--name") + 1]
+        assert calls[1] == ("docker", "rm", "-f", name)
+        assert run_process.killed
+        assert result["exit_code"] == -1
+
+    def test_cancel_removes_own_container(self, monkeypatch):
+        import asyncio
+        from tools.shell import shell_exec
+
+        calls = []
+        started = asyncio.Event()
+
+        class RunProcess:
+            returncode = None
+
+            def __init__(self):
+                from unittest.mock import AsyncMock
+                from types import SimpleNamespace
+                self.stdout = SimpleNamespace(read=self.read)
+                self.stderr = SimpleNamespace(read=AsyncMock(return_value=b""))
+
+            async def read(self, size):
+                started.set()
+                await asyncio.Future()
+
+            def kill(self):
+                self.returncode = -9
+
+            async def wait(self):
+                return self.returncode
+
+        class CleanupProcess:
+            async def wait(self):
+                return 0
+
+        async def fake_exec(*args, **kwargs):
+            calls.append(args)
+            return RunProcess() if args[1] == "run" else CleanupProcess()
+
+        monkeypatch.setattr(asyncio, "create_subprocess_exec", fake_exec)
+
+        async def check():
+            task = asyncio.create_task(shell_exec("nmap -sV 127.0.0.1"))
+            await started.wait()
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+            else:
+                assert False, "cancellation was swallowed"
+
+        asyncio.run(check())
+        name = calls[0][calls[0].index("--name") + 1]
+        assert calls[1] == ("docker", "rm", "-f", name)
+
 
 class TestBrowserTool:
     def test_tool_exists(self):

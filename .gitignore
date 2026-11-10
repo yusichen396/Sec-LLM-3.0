@@ -1,4 +1,6 @@
 # Python
+# Local execution snapshots, documents and potentially sensitive evaluation outputs
+/artifacts/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -8,6 +10,10 @@ venv/
 env/
 ENV/
 .venv
+.pytest_cache/
+.pytest_tmp/
+.audit_tmp/
+tsconfig.tsbuildinfo
 
 # Environment variables
 .env
@@ -23,6 +29,7 @@ ENV/
 
 # Node
 node_modules/
+*.tsbuildinfo
 .next/
 out/
 dist/
@@ -72,3 +79,10 @@ venv/
 *.key
 *.pem
 secrets.json
+
+# Local scratch dirs used by tests / CI reproduction (never fixtures)
+.cilock/
+.tmpci/
+.tmp_caps_*/
+.tmp_sessions_*/
+.tmp_evidence_*/

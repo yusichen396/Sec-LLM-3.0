@@ -1,91 +1,96 @@
-"""Auto-Fix PR agent — generates patches and creates GitHub PRs for verified findings."""
-import json
+"""Auto-fix PR helper (operator-only).
+
+Deliberately **not** registered in the agent tool registry: it writes to the
+filesystem and pushes to a git remote, so it must never be reachable from an LLM
+plan. Enable it explicitly with ``AGENT_AUTOFIX_ENABLED=true`` and call it from
+trusted code only.
+"""
 import os
 import re
-from typing import Any, Dict, List
+import subprocess
+import uuid
+from pathlib import Path
+from typing import Any, Dict
 
-from tools.registry import register_tool
+from config import settings
 
 
-@register_tool(
-    name="generate_fix_pr",
-    description="Generate an auto-fix pull request for a verified security finding. "
-    "Creates a branch, applies the fix, commits, and opens a PR on GitHub.",
-    category="report",
-    requires_provider=False,
-)
+def _resolve_target(repo_path: str, file_path: str) -> Path:
+    """Resolve file_path and refuse anything outside repo_path."""
+    repo = Path(repo_path).expanduser().resolve()
+    if not (repo / ".git").is_dir():
+        raise ValueError(f"Not a git repository: {repo}")
+    if not file_path or Path(file_path).is_absolute():
+        raise ValueError("file_path must be relative to the repository")
+    target = (repo / file_path).resolve()
+    try:
+        target.relative_to(repo)
+    except ValueError as error:
+        raise ValueError("file_path escapes the repository") from error
+    return target
+
+
 async def generate_fix_pr(
     repo_path: str,
     finding: Dict[str, Any],
     github_token: str = "",
 ) -> Dict[str, Any]:
-    """Generate auto-fix PR for a vulnerability finding.
+    """Create a branch with the provided fix, push it and open a PR.
 
-    Args:
-        repo_path: Local path to the git repository.
-        finding: Dict with 'title', 'severity', 'file_path', 'line_number', 'fixed_code', 'description'.
-        github_token: GitHub personal access token for PR creation.
+    Only callable from trusted code paths; see module docstring.
     """
-    import subprocess
-    import uuid
+    if not getattr(settings, "AGENT_AUTOFIX_ENABLED", False):
+        return {"status": "disabled", "message": "AGENT_AUTOFIX_ENABLED is false"}
 
-    if not os.path.isdir(os.path.join(repo_path, ".git")):
-        return {"status": "error", "message": f"Not a git repository: {repo_path}"}
-
-    title = finding.get("title", "Security Fix")
+    title = (finding.get("title") or "Security Fix")[:120]
     severity = finding.get("severity", "Medium")
     file_path = finding.get("file_path", "")
     fixed_code = finding.get("fixed_code", "")
-    description = finding.get("description", "")
+    description = (finding.get("description") or "")[:500]
 
-    # Sanitize branch name — only allow safe characters
-    slug = re.sub(r'[^a-z0-9._-]', '-', title.lower())[:40]
+    if not fixed_code:
+        return {"status": "error", "message": "finding.fixed_code is required"}
+
+    try:
+        target = _resolve_target(repo_path, file_path)
+    except ValueError as error:
+        return {"status": "error", "message": str(error)}
+    repo = str(Path(repo_path).expanduser().resolve())
+
+    slug = re.sub(r"[^a-z0-9._-]", "-", title.lower())[:40] or "fix"
     branch = f"fix/sec-llm-{slug}-{str(uuid.uuid4())[:6]}"
 
     try:
-        # Create branch
-        subprocess.run(["git", "-C", repo_path, "checkout", "-b", branch], capture_output=True, check=True)
+        subprocess.run(["git", "-C", repo, "checkout", "-b", branch], capture_output=True, check=True)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with target.open("w", encoding="utf-8") as handle:
+            handle.write(fixed_code)
+        relative = target.relative_to(Path(repo).resolve()).as_posix()
+        subprocess.run(["git", "-C", repo, "add", relative], capture_output=True, check=True)
+        commit_msg = f"fix(security): {title}\n\nSeverity: {severity}\n{description}"
+        subprocess.run(["git", "-C", repo, "commit", "-m", commit_msg], capture_output=True, check=True)
+        subprocess.run(["git", "-C", repo, "push", "origin", branch], capture_output=True, check=True)
 
-        # Apply fix (resolve path relative to repo)
-        if file_path and fixed_code:
-            abs_path = os.path.join(repo_path, file_path)
-            os.makedirs(os.path.dirname(abs_path), exist_ok=True)
-            with open(abs_path, "w", encoding="utf-8") as f:
-                f.write(fixed_code)
-            subprocess.run(["git", "-C", repo_path, "add", file_path], capture_output=True, check=True)
-
-            # Commit
-            commit_msg = f"fix(security): {title}\n\nSeverity: {severity}\n{description[:200]}"
-            subprocess.run(["git", "-C", repo_path, "commit", "-m", commit_msg], capture_output=True, check=True)
-
-            # Push
-            subprocess.run(["git", "-C", repo_path, "push", "origin", branch], capture_output=True, check=True)
-        else:
-            return {"status": "error", "message": "Finding must include file_path and fixed_code"}
-
-        # Create PR via GitHub CLI
-        pr_body = f"""## Auto-Fix: {title}
-
-**Severity**: {severity}
-**File**: {file_path}
-**Description**: {description}
-
-> Generated by Sec-LLM Agent Platform"""
+        pr_body = (
+            f"## Auto-Fix: {title}\n\n**Severity**: {severity}\n"
+            f"**File**: {relative}\n**Description**: {description}\n\n"
+            "> Generated by Sec-LLM Agent Platform (operator-invoked)"
+        )
         result = subprocess.run(
             ["gh", "pr", "create", "--title", f"fix(security): {title}",
              "--body", pr_body, "--base", "main", "--head", branch],
-            capture_output=True, text=True, cwd=repo_path,
+            capture_output=True, text=True, cwd=repo,
             env={**os.environ, "GITHUB_TOKEN": github_token},
         )
-
         pr_url = result.stdout.strip() if result.returncode == 0 else ""
         return {
-            "status": "success",
+            "status": "success" if pr_url else "partial",
             "branch": branch,
             "pr_url": pr_url,
             "message": "Auto-fix PR created" if pr_url else f"PR creation failed: {result.stderr[:500]}",
         }
-    except subprocess.CalledProcessError as e:
-        return {"status": "error", "message": f"Git operation failed: {e.stderr[:500] if e.stderr else str(e)}"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)[:500]}
+    except subprocess.CalledProcessError as error:
+        detail = error.stderr.decode("utf-8", errors="ignore") if isinstance(error.stderr, bytes) else (error.stderr or "")
+        return {"status": "error", "message": f"Git operation failed: {detail[:500] or str(error)}"}
+    except Exception as error:  # noqa: BLE001 - returned to the operator
+        return {"status": "error", "message": str(error)[:500]}

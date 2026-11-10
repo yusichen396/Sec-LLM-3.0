@@ -1,0 +1,3407 @@
+{
+  "created_at": "2026-11-08T15:23:49.716865+00:00",
+  "dataset": "tool_selection_cases_v3.json",
+  "provider": "cloud",
+  "summary": {
+    "cases": 138,
+    "repeats": 1,
+    "retries_configured": 1,
+    "covered_accuracy": [
+      1.0
+    ],
+    "covered_mean": 1.0,
+    "top1_accuracy": [
+      0.5217
+    ],
+    "top1_mean": 0.5217,
+    "args_valid_rate": [
+      1.0
+    ],
+    "args_valid_mean": 1.0,
+    "exact_plan_mean": 0.1014,
+    "avg_extra_steps": 2.26,
+    "retry_attempts_mean": 1.01,
+    "retry_recovered": 1,
+    "unstable_cases": [],
+    "by_split": {
+      "dev": {
+        "n": 60,
+        "covered": 1.0
+      },
+      "test": {
+        "n": 48,
+        "covered": 1.0
+      },
+      "validation": {
+        "n": 30,
+        "covered": 1.0
+      }
+    },
+    "by_group": {
+      "amb_code_vs_url": {
+        "n": 4,
+        "covered": 1.0
+      },
+      "amb_content_vs_endpoint": {
+        "n": 4,
+        "covered": 1.0
+      },
+      "amb_intel_pair": {
+        "n": 4,
+        "covered": 1.0
+      },
+      "amb_probe_family": {
+        "n": 4,
+        "covered": 1.0
+      },
+      "amb_rule_vs_report": {
+        "n": 2,
+        "covered": 1.0
+      },
+      "amb_shell_vs_probe": {
+        "n": 4,
+        "covered": 1.0
+      },
+      "api": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "code": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "crawl": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "intel_enrich": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "intel_report": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "lfi": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "login": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "multi_crawl_then_probe": {
+        "n": 1,
+        "covered": 1.0
+      },
+      "multi_explicit_shell": {
+        "n": 2,
+        "covered": 1.0
+      },
+      "multi_intel_then_report": {
+        "n": 1,
+        "covered": 1.0
+      },
+      "multi_read_audit": {
+        "n": 2,
+        "covered": 1.0
+      },
+      "multi_scan_then_report": {
+        "n": 1,
+        "covered": 1.0
+      },
+      "multi_scan_then_rule": {
+        "n": 1,
+        "covered": 1.0
+      },
+      "navigate": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "phish": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "read_source": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "report": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "rule": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "screenshot": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "session": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "shell": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "sqli": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "ssrf": {
+        "n": 6,
+        "covered": 1.0
+      },
+      "xss": {
+        "n": 6,
+        "covered": 1.0
+      }
+    }
+  },
+  "runs": [
+    [
+      {
+        "id": "c001",
+        "split": "dev",
+        "group": "intel_enrich",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2385.3,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"8.8.8.8\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP 8.8.8.8 with AbuseIPDB and AlienVault OTX reputation data to check for malicious records.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"8.8.8.8\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate a Chinese-language threat intelligence assessment report from the enrichment results.\"}]"
+      },
+      {
+        "id": "c002",
+        "split": "dev",
+        "group": "intel_enrich",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2393.6,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"evil-login.example.com\", \"ioc_type\": \"domain\"}, \"reason\": \"Enrich the target domain with AbuseIPDB/OTX reputation, scores, tags and verdict as the core recon step.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"evil-login.example.com\", \"detected_type\": \"domain\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Convert the enrichment data into a Chinese-language threat intelligence assessment report for the task deliverable.\"}]"
+      },
+      {
+        "id": "c003",
+        "split": "dev",
+        "group": "intel_enrich",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2621.9,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"44d88612fea8a8f36de82e1278abb02f\", \"ioc_type\": \"md5\"}, \"reason\": \"Enrich the suspicious MD5 hash with AbuseIPDB/OTX intelligence to get scores, tags and verdict\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"44d88612fea8a8f36de82e1278abb02f\", \"detected_type\": \"md5\", \"enrichment\": \"$prev\"}, \"reason\": \"Generate a Chinese-language threat intelligence assessment report from the enrichment data\"}]"
+      },
+      {
+        "id": "c004",
+        "split": "dev",
+        "group": "intel_enrich",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2572.7,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"1.1.1.1\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP 1.1.1.1 with AbuseIPDB and AlienVault OTX reputation data (scores, tags, verdict) as the core recon step.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"1.1.1.1\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\"}, \"reason\": \"Convert the enrichment output into a Chinese-language threat intelligence assessment report answering the reputation question.\"}]"
+      },
+      {
+        "id": "c005",
+        "split": "dev",
+        "group": "intel_enrich",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2490.6,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"d41d8cd98f00b204e9800998ecf8427e\", \"ioc_type\": \"md5\"}, \"reason\": \"查询该 MD5 文件哈希在 AbuseIPDB/OTX 的威胁情报标记与信誉评分\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"d41d8cd98f00b204e9800998ecf8427e\", \"detected_type\": \"md5\", \"enrichment\": \"$prev\"}, \"reason\": \"将富化结果整理为中文威胁情报评估报告，给出是否被标记的结论\"}]"
+      },
+      {
+        "id": "c006",
+        "split": "dev",
+        "group": "intel_enrich",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2379.7,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"9.9.9.9\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP with AbuseIPDB and AlienVault OTX data to obtain reputation scores, confidence, tags and verdict.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"9.9.9.9\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment results.\"}]"
+      },
+      {
+        "id": "c007",
+        "split": "dev",
+        "group": "intel_report",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2420.5,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"1.1.1.1\", \"ioc_type\": \"ip\"}, \"reason\": \"先对目标 IP 1.1.1.1 进行威胁情报富化，获取 AbuseIPDB/OTX 的评分、标签与判定，作为报告数据基础\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"1.1.1.1\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"将上一步的富化结果传入报告生成工具，产出中文威胁情报评估报告\"}]"
+      },
+      {
+        "id": "c008",
+        "split": "dev",
+        "group": "intel_report",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2231.3,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"evil.example.com\", \"ioc_type\": \"domain\"}, \"reason\": \"Enrich the IOC with AbuseIPDB/OTX data to obtain scores, tags and verdict needed for the report\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"evil.example.com\", \"detected_type\": \"domain\", \"enrichment\": \"$prev\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment output\"}]"
+      },
+      {
+        "id": "c009",
+        "split": "dev",
+        "group": "intel_report",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2411.9,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"9.9.9.9\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP with AbuseIPDB and AlienVault OTX data to obtain scores, confidence, tags and verdict for the assessment.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"9.9.9.9\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment results.\"}]"
+      },
+      {
+        "id": "c010",
+        "split": "dev",
+        "group": "intel_report",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2140.3,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"d41d8cd98f00b204e9800998ecf8427e\", \"ioc_type\": \"auto\"}, \"reason\": \"Enrich the provided hash IOC with AbuseIPDB/OTX data to obtain scores, tags and verdict before writing the report.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"d41d8cd98f00b204e9800998ecf8427e\", \"detected_type\": \"md5\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language IOC threat intelligence assessment report from the enrichment output.\"}]"
+      },
+      {
+        "id": "c011",
+        "split": "dev",
+        "group": "intel_report",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "browser_navigate",
+          "browser_screenshot",
+          "phishing_analyzer",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3289.6,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"phish-example.com\", \"ioc_type\": \"domain\"}, \"reason\": \"Enrich the target domain with AbuseIPDB/OTX reputation, scores, tags and verdict as the factual basis for the intelligence assessment.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://phish-example.com\", \"use_session\": false}, \"reason\": \"Passively inspect the live site's title, text, links and forms to characterize the phishing page and collect infrastructure/redirect clues.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://phish-example.com\", \"use_session\": false}, \"reason\""
+      },
+      {
+        "id": "c012",
+        "split": "dev",
+        "group": "intel_report",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2321.2,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"8.8.4.4\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP 8.8.4.4 with AbuseIPDB and AlienVault OTX data to obtain scores, confidence, tags and verdict as the factual basis for the report.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"8.8.4.4\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment output, fulfilling the report task.\"}]"
+      },
+      {
+        "id": "c013",
+        "split": "dev",
+        "group": "phish",
+        "expected": [
+          "phishing_analyzer"
+        ],
+        "picked": [
+          "phishing_analyzer",
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2557.3,
+        "raw": "[{\"tool\": \"phishing_analyzer\", \"args\": {\"content\": \"mail-raw-1\"}, \"reason\": \"Analyze the raw email content for phishing indicators, risk score, verdict, and suspicious URLs/IPs\"}, {\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"$prev\", \"ioc_type\": \"auto\"}, \"reason\": \"Enrich suspicious URLs/IPs extracted from the phishing analysis with threat intelligence\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"$step:1\", \"detected_type\": \"auto\", \"enrichment\": \"$prev\"}, \"reason\": \"Generate a Chinese-language threat intelligence assessment report from the enrichment data\"}]"
+      },
+      {
+        "id": "c014",
+        "split": "dev",
+        "group": "phish",
+        "expected": [
+          "phishing_analyzer"
+        ],
+        "picked": [
+          "phishing_analyzer",
+          "threat_intel_enrich",
+          "browser_navigate",
+          "threat_intel_report",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3006.9,
+        "raw": "[{\"tool\": \"phishing_analyzer\", \"args\": {\"content\": \"mail-raw-2\"}, \"reason\": \"Analyze the raw email content for phishing indicators including sender reputation and suspicious links\"}, {\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"$prev\", \"ioc_type\": \"auto\"}, \"reason\": \"Enrich extracted URLs/IPs/domains from the phishing analysis with threat intelligence scores and verdicts\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"$step:1\", \"use_session\": false}, \"reason\": \"Safely inspect the suspicious link destination to confirm whether it hosts a credential-harvesting page\"}, {\"tool\": \"threat_intel"
+      },
+      {
+        "id": "c015",
+        "split": "dev",
+        "group": "phish",
+        "expected": [
+          "phishing_analyzer"
+        ],
+        "picked": [
+          "phishing_analyzer",
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2718.0,
+        "raw": "[{\"tool\": \"phishing_analyzer\", \"args\": {\"content\": \"mail-raw-3\"}, \"reason\": \"Analyze the raw email content for phishing indicators, risk score, suspicious URLs/IPs, and verdict.\"}, {\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"$prev\", \"ioc_type\": \"auto\"}, \"reason\": \"Enrich any suspicious domains/IPs extracted from the phishing analysis with threat intelligence.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"$step:1\", \"detected_type\": \"auto\", \"enrichment\": \"$prev\"}, \"reason\": \"Generate a Chinese-language threat intelligence assessment report for the enriched IOC.\"}]"
+      },
+      {
+        "id": "c016",
+        "split": "dev",
+        "group": "phish",
+        "expected": [
+          "phishing_analyzer"
+        ],
+        "picked": [
+          "phishing_analyzer",
+          "threat_intel_enrich",
+          "threat_intel_report",
+          "rule_generator"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2872.7,
+        "raw": "[{\"tool\": \"phishing_analyzer\", \"args\": {\"content\": \"mail-raw-4\"}, \"reason\": \"Analyze the raw email content for phishing indicators, risk score, verdict, and suspicious URLs/IPs\"}, {\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"$prev\", \"ioc_type\": \"auto\"}, \"reason\": \"Enrich suspicious URLs/IPs extracted by the phishing analyzer with threat intelligence scores and verdicts\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"$prev\", \"detected_type\": \"auto\", \"enrichment\": \"$prev\"}, \"reason\": \"Generate a Chinese-language threat intelligence assessment report from the enrichment data\"}, {\"tool\": \""
+      },
+      {
+        "id": "c017",
+        "split": "dev",
+        "group": "phish",
+        "expected": [
+          "phishing_analyzer"
+        ],
+        "picked": [
+          "phishing_analyzer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2167.4,
+        "raw": "[{\"tool\": \"phishing_analyzer\", \"args\": {\"content\": \"mail-raw-5\"}, \"reason\": \"Analyze the raw email content for phishing indicators, risk score, verdict, and suspicious URLs/IPs to determine whether the transfer request is a scam.\"}]"
+      },
+      {
+        "id": "c018",
+        "split": "dev",
+        "group": "phish",
+        "expected": [
+          "phishing_analyzer"
+        ],
+        "picked": [
+          "browser_navigate",
+          "phishing_analyzer",
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3360.4,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"mail-raw-6\"}, \"reason\": \"获取原始邮件内容（mail-raw-6），作为后续发件域名伪造检查的输入\"}, {\"tool\": \"phishing_analyzer\", \"args\": {\"content\": \"$prev\"}, \"reason\": \"分析邮件内容，提取发件域名、可疑URL/IP及伪造迹象，返回风险评分与判定\"}, {\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"$step:1\", \"ioc_type\": \"auto\"}, \"reason\": \"对分析中提取的发件域名进行威胁情报富化，判断域名信誉与是否与已知恶意基础设施关联\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"$step:1\", \"detected_type\": \"domain\", \"enrichment\": \"$prev\"}, \"reason\": \"基于富化结果生成中文威胁情报评估报告，汇总发件域名伪造风险结论\"}]"
+      },
+      {
+        "id": "c019",
+        "split": "dev",
+        "group": "code",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "code_auditor",
+          "sqli_probe"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2685.9,
+        "raw": "[{\"tool\": \"code_auditor\", \"args\": {\"code\": \"cur.execute(f\\\"SELECT * FROM t WHERE id={uid}\\\")\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Audit the provided snippet for injection vulnerabilities; the f-string interpolation of uid into SQL is a strong SQL injection lead that must be confirmed by source review.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"$prev\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"Attempt to confirm the SQL injection lead against the live endpoint using error-based and boolean-based signals, requiring two agreeing signals before reporting.\"}]"
+      },
+      {
+        "id": "c020",
+        "split": "dev",
+        "group": "code",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "code_auditor",
+          "shell_exec",
+          "shell_exec",
+          "rule_generator",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3887.9,
+        "raw": "[{\"tool\": \"code_auditor\", \"args\": {\"code\": \"import os\\nos.system(input())\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"对目标源码进行静态安全审计，识别 os.system(input()) 导致的命令注入风险并获取修复建议\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"bandit -r . -f json\", \"timeout\": 300}, \"reason\": \"使用 bandit 对源码目录做独立静态扫描，交叉验证 code_auditor 的发现，避免仅依赖模型判断\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"semgrep --config=auto --json .\", \"timeout\": 300}, \"reason\": \"使用 semgrep 规则集补充检测命令注入等危险模式，形成多工具证据链\"}, {\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"检测 Python 源码中 os.system、subprocess 等函数直接接收 input() 或用户可控输入导致的命令注"
+      },
+      {
+        "id": "c021",
+        "split": "dev",
+        "group": "code",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "code_auditor",
+          "shell_exec"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2346.3,
+        "raw": "[{\"tool\": \"code_auditor\", \"args\": {\"code\": \"password = \\\"hardcoded123\\\"\", \"language\": \"python\"}, \"reason\": \"对给定的硬编码密码代码片段进行源码审查，识别硬编码凭据等安全问题（模型判断，作为线索）\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"semgrep --config=auto --json -e 'password = \\\"hardcoded123\\\"'\", \"timeout\": 120}, \"reason\": \"用静态分析工具独立验证硬编码密码类问题，补充 code_auditor 的模型判断\"}]"
+      },
+      {
+        "id": "c022",
+        "split": "dev",
+        "group": "code",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor",
+          "shell_exec",
+          "shell_exec",
+          "code_auditor"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3412.0,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \".\"}, \"reason\": \"读取目标代码库，定位 subprocess.call(cmd, shell=True) 的调用点及其上游输入来源\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"对读取到的源码做 LLM 辅助审查，识别命令注入污点路径（用户输入是否流入 cmd）\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"semgrep --config=p/command-injection --json .\", \"timeout\": 300}, \"reason\": \"用 semgrep 规则独立验证 shell=True 命令注入模式，与人工审查结果交叉确认\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"bandit -r . -f json -t B602,B604,B605\", \"timeout\": 300}, \"reason\": \"用 bandit 检查 subprocess shell=True 相关告警，补充静态分析证据"
+      },
+      {
+        "id": "c023",
+        "split": "dev",
+        "group": "code",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "code_auditor",
+          "read_source",
+          "api_discovery",
+          "browser_session_status",
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3354.5,
+        "raw": "[{\"tool\": \"code_auditor\", \"args\": {\"code\": \"def delete(uid):\\n    db.delete(uid)\", \"language\": \"python\"}, \"reason\": \"Review the delete function for missing authorization checks (IDOR/BOLA) before any dynamic testing\"}, {\"tool\": \"read_source\", \"args\": {\"path\": \".\"}, \"reason\": \"Locate the surrounding source (routes, auth middleware, db layer) to confirm whether authorization is enforced elsewhere\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"$prev\"}, \"reason\": \"Discover the API surface and the delete endpoint's parameters to plan concrete authorization probes\"}, {\"tool\": \"browser_session_status\""
+      },
+      {
+        "id": "c024",
+        "split": "dev",
+        "group": "code",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "code_auditor",
+          "read_source",
+          "code_auditor",
+          "shell_exec",
+          "shell_exec"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3451.8,
+        "raw": "[{\"tool\": \"code_auditor\", \"args\": {\"code\": \"pickle.loads(data)\", \"language\": \"python\"}, \"reason\": \"Review the provided deserialization snippet for insecure pickle usage and get severity plus remediation guidance.\"}, {\"tool\": \"read_source\", \"args\": {\"path\": \".\"}, \"reason\": \"Read surrounding source to confirm whether untrusted data reaches pickle.loads and to identify the actual entry point.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\"}, \"reason\": \"Audit the full source context to verify the deserialization risk and locate the sink's data flow.\"}, {\"tool\": \"shell_ex"
+      },
+      {
+        "id": "c025",
+        "split": "dev",
+        "group": "read_source",
+        "expected": [
+          "read_source"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2255.7,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/src/login.py\"}, \"reason\": \"Read the target source file from the allowed audit root so it can be reviewed.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Perform LLM-assisted source review of login.py to surface authentication and injection leads for verification.\"}]"
+      },
+      {
+        "id": "c026",
+        "split": "dev",
+        "group": "read_source",
+        "expected": [
+          "read_source"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2462.9,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/config/settings.py\"}, \"reason\": \"Recon task: read the target configuration file from the workspace to inspect its contents.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Review the retrieved settings.py for hardcoded secrets, insecure defaults, and other configuration weaknesses.\"}]"
+      },
+      {
+        "id": "c027",
+        "split": "dev",
+        "group": "read_source",
+        "expected": [
+          "read_source"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2341.3,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/src/db.py\"}, \"reason\": \"Read the target source file from the audit root so it can be reviewed.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Perform LLM-assisted source review of the retrieved db.py to surface vulnerability leads.\"}]"
+      },
+      {
+        "id": "c028",
+        "split": "dev",
+        "group": "read_source",
+        "expected": [
+          "read_source"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2316.2,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/src/utils.py\"}, \"reason\": \"Retrieve the source text of the target file for audit; read_source is the designated tool for reading source within the audit root.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Run LLM-assisted source review on the retrieved code to surface vulnerability leads with severity and fix suggestions.\"}]"
+      },
+      {
+        "id": "c029",
+        "split": "dev",
+        "group": "read_source",
+        "expected": [
+          "read_source"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2216.0,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/src/auth.py\"}, \"reason\": \"Read the target source file within the allowed audit root to obtain code for review.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Perform LLM-assisted source review of auth.py to identify authentication/authorization weaknesses as leads.\"}]"
+      },
+      {
+        "id": "c030",
+        "split": "dev",
+        "group": "read_source",
+        "expected": [
+          "read_source"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2576.8,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/src/api.py\"}, \"reason\": \"Load the target file into context as requested; read_source is the sanctioned reader for code audit and confines access to the audit root.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Perform LLM-assisted source review of the loaded file to surface candidate vulnerabilities and severity ratings as leads.\"}]"
+      },
+      {
+        "id": "c031",
+        "split": "dev",
+        "group": "sqli",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "shell_exec",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2884.1,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/item?id=1\"}, \"reason\": \"Reconnaissance: confirm the endpoint is reachable, capture baseline response and page structure before probing.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"http://test.local/item?id=1\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"Probe the id query parameter for SQL injection using error-based and boolean-based signals; requires two agreeing signals for confirmation.\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"sqlmap -u 'http://test.local/item?id=1' --batch --level=2 --risk=2 --output-dir=/tmp/sqlmap-out"
+      },
+      {
+        "id": "c032",
+        "split": "dev",
+        "group": "sqli",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "browser_check_xss",
+          "lfi_probe",
+          "ssrf_probe"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3113.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/search?q=abc\"}, \"reason\": \"Recon the target page to confirm the q parameter is reflected and observe response behavior before probing\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"http://test.local/search?q=abc\", \"param\": \"q\", \"method\": \"GET\"}, \"reason\": \"Test the q parameter for SQL injection using error-based and boolean-based signals\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"http://test.local/search?q=abc\", \"param\": \"q\"}, \"reason\": \"Check whether the q parameter reflects and executes injected payloads in the browser\"}, {\""
+      },
+      {
+        "id": "c033",
+        "split": "dev",
+        "group": "sqli",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "shell_exec",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2825.5,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/user?id=7\"}, \"reason\": \"Reconnaissance: confirm the endpoint is reachable, capture baseline response and page structure before probing.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"http://test.local/user\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"Run error-based and boolean-based SQL injection probes on the id parameter, requiring two agreeing signals for confirmation.\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"sqlmap -u 'http://test.local/user?id=7' -p id --batch --level=2 --risk=2 --output-dir=/tmp/sqlmap_out\", \"timeout\": "
+      },
+      {
+        "id": "c034",
+        "split": "dev",
+        "group": "sqli",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "browser_check_xss",
+          "lfi_probe",
+          "ssrf_probe"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3391.1,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://shop.local/product?pid=12\"}, \"reason\": \"Recon the target page to confirm it is reachable, capture the response, and see how pid is reflected or used before probing.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"http://shop.local/product?pid=12\", \"param\": \"pid\", \"method\": \"GET\"}, \"reason\": \"Test the pid query parameter for SQL injection using error-based and boolean-based signals, requiring two agreeing signals before reporting.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"http://shop.local/product?pid=12\", \"param\": \"pid\"}, \"reason\": \"Chec"
+      },
+      {
+        "id": "c035",
+        "split": "dev",
+        "group": "sqli",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "lfi_probe",
+          "browser_check_xss",
+          "shell_exec"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3537.7,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/login?user=admin\"}, \"reason\": \"Reconnaissance: confirm the login endpoint is reachable, capture baseline response, forms and parameters before probing.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"http://test.local/login\", \"param\": \"user\", \"method\": \"GET\"}, \"reason\": \"Probe the user parameter for SQL injection using error-based and boolean-based signals; requires two agreeing signals for confirmation.\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/login\", \"param\": \"user\"}, \"reason\": \"Check the same parameter for path t"
+      },
+      {
+        "id": "c036",
+        "split": "dev",
+        "group": "sqli",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2525.8,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/list?sort=name\"}, \"reason\": \"Establish baseline response for the sort parameter before probing\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"http://test.local/list\", \"param\": \"sort\", \"method\": \"GET\"}, \"reason\": \"Probe the sort parameter for error-based and boolean-based SQL injection signals\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/list?sort=name%20asc%2C%20(SELECT%201)\", \"use_session\": true}, \"reason\": \"Manually verify any injection lead with a controlled payload and compare against baseline\"}, {\"tool\": \"b"
+      },
+      {
+        "id": "c037",
+        "split": "dev",
+        "group": "lfi",
+        "expected": [
+          "lfi_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "lfi_probe",
+          "browser_navigate"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2757.0,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/download?file=../../etc/passwd\"}, \"reason\": \"Establish a baseline response for the download endpoint before injecting traversal payloads, so later file-marker differences are attributable to the probe.\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/download\", \"param\": \"file\"}, \"reason\": \"Probe the file parameter with traversal payloads and compare against the baseline for /etc/passwd markers, confirming or refuting path traversal.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/download?file=../../"
+      },
+      {
+        "id": "c038",
+        "split": "dev",
+        "group": "lfi",
+        "expected": [
+          "lfi_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "lfi_probe",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3040.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/read?path=notes.txt\"}, \"reason\": \"Establish a baseline: confirm the endpoint works, capture normal response content and behavior for the path parameter before any traversal payloads.\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/read?path=notes.txt\", \"param\": \"path\"}, \"reason\": \"Probe the path parameter with traversal payloads and compare against the baseline to detect file markers indicating directory traversal / LFI.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/read?path=../../../../etc/passw"
+      },
+      {
+        "id": "c039",
+        "split": "dev",
+        "group": "lfi",
+        "expected": [
+          "lfi_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "lfi_probe",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2676.3,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/view?file=index.html\"}, \"reason\": \"Establish baseline response for the file parameter before probing\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/view\", \"param\": \"file\"}, \"reason\": \"Probe the file parameter for path traversal/local file inclusion using traversal payloads and file markers\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/view?file=../../../../etc/passwd\"}, \"reason\": \"Manually verify the strongest traversal payload and capture response evidence\"}, {\"tool\": \"browser_screenshot\", \"args"
+      },
+      {
+        "id": "c040",
+        "split": "dev",
+        "group": "lfi",
+        "expected": [
+          "lfi_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "lfi_probe",
+          "browser_navigate",
+          "browser_screenshot",
+          "browser_navigate"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 2719.1,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/img?name=logo.png\"}, \"reason\": \"Establish baseline behavior of the image endpoint and confirm the name parameter is reflected/used before probing\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/img\", \"param\": \"name\"}, \"reason\": \"Probe the name parameter with traversal payloads to detect path traversal / local file inclusion via file markers absent from baseline\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/img?name=../../../../etc/passwd\"}, \"reason\": \"Manually verify a traversal payload response f"
+      },
+      {
+        "id": "c041",
+        "split": "dev",
+        "group": "lfi",
+        "expected": [
+          "lfi_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "lfi_probe",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2484.3,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/tpl?name=home\"}, \"reason\": \"Recon the template endpoint to confirm the name parameter is reflected/used and capture baseline behavior before probing.\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/tpl\", \"param\": \"name\"}, \"reason\": \"Probe the name parameter for path traversal / local file inclusion to test whether template parameters can read system files.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/tpl?name=../../../../etc/passwd\"}, \"reason\": \"Manually verify the traversal payload response for "
+      },
+      {
+        "id": "c042",
+        "split": "dev",
+        "group": "lfi",
+        "expected": [
+          "lfi_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "lfi_probe",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2722.7,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/log?f=app.log\"}, \"reason\": \"Reconnaissance: confirm the log-viewing endpoint responds and capture its structure, links and forms before probing the f parameter.\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/log\", \"param\": \"f\"}, \"reason\": \"Primary test: probe the f path parameter for path traversal / local file inclusion using traversal payloads and compare against the app.log baseline.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/log?f=../../../../etc/passwd\"}, \"reason\": \"Manual confirmation of"
+      },
+      {
+        "id": "c043",
+        "split": "dev",
+        "group": "ssrf",
+        "expected": [
+          "ssrf_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "ssrf_probe",
+          "browser_navigate",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3255.7,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/fetch?url=http://169.254.169.254\"}, \"reason\": \"Reconnaissance: confirm the fetch endpoint exists and observe baseline response before probing\"}, {\"tool\": \"ssrf_probe\", \"args\": {\"url\": \"http://test.local/fetch?url=http://169.254.169.254\", \"param\": \"url\"}, \"reason\": \"Probe the url parameter for SSRF against the cloud metadata address, looking for metadata content or upstream connection errors absent from baseline\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/fetch?url=http://127.0.0.1:80\"}, \"reason\": \"Cross-che"
+      },
+      {
+        "id": "c044",
+        "split": "dev",
+        "group": "ssrf",
+        "expected": [
+          "ssrf_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "ssrf_probe",
+          "browser_navigate",
+          "browser_navigate"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 2,
+        "recovered": true,
+        "errors": [
+          "got an unexpected keyword argument 'reason'"
+        ],
+        "extra_steps": 3,
+        "elapsed_ms": 6216.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/proxy?url=http://127.0.0.1:6379\"}, \"reason\": \"Establish a baseline response for the proxy endpoint with the given url parameter before probing, to distinguish normal behavior from SSRF-induced changes.\"}, {\"tool\": \"ssrf_probe\", \"args\": {\"url\": \"http://test.local/proxy?url=http://127.0.0.1:6379\", \"param\": \"url\"}, \"reason\": \"Probe the url parameter for SSRF using internal destinations; internal targets must produce upstream connection errors or metadata content absent from the baseline.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url"
+      },
+      {
+        "id": "c045",
+        "split": "dev",
+        "group": "ssrf",
+        "expected": [
+          "ssrf_probe"
+        ],
+        "picked": [
+          "ssrf_probe"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2580.0,
+        "raw": "[{\"tool\": \"ssrf_probe\", \"args\": {\"url\": \"http://test.local/callback?target=http://10.0.0.1\", \"param\": \"target\"}, \"reason\": \"直接对回调地址的 target 参数做 SSRF 探测，验证服务端是否向内部地址 10.0.0.1 发起请求并返回基线缺失的连接错误或元数据内容\"}]"
+      },
+      {
+        "id": "c046",
+        "split": "dev",
+        "group": "ssrf",
+        "expected": [
+          "ssrf_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "ssrf_probe",
+          "browser_navigate",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3387.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/load?u=http://metadata.local\", \"use_session\": true}, \"reason\": \"Reconnaissance: confirm the endpoint exists, observe baseline response and how the u parameter is handled before probing.\"}, {\"tool\": \"ssrf_probe\", \"args\": {\"url\": \"http://test.local/load\", \"param\": \"u\"}, \"reason\": \"Probe the URL-valued u parameter for SSRF using internal destinations and metadata content signals compared to baseline.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/load?u=http://127.0.0.1:80/\", \"use_session\": true}, \"reason\": \"Manu"
+      },
+      {
+        "id": "c047",
+        "split": "dev",
+        "group": "ssrf",
+        "expected": [
+          "ssrf_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "ssrf_probe",
+          "browser_navigate",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 2984.4,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/img?src=http://192.168.0.1\"}, \"reason\": \"Establish baseline behavior of the image proxy endpoint with an internal target to confirm it is reachable and observe response characteristics before probing.\"}, {\"tool\": \"ssrf_probe\", \"args\": {\"url\": \"http://test.local/img\", \"param\": \"src\"}, \"reason\": \"Probe the src parameter for SSRF using error-based signals to determine whether the server fetches internal destinations like 192.168.0.1.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/img?src=http://127.0.0.1:80\"}, \"r"
+      },
+      {
+        "id": "c048",
+        "split": "dev",
+        "group": "ssrf",
+        "expected": [
+          "ssrf_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "ssrf_probe",
+          "browser_check_xss",
+          "lfi_probe",
+          "api_discovery"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3064.6,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/hook?to=http://localhost\"}, \"reason\": \"Recon the webhook endpoint to confirm it is reachable and observe how the 'to' parameter is reflected or processed before probing.\"}, {\"tool\": \"ssrf_probe\", \"args\": {\"url\": \"http://test.local/hook\", \"param\": \"to\"}, \"reason\": \"Probe the URL-valued 'to' parameter for SSRF using internal destinations and compare against the baseline for upstream connection errors or metadata content.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"http://test.local/hook?to=http://localhost\", \"param\": \"to\"}, \""
+      },
+      {
+        "id": "c049",
+        "split": "dev",
+        "group": "crawl",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2882.8,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Baseline recon of the homepage to confirm reachability, capture title, links and forms before crawling.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate all entry points, forms, query parameters and scripts across the site for the attack-surface inventory.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Check for a published OpenAPI/Swagger"
+      },
+      {
+        "id": "c050",
+        "split": "dev",
+        "group": "crawl",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_crawl",
+          "browser_navigate",
+          "api_discovery",
+          "browser_check_xss"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3117.2,
+        "raw": "[{\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate pages, forms, query parameters and scripts across the site, providing the real endpoint inventory needed for parameter collection.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Read the homepage content and links to confirm crawl coverage and capture any links/forms the crawler may have missed at the entry point.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://ex"
+      },
+      {
+        "id": "c051",
+        "split": "dev",
+        "group": "crawl",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2784.7,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/sitemap\"}, \"reason\": \"读取 sitemap 页面内容，确认其结构（XML 索引或 HTML 链接列表），为后续枚举带参数页面提供入口\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/sitemap\", \"max_pages\": 200, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"在 sitemap 范围内做有界同源爬取，收集所有页面及其查询参数、表单和脚本，用于统计带参数的页面数量\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/sitemap\"}, \"reason\": \"尝试读取站点发布的 OpenAPI/Swagger 规范，补充爬虫可能遗漏的带参数 API 端点\"}]"
+      },
+      {
+        "id": "c052",
+        "split": "dev",
+        "group": "crawl",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_crawl",
+          "browser_navigate",
+          "api_discovery"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2653.3,
+        "raw": "[{\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/app\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate all pages' forms, query parameters and scripts across the app surface, not just the homepage.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/app\", \"use_session\": true}, \"reason\": \"Capture the landing page's title, text, links and forms to cross-check and supplement the crawl output, especially any forms/scripts the crawler may have missed.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example"
+      },
+      {
+        "id": "c053",
+        "split": "dev",
+        "group": "crawl",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_crawl",
+          "api_discovery",
+          "browser_navigate",
+          "browser_check_xss",
+          "sqli_probe"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3135.5,
+        "raw": "[{\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate pages, forms, query parameters and scripts as the endpoint inventory for later probing.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Read any published OpenAPI/Swagger spec to add documented API endpoints and parameter names to the inventory.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Capture homepage title, text and links/forms to"
+      },
+      {
+        "id": "c054",
+        "split": "dev",
+        "group": "crawl",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_navigate"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2535.0,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/search\", \"use_session\": true}, \"reason\": \"Load the target search page to capture its forms, links and query parameters as the initial recon baseline.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/search\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate query parameters across linked pages, forms and scripts for the full attack surface.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/search\"}, \"reason\": \"Check for a published OpenAPI/S"
+      },
+      {
+        "id": "c055",
+        "split": "dev",
+        "group": "navigate",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2487.8,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": false}, \"reason\": \"Fetch the target page and capture its title, text content, links and forms — this directly satisfies the recon task of retrieving the page body.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com\", \"use_session\": false}, \"reason\": \"Capture a visual artifact of the page to accompany the recon evidence.\"}]"
+      },
+      {
+        "id": "c056",
+        "split": "dev",
+        "group": "navigate",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 1864.6,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.org/about\", \"use_session\": true}, \"reason\": \"Recon task: fetch the target page and capture its title, text content, links and forms as requested.\"}]"
+      },
+      {
+        "id": "c057",
+        "split": "dev",
+        "group": "navigate",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_screenshot",
+          "browser_check_xss"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3237.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/docs\", \"use_session\": true}, \"reason\": \"访问目标页面并提取正文文本、标题、链接与表单，完成 recon 任务的核心目标\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/docs\", \"max_pages\": 20, \"max_depth\": 2, \"use_session\": true}, \"reason\": \"在正文提取基础上做有界同源爬取，枚举表单、查询参数与脚本，为后续探测提供真实端点\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/docs\"}, \"reason\": \"读取已发布的 OpenAPI/Swagger 规范，补充 API 端点、方法与参数名，扩展攻击面清单\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/docs\", \"use_session\": true}, \"reason\": \"留存页面视觉证据，作为 recon 阶段的证据工件\""
+      },
+      {
+        "id": "c058",
+        "split": "dev",
+        "group": "navigate",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2247.0,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/news\"}, \"reason\": \"读取目标新闻页面的标题、正文文本、链接与表单，完成用户要求的页面内容解读\"}]"
+      },
+      {
+        "id": "c059",
+        "split": "dev",
+        "group": "navigate",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_screenshot",
+          "browser_check_xss"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3434.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/help\", \"use_session\": true}, \"reason\": \"获取目标页面正文、标题、链接与表单，作为侦察分析的基础数据\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/help\", \"max_pages\": 20, \"max_depth\": 2, \"use_session\": true}, \"reason\": \"在限定预算内同源爬取，枚举帮助站点内的表单、查询参数与脚本，扩展攻击面清单\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/help\"}, \"reason\": \"尝试读取已发布的 OpenAPI/Swagger 规范，补充可测试的 API 端点与参数名\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/help\", \"use_session\": true}, \"reason\": \"留存页面视觉证据，便于后续分析时对照页面结构与内容\"}, {\"tool\": \"brows"
+      },
+      {
+        "id": "c060",
+        "split": "dev",
+        "group": "navigate",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2351.0,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/status\"}, \"reason\": \"Fetch the target URL and capture its title, text content, links and forms to see what the endpoint returns.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/status\"}, \"reason\": \"Capture a visual artifact of the response for evidence, since the task is to observe returned content.\"}]"
+      },
+      {
+        "id": "c061",
+        "split": "validation",
+        "group": "screenshot",
+        "expected": [
+          "browser_screenshot"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2411.2,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Recon step: load the target page to capture title, text, links and forms as baseline evidence before any further action.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Capture the requested screenshot of the target page as the evidence artifact for the recon task.\"}]"
+      },
+      {
+        "id": "c062",
+        "split": "validation",
+        "group": "screenshot",
+        "expected": [
+          "browser_screenshot"
+        ],
+        "picked": [
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2308.1,
+        "raw": "[{\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/about\"}, \"reason\": \"任务要求对该页面截图，直接调用截图工具获取页面图像证据。\"}]"
+      },
+      {
+        "id": "c063",
+        "split": "validation",
+        "group": "screenshot",
+        "expected": [
+          "browser_screenshot"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2394.5,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/login\", \"use_session\": true}, \"reason\": \"Load the login page and capture its title, text, links and forms as the recon baseline before taking the evidence snapshot.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/login\", \"use_session\": true}, \"reason\": \"Capture the page snapshot image that serves as the evidence artifact for the recon task.\"}]"
+      },
+      {
+        "id": "c064",
+        "split": "validation",
+        "group": "screenshot",
+        "expected": [
+          "browser_screenshot"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2570.2,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/dashboard\", \"use_session\": true}, \"reason\": \"先加载目标页面，确认可访问性、页面标题与内容，为后续视觉留证建立基线\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/dashboard\", \"use_session\": true}, \"reason\": \"对目标页面进行截图，生成视觉留证证据工件\"}]"
+      },
+      {
+        "id": "c065",
+        "split": "validation",
+        "group": "screenshot",
+        "expected": [
+          "browser_screenshot"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2369.7,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/render\"}, \"reason\": \"Load the target page to capture title, text content, links and forms, confirming the page responds and giving context before rendering checks.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/render\"}, \"reason\": \"Capture a screenshot of the page so rendering/layout can be visually verified as requested.\"}]"
+      },
+      {
+        "id": "c066",
+        "split": "validation",
+        "group": "screenshot",
+        "expected": [
+          "browser_screenshot"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2205.7,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/report\", \"use_session\": true}, \"reason\": \"Recon the target page to confirm it loads, capture title/text/links/forms, and establish the baseline before any evidence capture.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/report\", \"use_session\": true}, \"reason\": \"Capture the requested image evidence of the page as rendered, producing the visual artifact for the report.\"}]"
+      },
+      {
+        "id": "c067",
+        "split": "validation",
+        "group": "session",
+        "expected": [
+          "browser_session_status"
+        ],
+        "picked": [
+          "browser_session_status",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2668.2,
+        "raw": "[{\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.org\"}, \"reason\": \"First check whether a reusable authenticated session already exists for the target origin, including its age, expiry and cookie count, without exposing secrets.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.org\", \"use_session\": true}, \"reason\": \"If a session exists, navigate with use_session=true to confirm the stored session is actually accepted and the page loads in an authenticated state.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.org\", \"use_session\": true}, \"rea"
+      },
+      {
+        "id": "c068",
+        "split": "validation",
+        "group": "session",
+        "expected": [
+          "browser_session_status"
+        ],
+        "picked": [
+          "browser_session_status",
+          "browser_navigate",
+          "browser_crawl"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 3193.3,
+        "raw": "[{\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"检查目标站点是否仍存在可复用的已认证会话（年龄、过期时间、cookie 数量），直接回答登录态是否还在\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"复用已存会话访问首页，确认页面是否仍呈现登录后状态（标题、内容、链接/表单），作为会话有效性的行为证据\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 10, \"max_depth\": 2, \"use_session\": true}, \"reason\": \"在已认证会话下做有界同源爬取，枚举表单、查询参数与脚本，确认登录态覆盖的受保护页面范围并收集后续探测端点\"}]"
+      },
+      {
+        "id": "c069",
+        "split": "validation",
+        "group": "session",
+        "expected": [
+          "browser_session_status"
+        ],
+        "picked": [
+          "browser_session_status",
+          "browser_navigate",
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3514.8,
+        "raw": "[{\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.com/admin\"}, \"reason\": \"Check whether a stored session exists for the target origin and whether it is still valid (age, expiry, cookie count) — directly answers the session-expiry question.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/admin\", \"use_session\": true}, \"reason\": \"Load the admin page with the stored session to observe whether it redirects to login or renders authenticated content, confirming session validity.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/admin\", \"use_s"
+      },
+      {
+        "id": "c070",
+        "split": "validation",
+        "group": "session",
+        "expected": [
+          "browser_session_status"
+        ],
+        "picked": [
+          "browser_session_status",
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2787.9,
+        "raw": "[{\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.com/panel\"}, \"reason\": \"Check whether a reusable authenticated session already exists for the target origin before any navigation.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/panel\", \"use_session\": true}, \"reason\": \"Load the panel with any stored session and capture title, text, links and forms to determine whether the page shows a logged-in state or a login redirect.\"}]"
+      },
+      {
+        "id": "c071",
+        "split": "validation",
+        "group": "session",
+        "expected": [
+          "browser_session_status"
+        ],
+        "picked": [
+          "browser_session_status",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 3018.7,
+        "raw": "[{\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.com/user\"}, \"reason\": \"First check whether a reusable authenticated session exists for the target origin and whether its cookies are still valid (age, expiry, cookie count) before any authenticated request.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/user\", \"use_session\": true}, \"reason\": \"Load the target page with the stored session to confirm whether the session cookie is accepted (e.g., authenticated content vs. redirect to login) and capture links/forms for context.\"}, {\"tool\": \"browser_screenshot"
+      },
+      {
+        "id": "c072",
+        "split": "validation",
+        "group": "session",
+        "expected": [
+          "browser_session_status"
+        ],
+        "picked": [
+          "browser_session_status",
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 2703.9,
+        "raw": "[{\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"First check whether a reusable authenticated session already exists for the target origin before doing any recon.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Load the target homepage with the stored session to capture title, links, forms and confirm reachability.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 25, \"max_depth\": 2, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate pages, forms, qu"
+      },
+      {
+        "id": "c073",
+        "split": "validation",
+        "group": "login",
+        "expected": [
+          "browser_login"
+        ],
+        "picked": [
+          "browser_login",
+          "browser_session_status",
+          "browser_crawl",
+          "api_discovery",
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3323.4,
+        "raw": "[{\"tool\": \"browser_login\", \"args\": {\"url\": \"https://example.com/login\", \"username\": \"admin\", \"password\": \"123456\"}, \"reason\": \"Establish an authenticated session with the supplied credentials so subsequent recon runs against the logged-in admin surface.\"}, {\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.com/login\"}, \"reason\": \"Confirm the session was created and is valid before spending crawl budget on authenticated pages.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/login\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-"
+      },
+      {
+        "id": "c074",
+        "split": "validation",
+        "group": "login",
+        "expected": [
+          "browser_login"
+        ],
+        "picked": [
+          "browser_login",
+          "browser_session_status",
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3469.0,
+        "raw": "[\n  {\n    \"tool\": \"browser_login\",\n    \"args\": {\n      \"url\": \"https://example.com/signin\",\n      \"username\": \"provided_account\",\n      \"password\": \"provided_password\"\n    },\n    \"reason\": \"Log in once with the supplied credentials so the session (cookies/localStorage) is stored for the origin, satisfying the core task of authenticating and saving the session.\"\n  },\n  {\n    \"tool\": \"browser_session_status\",\n    \"args\": {\n      \"url\": \"https://example.com/signin\"\n    },\n    \"reason\": \"Confirm the reusable authenticated session exists for the origin (age, expiry, cookie count) without exposing s"
+      },
+      {
+        "id": "c075",
+        "split": "validation",
+        "group": "login",
+        "expected": [
+          "browser_login"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_login",
+          "browser_session_status",
+          "browser_crawl",
+          "api_discovery"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3218.2,
+        "raw": "[\n  {\n    \"tool\": \"browser_navigate\",\n    \"args\": {\n      \"url\": \"https://example.com/auth\",\n      \"use_session\": false\n    },\n    \"reason\": \"Recon step: load the login page to capture its title, text, links and form fields (including the username/password/submit selectors) before attempting login.\"\n  },\n  {\n    \"tool\": \"browser_login\",\n    \"args\": {\n      \"url\": \"https://example.com/auth\",\n      \"username\": \"test_account\",\n      \"password\": \"test_password\"\n    },\n    \"reason\": \"Authenticate with the authorized test account using default selectors so later authenticated recon calls reuse the s"
+      },
+      {
+        "id": "c076",
+        "split": "validation",
+        "group": "login",
+        "expected": [
+          "browser_login"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_login",
+          "browser_session_status",
+          "browser_crawl",
+          "api_discovery"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3400.0,
+        "raw": "[\n  {\n    \"tool\": \"browser_navigate\",\n    \"args\": {\n      \"url\": \"https://example.com/admin/login\",\n      \"use_session\": false\n    },\n    \"reason\": \"Recon the login page: capture title, text, links and form fields to identify the username/password selectors and any hidden parameters before authenticating.\"\n  },\n  {\n    \"tool\": \"browser_login\",\n    \"args\": {\n      \"url\": \"https://example.com/admin/login\",\n      \"username\": \"test_account\",\n      \"password\": \"test_password\"\n    },\n    \"reason\": \"Log in with the provided test account using default selectors so a reusable session is stored for the "
+      },
+      {
+        "id": "c077",
+        "split": "validation",
+        "group": "login",
+        "expected": [
+          "browser_login"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_login",
+          "browser_session_status",
+          "browser_crawl",
+          "api_discovery"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3155.5,
+        "raw": "[\n  {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/login\", \"use_session\": false}, \"reason\": \"Recon the login page to identify form fields, selectors, and any CSRF tokens before attempting authentication.\"},\n  {\"tool\": \"browser_login\", \"args\": {\"url\": \"https://example.com/login\", \"username\": \"$step:0\", \"password\": \"$step:0\"}, \"reason\": \"Establish an authenticated session for the target origin; credentials must be supplied by the user, not derived from page content.\"},\n  {\"tool\": \"browser_session_status\", \"args\": {\"url\": \"https://example.com/login\"}, \"reason\": \"Verify the stor"
+      },
+      {
+        "id": "c078",
+        "split": "validation",
+        "group": "login",
+        "expected": [
+          "browser_login"
+        ],
+        "picked": [
+          "browser_login",
+          "browser_session_status",
+          "browser_crawl",
+          "api_discovery",
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3962.5,
+        "raw": "[\n  {\n    \"tool\": \"browser_login\",\n    \"args\": {\n      \"url\": \"https://example.com/portal\",\n      \"username\": \"test_account\",\n      \"password\": \"test_password\"\n    },\n    \"reason\": \"Authenticate with the authorized test account so the session (cookies/localStorage) is stored for the target origin, enabling authenticated recon.\"\n  },\n  {\n    \"tool\": \"browser_session_status\",\n    \"args\": {\n      \"url\": \"https://example.com/portal\"\n    },\n    \"reason\": \"Confirm the reusable authenticated session exists (age, expiry, cookie count) before relying on it for crawl and probes.\"\n  },\n  {\n    \"tool\": \"b"
+      },
+      {
+        "id": "c079",
+        "split": "validation",
+        "group": "xss",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2930.1,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/search?q=test\"}, \"reason\": \"Reconnaissance: load the search page to confirm the q parameter is reflected and capture baseline page content, forms and links before probing.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/search?q=test\", \"param\": \"q\", \"use_session\": true}, \"reason\": \"Inject XSS payloads into the q parameter and observe whether the browser actually executes them; reflection alone is treated as a lead, not a confirmed finding.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example."
+      },
+      {
+        "id": "c080",
+        "split": "validation",
+        "group": "xss",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 3079.8,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/page?name=x\", \"use_session\": true}, \"reason\": \"先访问目标页面，确认页面结构、表单与参数，并观察 name 参数是否被原样回显，作为后续 XSS 测试的基线。\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/page?name=x\", \"param\": \"name\", \"use_session\": true}, \"reason\": \"针对 name 参数注入 XSS 载荷，验证输入是否被原样输出并在浏览器中执行；仅反射会作为线索而非确认漏洞。\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/page?name=x\", \"use_session\": true}, \"reason\": \"对测试结果页面截图，保存可复核的证据工件，用于确认反射/执行现象。\"}]"
+      },
+      {
+        "id": "c081",
+        "split": "validation",
+        "group": "xss",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss",
+          "browser_crawl",
+          "browser_check_xss",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3575.1,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/echo?msg=hi\"}, \"reason\": \"Reconnaissance: confirm the target page loads, capture title/forms/links, and verify the msg parameter is reflected in the response before probing.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/echo?msg=hi\", \"param\": \"msg\", \"use_session\": true}, \"reason\": \"Primary test: inject XSS payloads into the msg query parameter and observe whether the browser actually executes them; reflection alone is treated as a lead, not a confirmed finding.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\""
+      },
+      {
+        "id": "c082",
+        "split": "validation",
+        "group": "xss",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2365.8,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/list?kw=abc\"}, \"reason\": \"Recon the target page to confirm the kw query parameter is reflected and capture baseline page structure before probing.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/list?kw=abc\", \"param\": \"kw\", \"use_session\": true}, \"reason\": \"Inject XSS payloads into the kw query parameter and observe whether the browser actually executes them, collecting request/response evidence.\"}]"
+      },
+      {
+        "id": "c083",
+        "split": "validation",
+        "group": "xss",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 3186.6,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/result?q=1\", \"use_session\": true}, \"reason\": \"Recon the target page to confirm the q parameter is reflected and capture baseline page structure before probing.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/result?q=1\", \"param\": \"q\", \"use_session\": true}, \"reason\": \"Inject XSS payloads into the q parameter and observe whether the browser executes them, verifying whether user input is properly escaped.\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/result?q=1\", \"use_session\": true},"
+      },
+      {
+        "id": "c084",
+        "split": "validation",
+        "group": "xss",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss",
+          "browser_crawl",
+          "browser_check_xss",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3611.1,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/comment?text=hi\"}, \"reason\": \"Recon the target page to confirm the comment parameter is reflected and capture baseline response material before probing.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/comment?text=hi\", \"param\": \"text\", \"use_session\": true}, \"reason\": \"Inject XSS payloads into the text parameter and observe whether the browser actually executes them, distinguishing reflection leads from confirmed XSS.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/comment?text=hi\", \"max_p"
+      },
+      {
+        "id": "c085",
+        "split": "validation",
+        "group": "api",
+        "expected": [
+          "api_discovery"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_navigate",
+          "browser_check_xss"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 2911.3,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Recon the homepage to capture links, forms and scripts that reveal the API surface before deeper enumeration.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate endpoints, query parameters and forms across pages for later probing.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Read any published OpenAPI/Swagger spec to enumerate documented e"
+      },
+      {
+        "id": "c086",
+        "split": "validation",
+        "group": "api",
+        "expected": [
+          "api_discovery"
+        ],
+        "picked": [
+          "browser_navigate",
+          "api_discovery",
+          "browser_crawl",
+          "browser_navigate",
+          "browser_navigate"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3162.5,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": false}, \"reason\": \"Recon the homepage to capture links and forms that may point to API documentation paths.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Attempt to read a published OpenAPI/Swagger spec at the target to enumerate exposed API endpoints and parameters.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 30, \"max_depth\": 2, \"use_session\": false}, \"reason\": \"Bounded same-origin crawl to discover documentation links such as /swagger, /op"
+      },
+      {
+        "id": "c087",
+        "split": "validation",
+        "group": "api",
+        "expected": [
+          "api_discovery"
+        ],
+        "picked": [
+          "api_discovery",
+          "browser_crawl",
+          "browser_navigate",
+          "browser_check_xss"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3040.5,
+        "raw": "[{\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/api\"}, \"reason\": \"First enumerate the published API surface (endpoints, methods, parameter names) from the OpenAPI/Swagger spec to build the callable backend interface inventory.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/api\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to capture forms, query parameters and script-referenced endpoints that the spec may omit, expanding the endpoint inventory.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com"
+      },
+      {
+        "id": "c088",
+        "split": "validation",
+        "group": "api",
+        "expected": [
+          "api_discovery"
+        ],
+        "picked": [
+          "browser_navigate",
+          "api_discovery",
+          "browser_crawl",
+          "api_discovery"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2813.4,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/docs\"}, \"reason\": \"Recon the docs page to find links or references to Swagger/OpenAPI specs before fetching them.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/docs\"}, \"reason\": \"Attempt to read a published OpenAPI/Swagger spec at the docs URL and enumerate endpoints, methods and parameters.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/docs\", \"max_pages\": 20, \"max_depth\": 2}, \"reason\": \"Bounded same-origin crawl to locate spec files (swagger.json, openapi.yaml, /api-docs) linked from the"
+      },
+      {
+        "id": "c089",
+        "split": "validation",
+        "group": "api",
+        "expected": [
+          "api_discovery"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_navigate"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2517.2,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Recon the homepage to capture title, links, forms and scripts as the starting point for endpoint enumeration.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate pages, forms, query parameters and script-referenced endpoints across the site.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Read any published OpenAPI/Swagger spec to collect docu"
+      },
+      {
+        "id": "c090",
+        "split": "validation",
+        "group": "api",
+        "expected": [
+          "api_discovery"
+        ],
+        "picked": [
+          "api_discovery",
+          "browser_navigate",
+          "browser_crawl",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2724.7,
+        "raw": "[{\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/v1\"}, \"reason\": \"Read the published OpenAPI/Swagger spec at the target base URL to enumerate endpoints, methods and parameter names as the foundation of the API surface map.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/v1\", \"use_session\": false}, \"reason\": \"Inspect the base API URL directly to capture any spec links, docs UI, or error responses that api_discovery may have missed.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/v1\", \"max_pages\": 25, \"max_depth\": 2, \"use_session\": false}, \"r"
+      },
+      {
+        "id": "c091",
+        "split": "test",
+        "group": "report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2247.0,
+        "raw": "[{\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"将 Nmap XML 扫描报告转换为面向管理层的可读摘要，提取关键发现、暴露端口和优先行动项\"}]\n"
+      },
+      {
+        "id": "c092",
+        "split": "test",
+        "group": "report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2558.2,
+        "raw": "[{\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"解析 Nessus XML 报告，提取关键发现、暴露端口与按优先级排序的行动项，作为解释最高风险条目的基础。\"}]"
+      },
+      {
+        "id": "c093",
+        "split": "test",
+        "group": "report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2254.6,
+        "raw": "[{\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"将扫描报告文本转换为管理层可读的摘要，提取关键发现、暴露端口和优先处置项，从而回答“扫描结果说明什么问题”。\"}]"
+      },
+      {
+        "id": "c094",
+        "split": "test",
+        "group": "report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 1915.4,
+        "raw": "[{\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"将 Nmap 文本扫描输出转换为面向管理层的执行摘要，提取关键发现、暴露端口和优先行动项\"}]"
+      },
+      {
+        "id": "c095",
+        "split": "test",
+        "group": "report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "browser_navigate",
+          "report_explainer"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2985.5,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"nessus-html-output\"}, \"reason\": \"加载 Nessus HTML 报告页面，读取其文本内容以定位高危（Critical/High）条目\"}, {\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\"}, \"reason\": \"将 Nessus 报告内容解析为摘要，提取 Critical/High 高危项与暴露端口，并给出优先级建议\"}]"
+      },
+      {
+        "id": "c096",
+        "split": "test",
+        "group": "report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "report_explainer",
+          "browser_navigate",
+          "shell_exec"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2823.4,
+        "raw": "[{\"tool\": \"report_explainer\", \"args\": {\"content\": \"scan-xml-output\", \"provider\": \"local\"}, \"reason\": \"Parse the scan XML report and extract the vulnerability list with critical findings and prioritized items as the basis for the inventory.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"scan-xml-output\", \"use_session\": false}, \"reason\": \"Attempt to read the report location directly if it is a URL, to confirm the raw findings and capture evidence.\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"nmap --version\", \"timeout\": 60}, \"reason\": \"Verify the sandbox tooling is available in case the repor"
+      },
+      {
+        "id": "c097",
+        "split": "test",
+        "group": "rule",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "rule_generator",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2635.2,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"trojan-ioc-1\", \"ioc_type\": \"auto\"}, \"reason\": \"Enrich the supplied trojan IOC to obtain concrete indicators (hashes, domains, IPs, tags) needed as inputs for rule generation.\"}, {\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Generate YARA rules for trojan IOC 'trojan-ioc-1' using enrichment data: $prev\", \"rule_type\": \"yara\", \"provider\": \"local\"}, \"reason\": \"Produce linted YARA detection rules from the enriched IOC description.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"trojan-ioc-1\", \"detected_type\": \"auto\", \"enrichment\": \"$step:0"
+      },
+      {
+        "id": "c098",
+        "split": "test",
+        "group": "rule",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "rule_generator",
+          "rule_generator",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 4013.8,
+        "raw": "[{\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect SQL injection payload patterns in HTTP requests: UNION SELECT statements, boolean-based tautologies (OR 1=1, ' OR '1'='1), stacked queries with semicolons, time-based functions (SLEEP, BENCHMARK, pg_sleep, WAITFOR DELAY), information_schema and system table enumeration, comment terminators (--, #, /**/), and common SQLi encodings in URI, User-Agent and POST bodies\", \"rule_type\": \"suricata\", \"provider\": \"local\"}, \"reason\": \"Generate the Suricata rules for the SQLi payload pattern from the natural-language detection requirement; output "
+      },
+      {
+        "id": "c099",
+        "split": "test",
+        "group": "rule",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "rule_generator"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2437.8,
+        "raw": "[{\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect C2 beaconing traffic patterns: periodic HTTP/HTTPS callbacks to a command-and-control server, including regular-interval small requests, common beacon URI patterns, and suspicious User-Agent strings\", \"rule_type\": \"snort\", \"provider\": \"local\"}, \"reason\": \"Generate a Snort rule for the c2-beacon-pattern detection requirement, with structural linting of the output.\"}]"
+      },
+      {
+        "id": "c100",
+        "split": "test",
+        "group": "rule",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "rule_generator",
+          "rule_generator",
+          "rule_generator",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 3834.6,
+        "raw": "[{\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect reflected XSS attack payloads in HTTP requests: script tags, event handlers (onerror/onload/onmouseover), javascript: URIs, document.cookie access, alert()/prompt() calls, and encoded variants such as %3Cscript%3E or &#x3C;script&#x3E; in query strings and POST bodies\", \"rule_type\": \"suricata\"}, \"reason\": \"Generate a Suricata IDS rule set from the described XSS payload pattern, with structural linting of the output\"}, {\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect reflected XSS payload patterns in HTTP traffic: <script> ta"
+      },
+      {
+        "id": "c101",
+        "split": "test",
+        "group": "rule",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report",
+          "rule_generator",
+          "rule_generator",
+          "rule_generator"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 4230.4,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"malicious-domain.com\", \"ioc_type\": \"domain\"}, \"reason\": \"Enrich the target domain with threat intelligence to ground detection rules in real indicators, tags, and verdict data.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"malicious-domain.com\", \"detected_type\": \"domain\", \"enrichment\": \"$prev\"}, \"reason\": \"Produce a Chinese-language threat intelligence assessment report from the enrichment data for the final deliverable.\"}, {\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect DNS queries, HTTP Host headers, and TLS SNI values refere"
+      },
+      {
+        "id": "c102",
+        "split": "test",
+        "group": "rule",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "rule_generator",
+          "rule_generator",
+          "rule_generator",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 4285.2,
+        "raw": "[{\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect ransomware behavior: mass file encryption and extension changes, deletion of shadow copies (vssadmin delete shadows), disabling of recovery/backup services, ransom note creation (README/DECRYPT/HOW_TO_RESTORE files), rapid file rename/write bursts, and process command lines invoking bcdedit recoveryenabled no or wbadmin delete catalog\", \"rule_type\": \"yara\", \"provider\": \"local\"}, \"reason\": \"Generate deployable YARA detection rules for ransomware file and artifact behavior, with structural linting.\"}, {\"tool\": \"rule_generator\", \"args\": "
+      },
+      {
+        "id": "c103",
+        "split": "test",
+        "group": "shell",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "browser_navigate",
+          "shell_exec",
+          "report_explainer"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2948.3,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local\"}, \"reason\": \"Reconnaissance of the target site to confirm it is reachable and identify the actual host/IP and any links or forms before port scanning.\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"nmap -sT -sV -Pn -T3 --top-ports 1000 test.local\", \"timeout\": 300}, \"reason\": \"Run an approved nmap TCP connect scan with service/version detection against the target host to enumerate open ports.\"}, {\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\"}, \"reason\": \"Convert the raw nmap output into a prioritized summary of exposed "
+      },
+      {
+        "id": "c104",
+        "split": "test",
+        "group": "shell",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "shell_exec",
+          "browser_check_xss"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3014.6,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Confirm the target is reachable and capture baseline page content, links and forms before any active probing.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 25, \"max_depth\": 2}, \"reason\": \"Enumerate same-origin endpoints, forms, query parameters and scripts to build a concrete attack surface for vulnerability checks.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Discover any published OpenAPI/Swagger spec to identify API endpoints and parameters f"
+      },
+      {
+        "id": "c105",
+        "split": "test",
+        "group": "shell",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "shell_exec",
+          "api_discovery",
+          "browser_check_xss"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3025.6,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Reconnaissance of the target homepage to confirm reachability and collect baseline links/forms before enumeration.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 50, \"max_depth\": 2}, \"reason\": \"Bounded same-origin crawl to discover real endpoints, forms and query parameters so directory enumeration and later probes use actual paths.\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"ffuf -u https://example.com/FUZZ -w /usr/share/wordlists/dirb/common.txt -mc 200,204,301,302,403 -t 20 "
+      },
+      {
+        "id": "c106",
+        "split": "test",
+        "group": "shell",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "shell_exec",
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3246.1,
+        "raw": "[{\"tool\": \"shell_exec\", \"args\": {\"command\": \"whatweb --color=never -a 3 https://example.com\", \"timeout\": 120}, \"reason\": \"Run whatweb fingerprinting against the target as requested by the task\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": false}, \"reason\": \"Corroborate whatweb output with page title, links and forms for a fuller fingerprint\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 20, \"max_depth\": 2, \"use_session\": false}, \"reason\": \"Bounded same-origin crawl to enumerate additional endpoints and parameters for lat"
+      },
+      {
+        "id": "c107",
+        "split": "test",
+        "group": "shell",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "shell_exec",
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3232.7,
+        "raw": "[{\"tool\": \"shell_exec\", \"args\": {\"command\": \"nikto -h https://example.com -Tuning 123bde -nointeractive -maxtime 120s\", \"timeout\": 300}, \"reason\": \"Run nikto against the target to enumerate common misconfigurations, default files, and server configuration issues as requested.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": false}, \"reason\": \"Capture the homepage title, text, links and forms to corroborate nikto findings and identify real endpoints for follow-up checks.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 25, \"ma"
+      },
+      {
+        "id": "c108",
+        "split": "test",
+        "group": "shell",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "shell_exec",
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_check_xss"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3078.3,
+        "raw": "[{\"tool\": \"shell_exec\", \"args\": {\"command\": \"semgrep --config auto --json https://example.com\", \"timeout\": 300}, \"reason\": \"任务要求运行 semgrep 静态扫描；在隔离沙箱中执行 semgrep 并输出 JSON 结果\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": false}, \"reason\": \"semgrep 针对 URL 无法直接扫描源码，先导航目标页面获取标题、链接和表单，作为侦察补充\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 20, \"max_depth\": 2, \"use_session\": false}, \"reason\": \"在限定预算内同源爬取，枚举表单、查询参数和脚本，形成后续测试的攻击面清单\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"读取已发布的 OpenAPI/Swagge"
+      },
+      {
+        "id": "c109",
+        "split": "test",
+        "group": "amb_content_vs_endpoint",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2269.0,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/about\", \"use_session\": true}, \"reason\": \"Fetch the target page and capture its title, text content, links and forms — this directly satisfies the request to read the page body.\"}]"
+      },
+      {
+        "id": "c110",
+        "split": "test",
+        "group": "amb_content_vs_endpoint",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_check_xss",
+          "sqli_probe"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 2968.0,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/about\", \"use_session\": true}, \"reason\": \"Baseline recon of the target page to capture title, links, forms and query parameters before crawling.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com/about\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate all reachable pages, forms, query parameters and scripts as the attack surface.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/about\"}, \"reason\": \"Check for a published OpenAPI/Swagger spec t"
+      },
+      {
+        "id": "c111",
+        "split": "test",
+        "group": "amb_content_vs_endpoint",
+        "expected": [
+          "browser_navigate"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2272.4,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/faq\"}, \"reason\": \"读取目标 FAQ 页面的标题、正文文字、链接与表单，满足用户读取页面文字的需求\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"url\": \"https://example.com/faq\"}, \"reason\": \"留存页面视觉证据，便于核对文字内容与页面渲染一致性\"}]"
+      },
+      {
+        "id": "c112",
+        "split": "test",
+        "group": "amb_content_vs_endpoint",
+        "expected": [
+          "browser_crawl"
+        ],
+        "picked": [
+          "browser_crawl",
+          "api_discovery",
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2826.7,
+        "raw": "[{\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 100, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate pages, forms, query parameters and scripts across the site as the recon foundation.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Read any published OpenAPI/Swagger spec to capture API endpoints and parameter names that the crawl may miss.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Inspect the homepage content and links to confirm "
+      },
+      {
+        "id": "c113",
+        "split": "test",
+        "group": "amb_code_vs_url",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "code_auditor",
+          "read_source",
+          "code_auditor",
+          "sqli_probe",
+          "shell_exec"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3225.1,
+        "raw": "[{\"tool\": \"code_auditor\", \"args\": {\"code\": \"cursor.execute(f\\\"SELECT * FROM u WHERE id={uid}\\\")\", \"language\": \"python\"}, \"reason\": \"审计目标代码片段，确认 f-string 拼接 SQL 的注入风险与数据流\"}, {\"tool\": \"read_source\", \"args\": {\"path\": \".\"}, \"reason\": \"读取源码上下文，定位 uid 的来源、调用链与是否已有参数化/校验\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\"}, \"reason\": \"对完整源码做二次审计，识别其他注入点与可利用路径\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"$step:1\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"在真实端点上对 id 参数做 SQL 注入探测，验证错误型/布尔型信号\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"sqlmap -u \\\"$step:1\\\" --batch --level=2 --"
+      },
+      {
+        "id": "c114",
+        "split": "test",
+        "group": "amb_code_vs_url",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "browser_check_xss",
+          "lfi_probe"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3085.4,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/item?id=1\"}, \"reason\": \"Reconnaissance: confirm the page loads, capture forms/links and verify the id parameter is actually reflected/used before probing.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"https://example.com/item?id=1\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"Primary test: probe the id query parameter for error-based and boolean-based SQL injection signals (requires two agreeing signals for confirmation).\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/item?id=1\", \"param\": \"id\", \"use_session\""
+      },
+      {
+        "id": "c115",
+        "split": "test",
+        "group": "amb_code_vs_url",
+        "expected": [
+          "code_auditor"
+        ],
+        "picked": [
+          "code_auditor",
+          "read_source",
+          "code_auditor",
+          "api_discovery",
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3200.8,
+        "raw": "[{\"tool\": \"code_auditor\", \"args\": {\"code\": \"def remove(user_id):\\n    db.delete(user_id)\", \"language\": \"python\"}, \"reason\": \"Review the provided source snippet for broken access control / missing authorization checks before any dynamic testing.\"}, {\"tool\": \"read_source\", \"args\": {\"path\": \".\"}, \"reason\": \"Read surrounding source files to find the route/handler that calls remove() and confirm whether ownership or role checks exist.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\"}, \"reason\": \"Audit the broader source context to verify the authorization gap flagged in th"
+      },
+      {
+        "id": "c116",
+        "split": "test",
+        "group": "amb_code_vs_url",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "api_discovery",
+          "sqli_probe",
+          "lfi_probe",
+          "browser_check_xss",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3160.0,
+        "raw": "[{\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com/api/user?id=5\"}, \"reason\": \"Discover the API surface and confirm the id parameter's declared type and endpoint context before probing.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"https://example.com/api/user\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"Probe the id parameter for SQL injection using error-based and boolean-based signals, requiring two agreeing signals.\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"https://example.com/api/user\", \"param\": \"id\"}, \"reason\": \"Check whether the same parameter is vulnerable to path traversal/"
+      },
+      {
+        "id": "c117",
+        "split": "test",
+        "group": "amb_intel_pair",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2188.7,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"2.2.2.2\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP with AbuseIPDB and AlienVault OTX to obtain reputation scores, tags and verdict for the recon task.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"2.2.2.2\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment data.\"}]"
+      },
+      {
+        "id": "c118",
+        "split": "test",
+        "group": "amb_intel_pair",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2340.0,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"3.3.3.3\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP 3.3.3.3 with AbuseIPDB and AlienVault OTX data as the evidence base for the intelligence assessment report.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"3.3.3.3\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment results, fulfilling the report task.\"}]"
+      },
+      {
+        "id": "c119",
+        "split": "test",
+        "group": "amb_intel_pair",
+        "expected": [
+          "threat_intel_enrich"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report",
+          "browser_navigate"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2628.4,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"suspicious-site.com\", \"ioc_type\": \"domain\"}, \"reason\": \"查询该域名的威胁情报信誉数据（AbuseIPDB/OTX 评分、标签、判定）\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"suspicious-site.com\", \"detected_type\": \"domain\", \"enrichment\": \"$prev\"}, \"reason\": \"基于上一步的富化数据生成中文威胁情报评估报告\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://suspicious-site.com\", \"use_session\": false}, \"reason\": \"被动访问目标页面，收集标题、文本与链接以补充信誉判断（不进行任何注入或攻击性探测）\"}]"
+      },
+      {
+        "id": "c120",
+        "split": "test",
+        "group": "amb_intel_pair",
+        "expected": [
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2365.8,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"8.8.4.4\", \"ioc_type\": \"ip\"}, \"reason\": \"Enrich the target IP 8.8.4.4 with AbuseIPDB and OTX data to obtain reputation scores, tags, and verdict as the evidence base for the assessment report.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"8.8.4.4\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment output, which is the core deliverable of this report task.\"}]"
+      },
+      {
+        "id": "c121",
+        "split": "test",
+        "group": "amb_rule_vs_report",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "report_explainer",
+          "rule_generator",
+          "rule_generator"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 3526.8,
+        "raw": "[{\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Parse the Nmap XML scan report into a structured summary of exposed ports and critical findings, which is the input needed to derive detection requirements.\"}, {\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect network reconnaissance and exploitation attempts against the services and open ports identified in the Nmap scan report summary: $prev\", \"rule_type\": \"suricata\", \"provider\": \"local\"}, \"reason\": \"Generate linted Suricata detection rules from the scan-derived requirements so the exposed ser"
+      },
+      {
+        "id": "c122",
+        "split": "test",
+        "group": "amb_rule_vs_report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2502.9,
+        "raw": "[{\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\"}, \"reason\": \"The task is to interpret an Nmap XML scan report; report_explainer converts Nmap/Nessus output into a structured summary of critical findings, exposed ports and prioritized actions. The report content must be supplied as data (from the task block or a prior read step), not treated as instructions.\"}]"
+      },
+      {
+        "id": "c123",
+        "split": "test",
+        "group": "amb_probe_family",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "browser_check_xss",
+          "lfi_probe",
+          "ssrf_probe"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3186.3,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/item?id=1\"}, \"reason\": \"Reconnaissance: confirm the endpoint is reachable, capture baseline response and page structure before probing the id parameter.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"http://test.local/item\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"Primary test for the user's question: probe the id parameter for SQL injection using error-based and boolean-based signals (requires two agreeing signals).\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"http://test.local/item?id=1\", \"param\": \"id\"}, \"reason\": \"Check w"
+      },
+      {
+        "id": "c124",
+        "split": "test",
+        "group": "amb_probe_family",
+        "expected": [
+          "lfi_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "lfi_probe",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3022.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/dl?f=a.txt\"}, \"reason\": \"Baseline: confirm the download endpoint works and record normal response for comparison\"}, {\"tool\": \"lfi_probe\", \"args\": {\"url\": \"http://test.local/dl\", \"param\": \"f\"}, \"reason\": \"Probe the f parameter with traversal payloads to test for directory traversal / LFI\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/dl?f=../../../../etc/passwd\"}, \"reason\": \"Manual confirmation with a concrete traversal payload to verify file markers in the response\"}, {\"tool\": \"browser_screenshot\", \"args\": {\"u"
+      },
+      {
+        "id": "c125",
+        "split": "test",
+        "group": "amb_probe_family",
+        "expected": [
+          "ssrf_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "ssrf_probe",
+          "browser_navigate",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3063.4,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/p?u=http://127.0.0.1\", \"use_session\": true}, \"reason\": \"Recon the target page to confirm the u parameter is reflected/used and capture baseline response for comparison\"}, {\"tool\": \"ssrf_probe\", \"args\": {\"url\": \"http://test.local/p\", \"param\": \"u\"}, \"reason\": \"Probe the URL-valued u parameter for SSRF by injecting internal destinations and checking for upstream connection errors or metadata content absent from baseline\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/p?u=http://169.254.169.254/latest/meta-data/\", "
+      },
+      {
+        "id": "c126",
+        "split": "test",
+        "group": "amb_probe_family",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 2537.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"http://test.local/s?q=1\", \"use_session\": true}, \"reason\": \"先访问目标搜索页，确认页面结构、表单与参数，作为反射型 XSS 测试的基线。\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"http://test.local/s?q=1\", \"param\": \"q\", \"use_session\": true}, \"reason\": \"向 q 参数注入 XSS 载荷，观察浏览器是否实际执行脚本，以验证搜索框是否原样输出并触发脚本。\"}]"
+      },
+      {
+        "id": "c127",
+        "split": "test",
+        "group": "amb_shell_vs_probe",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "shell_exec",
+          "browser_navigate",
+          "api_discovery",
+          "browser_crawl",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 2777.7,
+        "raw": "[{\"tool\": \"shell_exec\", \"args\": {\"command\": \"nmap -sV -Pn --top-ports 1000 example.com\", \"timeout\": 300}, \"reason\": \"Run the requested port scan against the target host in the sandbox to enumerate open services.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Recon the web target to identify links, forms and parameters for follow-up testing.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Discover any published API surface and parameter names to scope authorization testing.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://"
+      },
+      {
+        "id": "c128",
+        "split": "test",
+        "group": "amb_shell_vs_probe",
+        "expected": [
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_navigate",
+          "sqli_probe",
+          "browser_check_xss",
+          "lfi_probe"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2871.3,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/item?id=9\"}, \"reason\": \"Reconnaissance: confirm the endpoint is reachable and observe baseline behavior of the id parameter before probing.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"https://example.com/item?id=9\", \"param\": \"id\", \"method\": \"GET\"}, \"reason\": \"Primary check: probe the id parameter for SQL injection using error-based and boolean-based signals (requires two agreeing signals).\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/item?id=9\", \"param\": \"id\"}, \"reason\": \"Secondary check: test whether th"
+      },
+      {
+        "id": "c129",
+        "split": "test",
+        "group": "amb_shell_vs_probe",
+        "expected": [
+          "shell_exec"
+        ],
+        "picked": [
+          "shell_exec",
+          "browser_navigate",
+          "api_discovery",
+          "browser_crawl",
+          "browser_check_xss"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3297.9,
+        "raw": "[{\"tool\": \"shell_exec\", \"args\": {\"command\": \"nuclei -u https://example.com -severity critical,high,medium -rl 50 -timeout 10 -stats -o /tmp/nuclei_example.json -jsonl\", \"timeout\": 300}, \"reason\": \"Run nuclei template-based detection against the authorized target with rate limiting and JSONL output for evidence.\"}, {\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Capture baseline page title, links and forms to correlate nuclei findings with actual reachable surface.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Check for a publish"
+      },
+      {
+        "id": "c130",
+        "split": "test",
+        "group": "amb_shell_vs_probe",
+        "expected": [
+          "browser_check_xss"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_check_xss",
+          "browser_screenshot"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 2,
+        "elapsed_ms": 2731.9,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com/s?q=x\"}, \"reason\": \"Establish a baseline: confirm the search endpoint responds, capture the page title/forms/links, and see how the q parameter is reflected before injecting anything.\"}, {\"tool\": \"browser_check_xss\", \"args\": {\"url\": \"https://example.com/s?q=x\", \"param\": \"q\", \"use_session\": true}, \"reason\": \"Run the actual reflected XSS test on the q parameter, injecting payloads and observing whether the browser executes them; reflection alone is treated as a lead, not a confirmed finding.\"}, {\"tool\": \"browser_screenshot\", \"arg"
+      },
+      {
+        "id": "c131",
+        "split": "test",
+        "group": "multi_read_audit",
+        "expected": [
+          "read_source",
+          "code_auditor"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor",
+          "shell_exec",
+          "shell_exec",
+          "sqli_probe"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3210.6,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/src/db.py\"}, \"reason\": \"Read the target source file first, as the task requires, to obtain the code for injection auditing.\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"Perform LLM-assisted source review of db.py to surface injection-related leads (SQL/command/path) with severity and fix suggestions.\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"bandit -r /app/src/db.py -f json\", \"timeout\": 300}, \"reason\": \"Independently verify the auditor's leads with a static analyzer (bandit) to "
+      },
+      {
+        "id": "c132",
+        "split": "test",
+        "group": "multi_read_audit",
+        "expected": [
+          "read_source",
+          "code_auditor"
+        ],
+        "picked": [
+          "read_source",
+          "code_auditor",
+          "shell_exec",
+          "shell_exec",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 2986.7,
+        "raw": "[{\"tool\": \"read_source\", \"args\": {\"path\": \"/app/config/secret.py\"}, \"reason\": \"读取目标配置文件内容，作为硬编码密钥检查的输入\"}, {\"tool\": \"code_auditor\", \"args\": {\"code\": \"$prev\", \"language\": \"python\", \"provider\": \"local\"}, \"reason\": \"对读取到的配置源码进行审查，识别硬编码密钥/凭据等敏感信息线索\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"semgrep --config p/secrets /app/config/secret.py\", \"timeout\": 300}, \"reason\": \"使用 semgrep 密钥规则独立验证是否存在硬编码密钥，避免仅依赖模型判断\"}, {\"tool\": \"shell_exec\", \"args\": {\"command\": \"bandit -q -t B105,B106,B107 /app/config/secret.py\", \"timeout\": 300}, \"reason\": \"使用 bandit 硬编码密码/密钥检测规则交叉验证发现\"}, {\"tool\": \"report_explainer\", \"ar"
+      },
+      {
+        "id": "c133",
+        "split": "test",
+        "group": "multi_intel_then_report",
+        "expected": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "picked": [
+          "threat_intel_enrich",
+          "threat_intel_report"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2256.6,
+        "raw": "[{\"tool\": \"threat_intel_enrich\", \"args\": {\"ioc\": \"5.5.5.5\", \"ioc_type\": \"auto\"}, \"reason\": \"Enrich the target IP with AbuseIPDB and AlienVault OTX data as the first step of the requested intelligence enrichment.\"}, {\"tool\": \"threat_intel_report\", \"args\": {\"ioc\": \"5.5.5.5\", \"detected_type\": \"ip\", \"enrichment\": \"$prev\", \"provider\": \"local\"}, \"reason\": \"Generate the Chinese-language threat intelligence assessment report from the enrichment results, fulfilling the report task.\"}]"
+      },
+      {
+        "id": "c134",
+        "split": "test",
+        "group": "multi_crawl_then_probe",
+        "expected": [
+          "browser_crawl",
+          "sqli_probe"
+        ],
+        "picked": [
+          "browser_crawl",
+          "api_discovery",
+          "sqli_probe",
+          "browser_check_xss",
+          "lfi_probe"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 3,
+        "elapsed_ms": 3041.5,
+        "raw": "[{\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 50, \"max_depth\": 3, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate pages, forms, query parameters and scripts as the attack surface for later probing.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Read any published OpenAPI/Swagger spec to enumerate API endpoints, methods and parameter names that the crawl may miss.\"}, {\"tool\": \"sqli_probe\", \"args\": {\"url\": \"$step:0\", \"param\": \"$prev\", \"method\": \"GET\"}, \"reason\": \"Probe a discovered query parameter for SQL i"
+      },
+      {
+        "id": "c135",
+        "split": "test",
+        "group": "multi_scan_then_rule",
+        "expected": [
+          "rule_generator"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "rule_generator",
+          "report_explainer"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 3827.0,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\", \"use_session\": true}, \"reason\": \"Reconnaissance of the target homepage to capture title, text, links and forms as the basis for the detection-rule report.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 20, \"max_depth\": 2, \"use_session\": true}, \"reason\": \"Bounded same-origin crawl to enumerate real endpoints, forms, query parameters and scripts so the generated rules target actual attack surface rather than just the homepage.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"},"
+      },
+      {
+        "id": "c136",
+        "split": "test",
+        "group": "multi_scan_then_report",
+        "expected": [
+          "report_explainer"
+        ],
+        "picked": [
+          "browser_navigate",
+          "browser_crawl",
+          "api_discovery",
+          "browser_check_xss",
+          "report_explainer"
+        ],
+        "top1_hit": false,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 4,
+        "elapsed_ms": 2940.8,
+        "raw": "[{\"tool\": \"browser_navigate\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Reconnaissance: capture the homepage title, text, links and forms to establish the attack surface before any probing.\"}, {\"tool\": \"browser_crawl\", \"args\": {\"url\": \"https://example.com\", \"max_pages\": 25, \"max_depth\": 2}, \"reason\": \"Bounded same-origin crawl to enumerate real endpoints, query parameters, forms and scripts for later checks.\"}, {\"tool\": \"api_discovery\", \"args\": {\"url\": \"https://example.com\"}, \"reason\": \"Check for a published OpenAPI/Swagger spec to map API endpoints and parameter names for authorizati"
+      },
+      {
+        "id": "c137",
+        "split": "test",
+        "group": "multi_explicit_shell",
+        "expected": [
+          "shell_exec",
+          "rule_generator"
+        ],
+        "picked": [
+          "shell_exec",
+          "report_explainer",
+          "rule_generator",
+          "rule_generator"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": false,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 1,
+        "elapsed_ms": 3123.7,
+        "raw": "[{\"tool\": \"shell_exec\", \"args\": {\"command\": \"nmap -sV -Pn -T3 --top-ports 1000 example.com\", \"timeout\": 300}, \"reason\": \"Run the requested nmap service/version scan against the target to collect open ports and service banners as the basis for detection rules.\"}, {\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\"}, \"reason\": \"Convert the raw nmap output into a structured summary of exposed ports and critical findings so the rule requirements are grounded in actual scan results.\"}, {\"tool\": \"rule_generator\", \"args\": {\"requirement\": \"Detect network reconnaissance and scanning activity again"
+      },
+      {
+        "id": "c138",
+        "split": "test",
+        "group": "multi_explicit_shell",
+        "expected": [
+          "shell_exec",
+          "report_explainer"
+        ],
+        "picked": [
+          "shell_exec",
+          "report_explainer"
+        ],
+        "top1_hit": true,
+        "covered": true,
+        "exact_plan": true,
+        "args_valid": true,
+        "attempts": 1,
+        "recovered": false,
+        "errors": [],
+        "extra_steps": 0,
+        "elapsed_ms": 2198.7,
+        "raw": "[{\"tool\": \"shell_exec\", \"args\": {\"command\": \"nuclei -u https://example.com -jsonl -silent\", \"timeout\": 300}, \"reason\": \"Run nuclei against the target to collect raw findings in JSONL format for later summarization.\"}, {\"tool\": \"report_explainer\", \"args\": {\"content\": \"$prev\"}, \"reason\": \"Convert the nuclei scan output into an executive summary with prioritized findings and action items.\"}]"
+      }
+    ]
+  ]
+}

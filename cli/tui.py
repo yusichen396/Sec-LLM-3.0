@@ -1,5 +1,6 @@
 """Textual TUI for Sec-LLM Agent — real-time agent monitoring terminal interface."""
 import asyncio
+import os
 from datetime import datetime
 
 from textual.app import App, ComposeResult
@@ -8,7 +9,18 @@ from textual.widgets import Header, Footer, Static, Input, Button, ListView, Lis
 from textual.screen import Screen
 from textual.binding import Binding
 
-API_BASE = "http://localhost:8000"
+API_BASE = os.environ.get("SEC_LLM_BASE_URL", "http://localhost:8000").rstrip("/")
+_TOKEN = os.environ.get("SEC_LLM_TOKEN")
+_SKILL_KEY = os.environ.get("SEC_LLM_SKILL_API_KEY")
+
+
+def _auth_headers() -> dict:
+    """TUI 与 CLI 使用同一套凭据；没有凭据时后端会返回 401。"""
+    if _TOKEN:
+        return {"Authorization": f"Bearer {_TOKEN}"}
+    if _SKILL_KEY:
+        return {"X-Skill-Api-Key": _SKILL_KEY}
+    return {}
 
 
 class AgentMonitorScreen(Screen):
@@ -78,6 +90,7 @@ class AgentMonitorScreen(Screen):
             async with httpx.AsyncClient(timeout=10) as client:
                 resp = await client.post(
                     f"{API_BASE}/api/agent/run",
+                    headers=_auth_headers(),
                     json={"target": target, "task_type": "web_scan", "provider": "local"},
                 )
                 if resp.status_code == 200:
@@ -95,7 +108,7 @@ class AgentMonitorScreen(Screen):
         import httpx
         try:
             async with httpx.AsyncClient(timeout=5) as client:
-                resp = await client.get(f"{API_BASE}/api/agent/{session_id}/status")
+                resp = await client.get(f"{API_BASE}/api/agent/{session_id}/status", headers=_auth_headers())
                 if resp.status_code == 200:
                     data = resp.json()
                     self.query_one("#status-text", Static).update(f"Status: {data['status']}")
@@ -121,7 +134,7 @@ class AgentMonitorScreen(Screen):
         self._log(f"[cyan]Streaming logs for {session_id}...[/cyan]")
         try:
             async with httpx.AsyncClient(timeout=None) as client:
-                async with client.stream("GET", f"{API_BASE}/api/agent/{session_id}/stream") as resp:
+                async with client.stream("GET", f"{API_BASE}/api/agent/{session_id}/stream", headers=_auth_headers()) as resp:
                     async for line in resp.aiter_lines():
                         if line.startswith("data: "):
                             try:

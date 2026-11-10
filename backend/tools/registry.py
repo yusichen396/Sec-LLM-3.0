@@ -39,6 +39,8 @@ def register_tool(
     description: str,
     category: str = "general",
     requires_provider: bool = True,
+    expects: str = "any",
+    accepts: str = "any",
 ):
     """Decorator to register a function as an agent-callable tool.
 
@@ -56,6 +58,8 @@ def register_tool(
             "category": category,
             "func": func,
             "requires_provider": requires_provider,
+            "expects": expects,
+            "accepts": accepts,
         }
         return func
 
@@ -99,4 +103,5 @@ async def invoke_tool(name: str, **kwargs) -> Any:
     tool = get_tool(name)
     if tool is None:
         raise ValueError(f"Unknown tool: {name}. Available: {list_tool_names()}")
+
     return await tool["func"](**kwargs)

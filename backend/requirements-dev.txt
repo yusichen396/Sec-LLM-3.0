@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8,<10
+# tests/test_agent_integration.py and test_agent_ui.py use @pytest.mark.asyncio
+pytest-asyncio>=0.23,<2

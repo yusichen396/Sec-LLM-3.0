@@ -1,0 +1,734 @@
+{
+  "name": "tool_selection_v2",
+  "notes": "70 条任务，覆盖 18 个工具。split 分 dev/validation/test，group 按工具族划分避免泄漏；ambiguous 组专门测同族歧义（两个工具都干得通，必须选对那个）。",
+  "cases": [
+    {
+      "id": "d01",
+      "split": "dev",
+      "group": "intel",
+      "task": "查一下 8.8.8.8 这个 IP 有没有恶意记录",
+      "target": "8.8.8.8",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "d02",
+      "split": "dev",
+      "group": "intel",
+      "task": "帮我富化域名 evil-login.example.com 的情报",
+      "target": "evil-login.example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "d03",
+      "split": "dev",
+      "group": "intel",
+      "task": "这个 MD5 哈希可疑，查一下它的情报",
+      "target": "44d88612fea8a8f36de82e1278abb02f",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "v01",
+      "split": "dev",
+      "group": "intel",
+      "task": "对 1.1.1.1 做情报富化",
+      "target": "1.1.1.1",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "t01",
+      "split": "dev",
+      "group": "intel",
+      "task": "判断这个域名是否被标记为恶意",
+      "target": "phish-example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "d04",
+      "split": "dev",
+      "group": "intel_pair",
+      "task": "针对 1.1.1.1 生成一份中文威胁情报评估报告",
+      "target": "1.1.1.1",
+      "task_type": "report",
+      "expected_tools": [
+        "threat_intel_report"
+      ]
+    },
+    {
+      "id": "d05",
+      "split": "dev",
+      "group": "intel_pair",
+      "task": "把这个 IOC 的研判结果写成报告",
+      "target": "evil.example.com",
+      "task_type": "report",
+      "expected_tools": [
+        "threat_intel_report"
+      ]
+    },
+    {
+      "id": "v02",
+      "split": "dev",
+      "group": "intel_pair",
+      "task": "输出一份威胁情报评估，针对 9.9.9.9",
+      "target": "9.9.9.9",
+      "task_type": "report",
+      "expected_tools": [
+        "threat_intel_report"
+      ]
+    },
+    {
+      "id": "t02",
+      "split": "dev",
+      "group": "intel_pair",
+      "task": "写一份 IOC 情报报告",
+      "target": "d41d8cd98f00b204e9800998ecf8427e",
+      "task_type": "report",
+      "expected_tools": [
+        "threat_intel_report"
+      ]
+    },
+    {
+      "id": "d06",
+      "split": "dev",
+      "group": "phish",
+      "task": "分析这封邮件是不是钓鱼邮件",
+      "target": "mail-raw-content",
+      "task_type": "recon",
+      "expected_tools": [
+        "phishing_analyzer"
+      ]
+    },
+    {
+      "id": "d07",
+      "split": "dev",
+      "group": "phish",
+      "task": "看看这封邮件的发件人和链接，判断钓鱼风险",
+      "target": "mail-raw-content-2",
+      "task_type": "recon",
+      "expected_tools": [
+        "phishing_analyzer"
+      ]
+    },
+    {
+      "id": "v03",
+      "split": "dev",
+      "group": "phish",
+      "task": "这封邮件可疑吗，帮我分析一下",
+      "target": "mail-raw-content-3",
+      "task_type": "recon",
+      "expected_tools": [
+        "phishing_analyzer"
+      ]
+    },
+    {
+      "id": "t03",
+      "split": "dev",
+      "group": "phish",
+      "task": "识别邮件中的钓鱼特征",
+      "target": "mail-raw-content-4",
+      "task_type": "recon",
+      "expected_tools": [
+        "phishing_analyzer"
+      ]
+    },
+    {
+      "id": "d08",
+      "split": "dev",
+      "group": "code",
+      "task": "审计这段 Python 代码里有没有注入漏洞",
+      "target": "def handler(req):\n    cur.execute(f\"SELECT * FROM t WHERE id={req.id}\")",
+      "task_type": "exploit",
+      "expected_tools": [
+        "code_auditor"
+      ]
+    },
+    {
+      "id": "d09",
+      "split": "dev",
+      "group": "code",
+      "task": "帮我做一次源码安全审计",
+      "target": "import os\nos.system(input())",
+      "task_type": "exploit",
+      "expected_tools": [
+        "code_auditor"
+      ]
+    },
+    {
+      "id": "v04",
+      "split": "dev",
+      "group": "code",
+      "task": "这段代码有什么安全问题",
+      "target": "password = \"hardcoded123\"",
+      "task_type": "exploit",
+      "expected_tools": [
+        "code_auditor"
+      ]
+    },
+    {
+      "id": "t04",
+      "split": "dev",
+      "group": "code",
+      "task": "检查代码中是否存在命令注入",
+      "target": "subprocess.call(cmd, shell=True)",
+      "task_type": "exploit",
+      "expected_tools": [
+        "code_auditor"
+      ]
+    },
+    {
+      "id": "d10",
+      "split": "dev",
+      "group": "read",
+      "task": "先把 /app/src/login.py 的源码读出来再审计",
+      "target": "/app/src/login.py",
+      "task_type": "exploit",
+      "expected_tools": [
+        "read_source"
+      ]
+    },
+    {
+      "id": "d11",
+      "split": "dev",
+      "group": "read",
+      "task": "读取工作区里的配置文件内容",
+      "target": "/app/config/settings.py",
+      "task_type": "recon",
+      "expected_tools": [
+        "read_source"
+      ]
+    },
+    {
+      "id": "v05",
+      "split": "dev",
+      "group": "read",
+      "task": "把这个源码文件读进来",
+      "target": "/app/src/db.py",
+      "task_type": "exploit",
+      "expected_tools": [
+        "read_source"
+      ]
+    },
+    {
+      "id": "t05",
+      "split": "dev",
+      "group": "read",
+      "task": "获取审计用的源码文本",
+      "target": "/app/src/utils.py",
+      "task_type": "exploit",
+      "expected_tools": [
+        "read_source"
+      ]
+    },
+    {
+      "id": "d12",
+      "split": "dev",
+      "group": "probe_sqli",
+      "task": "测试 http://test.local/item?id=1 是否存在 SQL 注入",
+      "target": "http://test.local/item?id=1",
+      "task_type": "exploit",
+      "expected_tools": [
+        "sqli_probe"
+      ]
+    },
+    {
+      "id": "d13",
+      "split": "dev",
+      "group": "probe_sqli",
+      "task": "这个参数能不能注入，帮我验证一下",
+      "target": "http://test.local/search?q=abc",
+      "task_type": "exploit",
+      "expected_tools": [
+        "sqli_probe"
+      ]
+    },
+    {
+      "id": "v06",
+      "split": "dev",
+      "group": "probe_sqli",
+      "task": "对 id 参数做 SQL 注入探测",
+      "target": "http://test.local/user?id=7",
+      "task_type": "exploit",
+      "expected_tools": [
+        "sqli_probe"
+      ]
+    },
+    {
+      "id": "t06",
+      "split": "dev",
+      "group": "probe_sqli",
+      "task": "确认这个 URL 有没有注入点",
+      "target": "http://shop.local/product?pid=12",
+      "task_type": "exploit",
+      "expected_tools": [
+        "sqli_probe"
+      ]
+    },
+    {
+      "id": "d14",
+      "split": "dev",
+      "group": "probe_lfi",
+      "task": "检测 http://test.local/download?file=../../etc/passwd 是否存在路径穿越",
+      "target": "http://test.local/download?file=../../etc/passwd",
+      "task_type": "exploit",
+      "expected_tools": [
+        "lfi_probe"
+      ]
+    },
+    {
+      "id": "d15",
+      "split": "dev",
+      "group": "probe_lfi",
+      "task": "看看这个文件读取参数能不能穿越目录",
+      "target": "http://test.local/read?path=notes.txt",
+      "task_type": "exploit",
+      "expected_tools": [
+        "lfi_probe"
+      ]
+    },
+    {
+      "id": "v07",
+      "split": "dev",
+      "group": "probe_lfi",
+      "task": "对 file 参数做本地文件包含测试",
+      "target": "http://test.local/view?file=index.html",
+      "task_type": "exploit",
+      "expected_tools": [
+        "lfi_probe"
+      ]
+    },
+    {
+      "id": "t07",
+      "split": "dev",
+      "group": "probe_lfi",
+      "task": "验证是否存在目录遍历漏洞",
+      "target": "http://test.local/img?name=logo.png",
+      "task_type": "exploit",
+      "expected_tools": [
+        "lfi_probe"
+      ]
+    },
+    {
+      "id": "d16",
+      "split": "dev",
+      "group": "probe_ssrf",
+      "task": "测试 http://test.local/fetch?url= 能否访问内网地址",
+      "target": "http://test.local/fetch?url=http://169.254.169.254",
+      "task_type": "exploit",
+      "expected_tools": [
+        "ssrf_probe"
+      ]
+    },
+    {
+      "id": "d17",
+      "split": "dev",
+      "group": "probe_ssrf",
+      "task": "这个 url 参数会不会被用来打内网",
+      "target": "http://test.local/proxy?url=http://127.0.0.1:6379",
+      "task_type": "exploit",
+      "expected_tools": [
+        "ssrf_probe"
+      ]
+    },
+    {
+      "id": "v08",
+      "split": "dev",
+      "group": "probe_ssrf",
+      "task": "对回调地址参数做 SSRF 探测",
+      "target": "http://test.local/callback?target=http://10.0.0.1",
+      "task_type": "exploit",
+      "expected_tools": [
+        "ssrf_probe"
+      ]
+    },
+    {
+      "id": "t08",
+      "split": "dev",
+      "group": "probe_ssrf",
+      "task": "验证服务端请求伪造风险",
+      "target": "http://test.local/load?u=http://metadata.local",
+      "task_type": "exploit",
+      "expected_tools": [
+        "ssrf_probe"
+      ]
+    },
+    {
+      "id": "d18",
+      "split": "dev",
+      "group": "browser",
+      "task": "抓取 https://example.com 的页面内容",
+      "target": "https://example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_navigate"
+      ],
+      "note": "抓取页面正文：只有 navigate 返回 text，crawl 不返回"
+    },
+    {
+      "id": "d19",
+      "split": "dev",
+      "group": "browser",
+      "task": "打开 https://example.com 并截图存证",
+      "target": "https://example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_screenshot"
+      ]
+    },
+    {
+      "id": "v09",
+      "split": "dev",
+      "group": "browser",
+      "task": "看看这个站点首页返回了什么",
+      "target": "https://example.org",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_navigate"
+      ]
+    },
+    {
+      "id": "t09",
+      "split": "dev",
+      "group": "browser",
+      "task": "确认浏览器会话是否还能复用",
+      "target": "https://example.org",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_session_status"
+      ]
+    },
+    {
+      "id": "d20",
+      "split": "validation",
+      "group": "browser_auth",
+      "task": "登录这个后台，用户名 admin 密码 123456",
+      "target": "https://example.com/login",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_login"
+      ]
+    },
+    {
+      "id": "d21",
+      "split": "validation",
+      "group": "browser_auth",
+      "task": "测试搜索框有没有反射型 XSS",
+      "target": "https://example.com/search?q=test",
+      "task_type": "exploit",
+      "expected_tools": [
+        "browser_check_xss"
+      ]
+    },
+    {
+      "id": "v10",
+      "split": "validation",
+      "group": "browser_auth",
+      "task": "枚举这个站的 API 接口",
+      "target": "https://example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "api_discovery"
+      ]
+    },
+    {
+      "id": "t10",
+      "split": "validation",
+      "group": "browser_auth",
+      "task": "用浏览器打开页面并抓取所有链接和表单",
+      "target": "https://example.com/list",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_navigate"
+      ]
+    },
+    {
+      "id": "d22",
+      "split": "validation",
+      "group": "report",
+      "task": "把这份 Nmap 扫描报告解释成可读摘要",
+      "target": "nmap-xml-output",
+      "task_type": "report",
+      "expected_tools": [
+        "report_explainer"
+      ]
+    },
+    {
+      "id": "d23",
+      "split": "validation",
+      "group": "report",
+      "task": "解释这份 Nessus 报告里风险最高的几条",
+      "target": "nessus-xml-output",
+      "task_type": "report",
+      "expected_tools": [
+        "report_explainer"
+      ]
+    },
+    {
+      "id": "v11",
+      "split": "validation",
+      "group": "report",
+      "task": "这个扫描结果说明了什么问题",
+      "target": "scan-report-text",
+      "task_type": "report",
+      "expected_tools": [
+        "report_explainer"
+      ]
+    },
+    {
+      "id": "t11",
+      "split": "validation",
+      "group": "report",
+      "task": "把扫描报告转成执行摘要",
+      "target": "nmap-text-output",
+      "task_type": "report",
+      "expected_tools": [
+        "report_explainer"
+      ]
+    },
+    {
+      "id": "d24",
+      "split": "validation",
+      "group": "rule",
+      "task": "根据这个木马样本的 IOC 生成一条 YARA 规则",
+      "target": "trojan-ioc-1",
+      "task_type": "report",
+      "expected_tools": [
+        "rule_generator"
+      ]
+    },
+    {
+      "id": "d25",
+      "split": "validation",
+      "group": "rule",
+      "task": "为这个 SQL 注入特征生成 Suricata 规则",
+      "target": "sqli-payload-pattern",
+      "task_type": "report",
+      "expected_tools": [
+        "rule_generator"
+      ]
+    },
+    {
+      "id": "v12",
+      "split": "validation",
+      "group": "rule",
+      "task": "写一条 Snort 检测规则",
+      "target": "c2-beacon-pattern",
+      "task_type": "report",
+      "expected_tools": [
+        "rule_generator"
+      ]
+    },
+    {
+      "id": "t12",
+      "split": "validation",
+      "group": "rule",
+      "task": "把这个攻击特征做成 IDS 规则",
+      "target": "xss-payload-pattern",
+      "task_type": "report",
+      "expected_tools": [
+        "rule_generator"
+      ]
+    },
+    {
+      "id": "d26",
+      "split": "validation",
+      "group": "shell",
+      "task": "用 nmap 扫描 http://test.local 的开放端口",
+      "target": "http://test.local",
+      "task_type": "exploit",
+      "expected_tools": [
+        "shell_exec"
+      ]
+    },
+    {
+      "id": "d27",
+      "split": "validation",
+      "group": "shell",
+      "task": "跑一下 nuclei 对这个站点做漏洞探测",
+      "target": "https://example.com",
+      "task_type": "exploit",
+      "expected_tools": [
+        "shell_exec"
+      ]
+    },
+    {
+      "id": "v13",
+      "split": "validation",
+      "group": "shell",
+      "task": "用 ffuf 枚举目录",
+      "target": "https://example.com",
+      "task_type": "exploit",
+      "expected_tools": [
+        "shell_exec"
+      ]
+    },
+    {
+      "id": "t13",
+      "split": "validation",
+      "group": "shell",
+      "task": "执行 whatweb 识别站点指纹",
+      "target": "https://example.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "shell_exec"
+      ]
+    },
+    {
+      "id": "d28",
+      "split": "test",
+      "group": "amb_web",
+      "task": "抓取这个页面的正文内容",
+      "target": "https://example.com/about",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_navigate"
+      ],
+      "note": "抓取页面正文：只有 navigate 返回 text，crawl 不返回"
+    },
+    {
+      "id": "d29",
+      "split": "test",
+      "group": "amb_web",
+      "task": "把这个页面截个图",
+      "target": "https://example.com/about",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_screenshot"
+      ]
+    },
+    {
+      "id": "v14",
+      "split": "test",
+      "group": "amb_web",
+      "task": "访问页面并拿到标题和表单",
+      "target": "https://example.com/form",
+      "task_type": "recon",
+      "expected_tools": [
+        "browser_navigate"
+      ]
+    },
+    {
+      "id": "d30",
+      "split": "test",
+      "group": "amb_code_url",
+      "task": "审计这段代码的注入问题",
+      "target": "query = \"SELECT * FROM u WHERE id=\" + uid",
+      "task_type": "exploit",
+      "expected_tools": [
+        "code_auditor"
+      ]
+    },
+    {
+      "id": "d31",
+      "split": "test",
+      "group": "amb_code_url",
+      "task": "这个网页参数存在注入吗",
+      "target": "https://example.com/item?id=1",
+      "task_type": "exploit",
+      "expected_tools": [
+        "sqli_probe"
+      ]
+    },
+    {
+      "id": "v15",
+      "split": "test",
+      "group": "amb_code_url",
+      "task": "检查源码里有没有越权逻辑",
+      "target": "def delete(user_id):\n    db.delete(user_id)",
+      "task_type": "exploit",
+      "expected_tools": [
+        "code_auditor"
+      ]
+    },
+    {
+      "id": "t14",
+      "split": "test",
+      "group": "amb_code_url",
+      "task": "探测这个请求参数能不能注入",
+      "target": "https://example.com/api/user?id=5",
+      "task_type": "exploit",
+      "expected_tools": [
+        "sqli_probe"
+      ]
+    },
+    {
+      "id": "d32",
+      "split": "test",
+      "group": "amb_intel",
+      "task": "查一下 2.2.2.2 的情报",
+      "target": "2.2.2.2",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "d33",
+      "split": "test",
+      "group": "amb_intel",
+      "task": "写一份 3.3.3.3 的情报评估报告",
+      "target": "3.3.3.3",
+      "task_type": "report",
+      "expected_tools": [
+        "threat_intel_report"
+      ]
+    },
+    {
+      "id": "v16",
+      "split": "test",
+      "group": "amb_intel",
+      "task": "这个域名信誉如何",
+      "target": "suspicious-site.com",
+      "task_type": "recon",
+      "expected_tools": [
+        "threat_intel_enrich"
+      ]
+    },
+    {
+      "id": "t15",
+      "split": "test",
+      "group": "amb_intel",
+      "task": "针对这个 IOC 出一份研判结论报告",
+      "target": "8.8.4.4",
+      "task_type": "report",
+      "expected_tools": [
+        "threat_intel_report"
+      ]
+    },
+    {
+      "id": "t16",
+      "split": "test",
+      "group": "amb_rule_report",
+      "task": "根据这份扫描报告生成检测规则",
+      "target": "nmap-xml-output",
+      "task_type": "report",
+      "expected_tools": [
+        "rule_generator"
+      ]
+    },
+    {
+      "id": "t17",
+      "split": "test",
+      "group": "amb_rule_report",
+      "task": "这份扫描报告里有什么问题",
+      "target": "nmap-xml-output",
+      "task_type": "report",
+      "expected_tools": [
+        "report_explainer"
+      ]
+    }
+  ]
+}

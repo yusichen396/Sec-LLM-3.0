@@ -1,39 +1,78 @@
-"""Sec-LLM Agent CLI — command-line interface for the AI agent platform."""
+"""Sec-LLM Agent CLI — command-line interface for the AI agent platform.
+
+Every command talks to the authenticated API: provide a JWT with --token /
+SEC_LLM_TOKEN, or the OpenClaw skill key with --skill-key /
+SEC_LLM_SKILL_API_KEY.
+"""
+import json
 import os
 import sys
 
 import typer
 
-BASE_URL = os.environ.get("SEC_LLM_BASE_URL", "http://localhost:8000")
+DEFAULT_BASE_URL = os.environ.get("SEC_LLM_BASE_URL", "http://localhost:8000")
 
 app = typer.Typer(
     name="sec-llm",
     help="Sec-LLM AI Agent — autonomous cybersecurity testing platform",
 )
 
-_base_url_option = typer.Option(BASE_URL, "--base-url", "-u", help="Sec-LLM API base URL")
+_base_url_option = typer.Option(
+    DEFAULT_BASE_URL, "--base-url", "-u", help="Sec-LLM API base URL", envvar="SEC_LLM_BASE_URL"
+)
+_token_option = typer.Option(
+    None, "--token", "-t", help="JWT access token", envvar="SEC_LLM_TOKEN"
+)
+_skill_key_option = typer.Option(
+    None, "--skill-key", help="OpenClaw skill API key", envvar="SEC_LLM_SKILL_API_KEY"
+)
+
+
+def _headers(token: str | None, skill_key: str | None) -> dict:
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    elif skill_key:
+        headers["X-Skill-Api-Key"] = skill_key
+    return headers
+
+
+def _require_auth(token: str | None, skill_key: str | None) -> dict:
+    if not token and not skill_key:
+        typer.echo(
+            "未提供凭据：请传 --token / SEC_LLM_TOKEN，或 --skill-key / SEC_LLM_SKILL_API_KEY",
+            err=True,
+        )
+        raise typer.Exit(code=2)
+    return _headers(token, skill_key)
+
+
+def _url(base_url: str, path: str) -> str:
+    return base_url.rstrip("/") + path
 
 
 @app.command()
 def scan(
     target: str = typer.Argument(..., help="Target URL or IP to scan"),
-    mode: str = typer.Option("quick", help="Scan mode: quick, standard, deep"),
     provider: str = typer.Option("local", help="LLM provider: local or cloud"),
     base_url: str = _base_url_option,
+    token: str = _token_option,
+    skill_key: str = _skill_key_option,
 ):
-    """Run an automated security scan against a target."""
+    """Run an automated web scan against a target."""
     import httpx
 
-    typer.echo(f"Starting {mode} scan against {target} (provider={provider})...")
+    headers = _require_auth(token, skill_key)
+    typer.echo(f"Starting web_scan against {target} (provider={provider})...")
     try:
         resp = httpx.post(
-            "http://localhost:8000/api/agent/run",
+            _url(base_url, "/api/agent/run"),
+            headers=headers,
             json={"target": target, "task_type": "web_scan", "provider": provider},
-            timeout=10,
+            timeout=15,
         )
         resp.raise_for_status()
-        data = resp.json()
-        session_id = data["session_id"]
+        session_id = resp.json()["session_id"]
         typer.echo(f"Task started. Session ID: {session_id}")
         typer.echo(f"Monitor: sec-llm stream {session_id}")
     except Exception as e:
@@ -43,20 +82,23 @@ def scan(
 
 @app.command()
 def audit(
-    path: str = typer.Argument(..., help="File or directory path to audit"),
-    language: str = typer.Option("python", help="Programming language"),
+    path: str = typer.Argument(..., help="Server-side path under AGENT_CODE_AUDIT_ROOT"),
     provider: str = typer.Option("local", help="LLM provider"),
     base_url: str = _base_url_option,
+    token: str = _token_option,
+    skill_key: str = _skill_key_option,
 ):
-    """Audit source code for security vulnerabilities."""
+    """Audit server-side source code (the path is read on the server, not locally)."""
     import httpx
 
-    typer.echo(f"Auditing {path} ({language})...")
+    headers = _require_auth(token, skill_key)
+    typer.echo(f"Auditing {path} (server side)...")
     try:
         resp = httpx.post(
-            "http://localhost:8000/api/agent/run",
+            _url(base_url, "/api/agent/run"),
+            headers=headers,
             json={"target": path, "task_type": "code_audit", "provider": provider},
-            timeout=10,
+            timeout=15,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -70,29 +112,33 @@ def audit(
 def stream(
     session_id: str = typer.Argument(..., help="Agent session ID to monitor"),
     base_url: str = _base_url_option,
+    token: str = _token_option,
+    skill_key: str = _skill_key_option,
 ):
     """Stream agent execution logs in real-time."""
     import httpx
 
+    headers = _require_auth(token, skill_key)
     typer.echo(f"Streaming agent session {session_id}...\n")
     try:
         with httpx.stream(
-            "GET", f"http://localhost:8000/api/agent/{session_id}/stream", timeout=None
+            "GET", _url(base_url, f"/api/agent/{session_id}/stream"),
+            headers=headers, timeout=None,
         ) as resp:
+            resp.raise_for_status()
             for line in resp.iter_lines():
-                if line.startswith("data: "):
-                    import json
-
-                    try:
-                        event = json.loads(line[6:])
-                        if event["type"] == "log":
-                            typer.echo(event["message"])
-                        elif event["type"] == "done":
-                            typer.echo(f"\n{'='*60}")
-                            typer.echo(f"Task {event['status']}. Findings: {event.get('findings_count', 0)}")
-                            break
-                    except json.JSONDecodeError:
-                        pass
+                if not line.startswith("data: "):
+                    continue
+                try:
+                    event = json.loads(line[6:])
+                except json.JSONDecodeError:
+                    continue
+                if event.get("type") == "log":
+                    typer.echo(event.get("message", ""))
+                elif event.get("type") == "done":
+                    typer.echo(f"\n{'=' * 60}")
+                    typer.echo(f"Task {event.get('status')}. Findings: {event.get('findings_count', 0)}")
+                    break
     except KeyboardInterrupt:
         typer.echo("\nStream interrupted.")
     except Exception as e:
@@ -101,12 +147,18 @@ def stream(
 
 
 @app.command()
-def status(session_id: str = typer.Argument(..., help="Agent session ID"), base_url: str = _base_url_option):
+def status(
+    session_id: str = typer.Argument(..., help="Agent session ID"),
+    base_url: str = _base_url_option,
+    token: str = _token_option,
+    skill_key: str = _skill_key_option,
+):
     """Check agent task status."""
     import httpx
 
+    headers = _require_auth(token, skill_key)
     try:
-        resp = httpx.get(f"http://localhost:8000/api/agent/{session_id}/status", timeout=5)
+        resp = httpx.get(_url(base_url, f"/api/agent/{session_id}/status"), headers=headers, timeout=10)
         resp.raise_for_status()
         data = resp.json()
         typer.echo(f"Session: {data['session_id']}")
@@ -120,19 +172,24 @@ def status(session_id: str = typer.Argument(..., help="Agent session ID"), base_
 
 
 @app.command()
-def report(session_id: str = typer.Argument(..., help="Agent session ID"), base_url: str = _base_url_option,
+def report(
+    session_id: str = typer.Argument(..., help="Agent session ID"),
+    base_url: str = _base_url_option,
+    token: str = _token_option,
+    skill_key: str = _skill_key_option,
 ):
     """Print the final agent report."""
     import httpx
 
+    headers = _require_auth(token, skill_key)
     try:
-        resp = httpx.get(f"http://localhost:8000/api/agent/{session_id}/report", timeout=10)
+        resp = httpx.get(_url(base_url, f"/api/agent/{session_id}/report"), headers=headers, timeout=15)
         resp.raise_for_status()
         data = resp.json()
         if data.get("report"):
             typer.echo(data["report"])
         else:
-            typer.echo("No report available yet.")
+            typer.echo(f"No report available (status={data.get('status')}).")
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
@@ -142,14 +199,18 @@ def report(session_id: str = typer.Argument(..., help="Agent session ID"), base_
 def intel(
     ioc: str = typer.Argument(..., help="IOC to lookup: IP, domain, MD5, or SHA256"),
     base_url: str = _base_url_option,
+    token: str = _token_option,
+    skill_key: str = _skill_key_option,
 ):
     """Lookup threat intelligence for an IOC."""
     import httpx
 
+    headers = _require_auth(token, skill_key)
     typer.echo(f"Looking up threat intelligence for: {ioc}")
     try:
         resp = httpx.post(
-            "http://localhost:8000/api/security-tools/threat-intel/enrich",
+            _url(base_url, "/api/security-tools/threat-intel/enrich"),
+            headers=headers,
             json={"ioc": ioc, "ioc_type": "auto"},
             timeout=30,
         )
@@ -159,6 +220,8 @@ def intel(
         typer.echo(f"Verdict: {data.get('verdict', '?')}")
         typer.echo(f"Score: {data.get('total_score', 0)}/100")
         typer.echo(f"Sources: {data.get('source_hits', 0)}")
+        if data.get("source_status"):
+            typer.echo(f"Source status: {data['source_status']}")
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1)
