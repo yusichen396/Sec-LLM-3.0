@@ -1,4 +1,6 @@
 """Tests for the multi-agent supervisor and specialists."""
+import os
+
 import pytest
 from agents.collaboration import Blackboard
 from agents.supervisor import run_multi_agent
@@ -231,15 +233,46 @@ class TestSupervisor:
         assert [item["steps_completed"] for item in progress] == [0, 1, 2, 3]
         assert progress[-1]["status"] == "completed"
 
-    def test_run_supervisor_basic(self):
-        """Supervisor should complete multi-agent run without crashing."""
+    def test_run_supervisor_basic(self, monkeypatch):
+        """Supervisor orchestration contract: recon -> exploit -> report, no live LLM/tools."""
+        import asyncio
+        import agents.supervisor as supervisor
+
+        async def recon(target, provider, blackboard, **kwargs):
+            blackboard.publish("forms", [{"action": "/search", "inputs": []}], "recon")
+            return {"phase": "recon_complete"}
+
+        async def exploit(target, provider, blackboard, discoveries, **kwargs):
+            blackboard.publish("all_findings", [{"title": "sample"}], "exploit")
+            return {"phase": "exploit_complete", "findings_count": 1}
+
+        async def report(*args, **kwargs):
+            return "sample report"
+
+        monkeypatch.setattr(supervisor, "run_recon", recon)
+        monkeypatch.setattr(supervisor, "run_exploit", exploit)
+        monkeypatch.setattr(supervisor, "single_shot_completion", report)
+
+        result = asyncio.run(supervisor.run_multi_agent(target="http://fixture.test", task_type="comprehensive"))
+
+        assert result["status"] == "completed"
+        assert result["target"] == "http://fixture.test"
+        assert result["report"] == "sample report"
+        assert "logs" in result
+        assert "blackboard_keys" in result
+        assert "all_findings" in result["blackboard_keys"]
+
+    @pytest.mark.skipif(
+        os.environ.get("RUN_AGENT_LIVE") != "1",
+        reason="需要真实模型/网络，设 RUN_AGENT_LIVE=1 才跑",
+    )
+    def test_run_supervisor_against_live_target(self):
+        """真实环境冒烟：打 example.com，验证不崩。默认跳过。"""
         import asyncio
         result = asyncio.run(run_multi_agent(
             target="http://example.com",
             task_type="comprehensive",
             provider="local",
         ))
-        assert result["status"] == "completed"
+        assert result["status"] in ("completed", "failed")
         assert "target" in result
-        assert "logs" in result
-        assert "blackboard_keys" in result
