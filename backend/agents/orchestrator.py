@@ -149,6 +149,17 @@ def _audit_scan(session_id: str, final: bool = False) -> None:
     except Exception as error:  # 审计失败不影响扫描本身，但必须留痕
         print(f"[AUDIT] failed for {session_id}: {error}")
 
+    # 发现另存成可查询的行：一条事务批量写入，失败只记日志，不打断扫描
+    if final:
+        from agents.findings_store import persist_findings_safe
+
+        persist_findings_safe(
+            _db_connection,
+            session_id,
+            task.get("target", ""),
+            session.get("findings") or [],
+        )
+
 
 def _session_from_row(row: dict) -> Dict[str, Any]:
     """Reconstruct API-facing state without replaying any tool call."""
